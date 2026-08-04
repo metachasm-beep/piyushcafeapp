@@ -1,6 +1,5 @@
 <script lang="ts">
   import { MOCK_TABLES, MOCK_RESTAURANT } from '$lib/mock-data';
-  import { PUBLIC_APP_URL } from '$env/static/public';
   import QRCode from 'qrcode';
   import { QrCode, Users, Plus, Download, Printer, X } from '@lucide/svelte';
   import { toast } from 'svelte-sonner';
@@ -13,7 +12,8 @@
 
   async function generateQR(table: any) {
     selectedTableForQr = table;
-    const url = `${PUBLIC_APP_URL || 'http://localhost:5173'}/table/${MOCK_RESTAURANT.id}/${table.id}`;
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+    const url = `${baseUrl}/table/${MOCK_RESTAURANT.id}/${table.id}`;
     
     try {
       generatedQrUrl = await QRCode.toDataURL(url, {

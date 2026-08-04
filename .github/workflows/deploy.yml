@@ -1,0 +1,52 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches: [main]
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build for Vercel
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+# ─── Required GitHub Secrets ──────────────────────────────────────────────────
+# VERCEL_TOKEN         : Vercel API token (Settings > Tokens)
+# VERCEL_ORG_ID        : Found in Vercel project settings
+# VERCEL_PROJECT_ID    : Found in Vercel project settings
+#
+# ─── Required Vercel Environment Variables (set in Vercel Dashboard) ──────────
+# PUBLIC_SUPABASE_URL        : https://your-project.supabase.co
+# PUBLIC_SUPABASE_ANON_KEY   : your-anon-key
+# PUBLIC_USE_MOCK            : false (in production)
+# PUBLIC_RAZORPAY_KEY_ID     : rzp_live_xxxxxxxxxxxx
+# PUBLIC_APP_URL             : https://your-production-domain.com

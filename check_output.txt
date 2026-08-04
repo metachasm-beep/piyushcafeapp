@@ -1,0 +1,449 @@
+﻿
+> restaurant-pwa@0.0.1 check
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+
+node.exe : The following Vite config options will be overridden by SvelteKit:
+In C:\Program Files\nodejs\npm.ps1:29 Zeichen:3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (The following V...n by SvelteKit::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  - root
+Loading svelte-check in workspace: f:\Piyush\restaurant-pwa
+Getting Svelte diagnostics...
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\+layout.svelte[39m:83:76
+[31mError[39m: Property 'name' does not exist on type '{ email: string; role: string; }'. (ts)
+[36m          <div class="w-10 h-10 rounded-full bg-[var(--color-card)] border border-[var(--color-border)] flex items-center justify-center">
+            <span class="font-bold text-[var(--color-brand)]">{$adminUser?.[35mname[36m?.charAt(0) || 'A'}</span>
+          </div>[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\+layout.svelte[39m:86:66
+[31mError[39m: Property 'name' does not exist on type '{ email: string; role: string; }'. (ts)
+[36m          <div class="overflow-hidden">
+            <p class="text-sm font-medium truncate">{$adminUser?.[35mname[36m || 'Admin'}</p>
+            <p class="text-xs text-[var(--color-text-secondary)] truncate">{$adminUser?.email || 'admin@example.com'}</p>[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\+page.svelte[39m:29:20
+[31mError[39m: Property 'updateStatus' does not exist on type '{ subscribe: (this: void, run: Subscriber<WaiterRequest[]>, invalidate?: (() => void) | undefined) => Unsubscriber; add(req: WaiterRequest): void; acknowledge(id: string): void; resolve(id: string): void; setAll(reqs: WaiterRequest[]): void; }'. (ts)
+[36m  function handleAcknowledgeRequest(id: string) {
+    waiterRequests.[35mupdateStatus[36m(id, 'acknowledged');
+  }[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\+page.svelte[39m:33:20
+[31mError[39m: Property 'updateStatus' does not exist on type '{ subscribe: (this: void, run: Subscriber<WaiterRequest[]>, invalidate?: (() => void) | undefined) => Unsubscriber; add(req: WaiterRequest): void; acknowledge(id: string): void; resolve(id: string): void; setAll(reqs: WaiterRequest[]): void; }'. (ts)
+[36m  function handleResolveRequest(id: string) {
+    waiterRequests.[35mupdateStatus[36m(id, 'resolved');
+  }[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\kitchen\+page.svelte[39m:43:5
+[33mWarn[39m: Visible, non-interactive element `<div>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events (svelte)
+[36m  {#if $pendingWaiterCount > 0}
+    [35m<div class="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex items-center justify-between flex-shrink-0 animate-pulse-ring cursor-pointer" onclick={() => {
+      const pending = $waiterRequests.find(r => r.status === 'pending');
+      if(pending) waiterRequests.updateStatus(pending.id, 'acknowledged');
+    }}>
+      <div class="flex items-center gap-3">
+        <AlertTriangle class="text-red-400" />
+        <span class="text-red-200 font-medium">{$pendingWaiterCount} Waiter Request(s) Pending! Click to acknowledge.</span>
+      </div>
+    </div>[36m
+  {/if}[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\kitchen\+page.svelte[39m:43:5
+[33mWarn[39m: `<div>` with a click handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions (svelte)
+[36m  {#if $pendingWaiterCount > 0}
+    [35m<div class="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex items-center justify-between flex-shrink-0 animate-pulse-ring cursor-pointer" onclick={() => {
+      const pending = $waiterRequests.find(r => r.status === 'pending');
+      if(pending) waiterRequests.updateStatus(pending.id, 'acknowledged');
+    }}>
+      <div class="flex items-center gap-3">
+        <AlertTriangle class="text-red-400" />
+        <span class="text-red-200 font-medium">{$pendingWaiterCount} Waiter Request(s) Pending! Click to acknowledge.</span>
+      </div>
+    </div>[36m
+  {/if}[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\kitchen\+page.svelte[39m:45:34
+[31mError[39m: Property 'updateStatus' does not exist on type '{ subscribe: (this: void, run: Subscriber<WaiterRequest[]>, invalidate?: (() => void) | undefined) => Unsubscriber; add(req: WaiterRequest): void; acknowledge(id: string): void; resolve(id: string): void; setAll(reqs: WaiterRequest[]): void; }'. (ts)
+[36m      const pending = $waiterRequests.find(r => r.status === 'pending');
+      if(pending) waiterRequests.[35mupdateStatus[36m(pending.id, 'acknowledged');
+    }}>[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\kitchen\+page.svelte[39m:94:30
+[31mError[39m: Property 'items' does not exist on type 'Order'. (ts)
+[36m              <div class="space-y-2 mb-4">
+                {#each order.[35mitems[36m as item}
+                  <div class="flex items-start justify-between gap-2">[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\login\+page.svelte[39m:20:23
+[31mError[39m: Argument of type '{ id: string; email: string; role: string; name: string; }' is not assignable to parameter of type 'string'. (ts)
+[36m    if (password === 'password123' && email.trim() !== '') {
+      adminUser.login([35m{ 
+        id: '1', 
+        email, 
+        role: 'admin', 
+        name: email.split('@')[0] || 'Admin User' 
+      }[36m);
+      toast.success('Logged in successfully');[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\menu\+page.svelte[39m:178:3
+[33mWarn[39m: Visible, non-interactive element `<div>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events (svelte)
+[36m{#if showModal}
+  [35m<div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) showModal = false; }}>
+    <div class="glass-strong bg-[var(--color-card)] w-full max-w-lg rounded-2xl border border-[var(--color-border)] p-6 shadow-2xl animate-slide-up" onclick={(e) => e.stopPropagation()}>
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-display font-bold">Add Menu Item</h2>
+        <button class="p-2 text-[var(--color-text-secondary)] hover:text-white" onclick={() => showModal = false}>Γ£ò</button>
+      </div>
+      
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="col-span-2 space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]">Name</label>
+            <input type="text" class="input-dark w-full" placeholder="Item name" />
+          </div>
+          <div class="space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]">Price (Γé╣)</label>
+            <input type="number" class="input-dark w-full" placeholder="0.00" />
+          </div>
+          <div class="space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]">Category</label>
+            <select class="input-dark w-full appearance-none">
+              {#each MOCK_CATEGORIES as cat}
+                <option value={cat.id}>{cat.name}</option>
+              {/each}
+            </select>
+          </div>
+          <div class="col-span-2 space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]">Description</label>
+            <textarea class="input-dark w-full h-24 resize-none" placeholder="Delicious description..."></textarea>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex justify-end gap-3 mt-8">
+        <button class="btn-ghost" onclick={() => showModal = false}>Cancel</button>
+        <button class="btn-brand" onclick={() => { toast.success('Item added'); showModal = false; }}>Save Item</button>
+      </div>
+    </div>
+  </div>[36m
+{/if}[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\menu\+page.svelte[39m:178:3
+[33mWarn[39m: `<div>` with a click handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions (svelte)
+[36m{#if showModal}
+  [35m<div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) showModal = false; }}>
+    <div class="glass-strong bg-[var(--color-card)] w-full max-w-lg rounded-2xl border border-[var(--color-border)] p-6 shadow-2xl animate-slide-up" onclick={(e) => e.stopPropagation()}>
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-display font-bold">Add Menu Item</h2>
+        <button class="p-2 text-[var(--color-text-secondary)] hover:text-white" onclick={() => showModal = false}>Γ£ò</button>
+      </div>
+      
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="col-span-2 space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]">Name</label>
+            <input type="text" class="input-dark w-full" placeholder="Item name" />
+          </div>
+          <div class="space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]">Price (Γé╣)</label>
+            <input type="number" class="input-dark w-full" placeholder="0.00" />
+          </div>
+          <div class="space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]">Category</label>
+            <select class="input-dark w-full appearance-none">
+              {#each MOCK_CATEGORIES as cat}
+                <option value={cat.id}>{cat.name}</option>
+              {/each}
+            </select>
+          </div>
+          <div class="col-span-2 space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]">Description</label>
+            <textarea class="input-dark w-full h-24 resize-none" placeholder="Delicious description..."></textarea>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex justify-end gap-3 mt-8">
+        <button class="btn-ghost" onclick={() => showModal = false}>Cancel</button>
+        <button class="btn-brand" onclick={() => { toast.success('Item added'); showModal = false; }}>Save Item</button>
+      </div>
+    </div>
+  </div>[36m
+{/if}[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\menu\+page.svelte[39m:179:5
+[33mWarn[39m: Visible, non-interactive element `<div>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events (svelte)
+[36m  <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) showModal = false; }}>
+    [35m<div class="glass-strong bg-[var(--color-card)] w-full max-w-lg rounded-2xl border border-[var(--color-border)] p-6 shadow-2xl animate-slide-up" onclick={(e) => e.stopPropagation()}>
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-display font-bold">Add Menu Item</h2>
+        <button class="p-2 text-[var(--color-text-secondary)] hover:text-white" onclick={() => showModal = false}>Γ£ò</button>
+      </div>
+      
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="col-span-2 space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]">Name</label>
+            <input type="text" class="input-dark w-full" placeholder="Item name" />
+          </div>
+          <div class="space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]">Price (Γé╣)</label>
+            <input type="number" class="input-dark w-full" placeholder="0.00" />
+          </div>
+          <div class="space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]">Category</label>
+            <select class="input-dark w-full appearance-none">
+              {#each MOCK_CATEGORIES as cat}
+                <option value={cat.id}>{cat.name}</option>
+              {/each}
+            </select>
+          </div>
+          <div class="col-span-2 space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]">Description</label>
+            <textarea class="input-dark w-full h-24 resize-none" placeholder="Delicious description..."></textarea>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex justify-end gap-3 mt-8">
+        <button class="btn-ghost" onclick={() => showModal = false}>Cancel</button>
+        <button class="btn-brand" onclick={() => { toast.success('Item added'); showModal = false; }}>Save Item</button>
+      </div>
+    </div>[36m
+  </div>[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\menu\+page.svelte[39m:179:5
+[33mWarn[39m: `<div>` with a click handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions (svelte)
+[36m  <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) showModal = false; }}>
+    [35m<div class="glass-strong bg-[var(--color-card)] w-full max-w-lg rounded-2xl border border-[var(--color-border)] p-6 shadow-2xl animate-slide-up" onclick={(e) => e.stopPropagation()}>
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-display font-bold">Add Menu Item</h2>
+        <button class="p-2 text-[var(--color-text-secondary)] hover:text-white" onclick={() => showModal = false}>Γ£ò</button>
+      </div>
+      
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="col-span-2 space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]">Name</label>
+            <input type="text" class="input-dark w-full" placeholder="Item name" />
+          </div>
+          <div class="space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]">Price (Γé╣)</label>
+            <input type="number" class="input-dark w-full" placeholder="0.00" />
+          </div>
+          <div class="space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]">Category</label>
+            <select class="input-dark w-full appearance-none">
+              {#each MOCK_CATEGORIES as cat}
+                <option value={cat.id}>{cat.name}</option>
+              {/each}
+            </select>
+          </div>
+          <div class="col-span-2 space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]">Description</label>
+            <textarea class="input-dark w-full h-24 resize-none" placeholder="Delicious description..."></textarea>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex justify-end gap-3 mt-8">
+        <button class="btn-ghost" onclick={() => showModal = false}>Cancel</button>
+        <button class="btn-brand" onclick={() => { toast.success('Item added'); showModal = false; }}>Save Item</button>
+      </div>
+    </div>[36m
+  </div>[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\menu\+page.svelte[39m:188:13
+[33mWarn[39m: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+[36m          <div class="col-span-2 space-y-1">
+            [35m<label class="text-sm text-[var(--color-text-secondary)]">Name</label>[36m
+            <input type="text" class="input-dark w-full" placeholder="Item name" />[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\menu\+page.svelte[39m:192:13
+[33mWarn[39m: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+[36m          <div class="space-y-1">
+            [35m<label class="text-sm text-[var(--color-text-secondary)]">Price (Γé╣)</label>[36m
+            <input type="number" class="input-dark w-full" placeholder="0.00" />[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\menu\+page.svelte[39m:196:13
+[33mWarn[39m: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+[36m          <div class="space-y-1">
+            [35m<label class="text-sm text-[var(--color-text-secondary)]">Category</label>[36m
+            <select class="input-dark w-full appearance-none">[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\menu\+page.svelte[39m:204:13
+[33mWarn[39m: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+[36m          <div class="col-span-2 space-y-1">
+            [35m<label class="text-sm text-[var(--color-text-secondary)]">Description</label>[36m
+            <textarea class="input-dark w-full h-24 resize-none" placeholder="Delicious description..."></textarea>[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\menu\+page.svelte[39m:97:12
+[31mError[39m: Cannot find name 'UtensilsCrossed'. (ts)
+[36m        <div class="glass h-64 flex flex-col items-center justify-center text-[var(--color-text-secondary)] rounded-xl">
+          <[35mUtensilsCrossed[36m size={48} class="mb-4 opacity-20" />
+          <p>No items found.</p>[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\tables\+page.svelte[39m:89:11
+[33mWarn[39m: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+[36m        <div>
+          [35m<label class="block text-sm text-[var(--color-text-secondary)] mb-1">Table Number</label>[36m
+          <input type="text" class="input-dark w-full" placeholder="e.g. 7" />[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\tables\+page.svelte[39m:93:11
+[33mWarn[39m: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+[36m        <div>
+          [35m<label class="block text-sm text-[var(--color-text-secondary)] mb-1">Display Name</label>[36m
+          <input type="text" class="input-dark w-full" placeholder="e.g. Balcony 1" />[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\tables\+page.svelte[39m:97:11
+[33mWarn[39m: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+[36m        <div>
+          [35m<label class="block text-sm text-[var(--color-text-secondary)] mb-1">Capacity</label>[36m
+          <input type="number" class="input-dark w-full" placeholder="e.g. 4" />[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\tables\+page.svelte[39m:139:3
+[33mWarn[39m: Visible, non-interactive element `<div>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events (svelte)
+[36m{#if qrModalOpen && selectedTableForQr}
+  [35m<div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) qrModalOpen = false; }}>
+    <div class="bg-white text-black w-full max-w-sm rounded-2xl p-8 flex flex-col items-center animate-slide-up relative shadow-2xl">
+      
+      <button class="absolute top-4 right-4 text-gray-400 hover:text-black transition-colors" onclick={() => qrModalOpen = false}>
+        <X size={24} />
+      </button>
+
+      <div class="text-center mb-6 w-full">
+        <h2 class="text-3xl font-black">{selectedTableForQr.display_name}</h2>
+        <p class="text-gray-500 font-medium">Scan to order</p>
+      </div>
+
+      <div class="bg-white p-2 rounded-xl shadow-inner border border-gray-100 mb-8">
+        {#if generatedQrUrl}
+          <img src={generatedQrUrl} alt="QR Code" class="w-64 h-64 object-contain" />
+        {/if}
+      </div>
+
+      <div class="flex w-full gap-3">
+        <button 
+          class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors"
+          onclick={downloadQR}
+        >
+          <Download size={18} /> Download
+        </button>
+        <button 
+          class="flex-1 py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors"
+          onclick={printQR}
+        >
+          <Printer size={18} /> Print
+        </button>
+      </div>
+    </div>
+  </div>[36m
+{/if}[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\admin\tables\+page.svelte[39m:139:3
+[33mWarn[39m: `<div>` with a click handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions (svelte)
+[36m{#if qrModalOpen && selectedTableForQr}
+  [35m<div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) qrModalOpen = false; }}>
+    <div class="bg-white text-black w-full max-w-sm rounded-2xl p-8 flex flex-col items-center animate-slide-up relative shadow-2xl">
+      
+      <button class="absolute top-4 right-4 text-gray-400 hover:text-black transition-colors" onclick={() => qrModalOpen = false}>
+        <X size={24} />
+      </button>
+
+      <div class="text-center mb-6 w-full">
+        <h2 class="text-3xl font-black">{selectedTableForQr.display_name}</h2>
+        <p class="text-gray-500 font-medium">Scan to order</p>
+      </div>
+
+      <div class="bg-white p-2 rounded-xl shadow-inner border border-gray-100 mb-8">
+        {#if generatedQrUrl}
+          <img src={generatedQrUrl} alt="QR Code" class="w-64 h-64 object-contain" />
+        {/if}
+      </div>
+
+      <div class="flex w-full gap-3">
+        <button 
+          class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors"
+          onclick={downloadQR}
+        >
+          <Download size={18} /> Download
+        </button>
+        <button 
+          class="flex-1 py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors"
+          onclick={printQR}
+        >
+          <Printer size={18} /> Print
+        </button>
+      </div>
+    </div>
+  </div>[36m
+{/if}[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\table\[restaurant_id]\[table_id]\+page.svelte[39m:17:54
+[33mWarn[39m: This reference only captures the initial value of `data`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally (svelte)
+[36m  let { data }: { data: PageData } = $props();
+  let { restaurant, table, categories, menuItems } = [35mdata[36m;[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\table\[restaurant_id]\[table_id]\+page.svelte[39m:314:7
+[33mWarn[39m: Visible, non-interactive element `<div>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events (svelte)
+[36m      <!-- Handle for dragging (visual only) -->
+      [35m<div class="w-full flex justify-center py-3" onclick={() => isCartOpen = false}>
+        <div class="w-12 h-1.5 bg-white/20 rounded-full"></div>
+      </div>[36m[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\table\[restaurant_id]\[table_id]\+page.svelte[39m:314:7
+[33mWarn[39m: `<div>` with a click handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions (svelte)
+[36m      <!-- Handle for dragging (visual only) -->
+      [35m<div class="w-full flex justify-center py-3" onclick={() => isCartOpen = false}>
+        <div class="w-12 h-1.5 bg-white/20 rounded-full"></div>
+      </div>[36m[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\table\[restaurant_id]\[table_id]\+page.svelte[39m:340:146
+[31mError[39m: Cannot find name 'updateQuantity'. (ts)
+[36m              <div class="flex items-center gap-3 bg-surface rounded-full p-1 border border-white/5">
+                <button class="w-7 h-7 rounded-full bg-surface-light flex items-center justify-center text-white active:scale-95" onclick={() => [35mupdateQuantity[36m(item.menu_item.id, item.quantity - 1)}>
+                  <Minus size={14} />[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\table\[restaurant_id]\[table_id]\+page.svelte[39m:344:138
+[31mError[39m: Cannot find name 'updateQuantity'. (ts)
+[36m                <span class="w-4 text-center font-medium text-sm">{item.quantity}</span>
+                <button class="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-white active:scale-95" onclick={() => [35mupdateQuantity[36m(item.menu_item.id, item.quantity + 1)}>
+                  <Plus size={14} />[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\table\[restaurant_id]\[table_id]\+page.svelte[39m:355:14
+[31mError[39m: Cannot find name 'Info'. (ts)
+[36m          <label for="instructions" class="text-sm font-medium text-text-secondary flex items-center gap-1">
+            <[35mInfo[36m size={14} /> Special Instructions
+          </label>[39m
+
+f:\Piyush\restaurant-pwa\[32msrc\routes\table\[restaurant_id]\[table_id]\order\+page.svelte[39m:271:15
+[33mWarn[39m: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+[36m            <div class="space-y-3" transition:slide>
+              [35m<label class="text-sm text-text-secondary">Enter UPI ID</label>[36m
+              <input type="text" class="input-dark w-full" value="goldenfork@upi" />[39m
+
+====================================
+[31msvelte-check found 11 errors and 19 warnings in 8 files
+[39m

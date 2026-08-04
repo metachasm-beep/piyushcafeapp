@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+    <!-- Primary Meta Tags -->
+    <title>The Golden Fork</title>
+    <meta name="title" content="The Golden Fork — Digital Menu" />
+    <meta name="description" content="Scan, order, and enjoy. The Golden Fork's digital dining experience." />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#F97316" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Golden Fork" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="The Golden Fork" />
+    <meta property="og:description" content="Scan, order, and enjoy. The Golden Fork's digital dining experience." />
+    <meta property="og:image" content="/icons/icon-512.png" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
+    />
+
+    %sveltekit.head%
+  </head>
+  <body data-sveltekit-preload-data="hover" style="background:#0c0c0c">
+    <div style="display: contents">%sveltekit.body%</div>
+  </body>
+</html>

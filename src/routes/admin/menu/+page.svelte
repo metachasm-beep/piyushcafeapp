@@ -1,11 +1,18 @@
 <script lang="ts">
-  import { MOCK_CATEGORIES, MOCK_MENU_ITEMS } from '$lib/mock-data';
-  import { formatCurrency, DIETARY_META } from '$lib/utils';
+  import { onMount } from 'svelte';
+  import { getCategories, getMenuItems, addMenuItemToSheet, deleteMenuItemFromSheet, toggleMenuItemAvailabilityInSheet } from '$lib/sheets';
+  import { formatCurrency, DIETARY_META, generateUUID } from '$lib/utils';
   import { toast } from 'svelte-sonner';
-  import { Plus, Search, Edit2, Trash2, Image as ImageIcon, UtensilsCrossed } from '@lucide/svelte';
-  import type { MenuItem } from '$lib/types';
+  import { Plus, Search, Edit2, Trash2, Image as ImageIcon, UtensilsCrossed, RefreshCw } from '@lucide/svelte';
+  import type { MenuItem, MenuCategory } from '$lib/types';
+  import { adminSettings } from '$lib/stores/admin';
 
-  let items = $state<MenuItem[]>([...MOCK_MENU_ITEMS]);
+  let items = $state<MenuItem[]>([]);
+  let categories = $state<MenuCategory[]>([]);
+  let isLoading = $state(true);
+  let isSaving = $state(false);
+  let errorMsg = $state('');
+
   let selectedCategory = $state<string | null>(null);
   let searchQuery = $state('');
 
@@ -18,29 +25,127 @@
     })
   );
 
-  function toggleAvailability(item: MenuItem) {
-    const idx = items.findIndex(i => i.id === item.id);
-    if (idx !== -1) {
-      items[idx].is_available = !items[idx].is_available;
-      toast.success(`${item.name} marked as ${items[idx].is_available ? 'available' : 'unavailable'}`);
+  async function loadData() {
+    if (!$adminSettings.spreadsheetId) {
+      errorMsg = 'Google Sheets not configured. Please go to Settings.';
+      isLoading = false;
+      return;
+    }
+    isLoading = true;
+    errorMsg = '';
+    try {
+      [categories, items] = await Promise.all([
+        getCategories(),
+        getMenuItems()
+      ]);
+    } catch (e: any) {
+      errorMsg = e.message || 'Failed to load data';
+      toast.error(errorMsg);
+    } finally {
+      isLoading = false;
     }
   }
 
-  function deleteItem(id: string) {
+  onMount(() => {
+    loadData();
+  });
+
+  async function toggleAvailability(item: MenuItem) {
+    if (!$adminSettings.googleAppsScriptUrl) {
+      toast.error('Webhook not configured in Settings.');
+      return;
+    }
+    const idx = items.findIndex(i => i.id === item.id);
+    if (idx !== -1) {
+      const newStatus = !items[idx].is_available;
+      // Optimistic update
+      items[idx].is_available = newStatus;
+      try {
+        await toggleMenuItemAvailabilityInSheet(item.id, newStatus);
+        toast.success(`${item.name} marked as ${newStatus ? 'available' : 'unavailable'}`);
+      } catch (e: any) {
+        // Revert on fail
+        items[idx].is_available = !newStatus;
+        toast.error('Failed to update: ' + e.message);
+      }
+    }
+  }
+
+  async function deleteItem(id: string) {
+    if (!$adminSettings.googleAppsScriptUrl) {
+      toast.error('Webhook not configured in Settings.');
+      return;
+    }
     if (confirm('Are you sure you want to delete this item?')) {
+      const prevItems = [...items];
+      // Optimistic update
       items = items.filter(i => i.id !== id);
-      toast.success('Item deleted successfully');
+      try {
+        await deleteMenuItemFromSheet(id);
+        toast.success('Item deleted successfully');
+      } catch (e: any) {
+        items = prevItems;
+        toast.error('Failed to delete: ' + e.message);
+      }
     }
   }
   
   let showModal = $state(false);
+  let newItemForm = $state({
+    name: '',
+    price: '',
+    category_id: '',
+    description: '',
+    image_url: ''
+  });
+
+  async function saveItem() {
+    if (!$adminSettings.googleAppsScriptUrl) {
+      toast.error('Webhook not configured in Settings.');
+      return;
+    }
+    if (!newItemForm.name || !newItemForm.price || !newItemForm.category_id) {
+      toast.error('Name, Price, and Category are required');
+      return;
+    }
+
+    isSaving = true;
+    const newItem: MenuItem = {
+      id: `item_${generateUUID()}`,
+      restaurant_id: 'res_1',
+      category_id: newItemForm.category_id,
+      name: newItemForm.name,
+      description: newItemForm.description,
+      price: parseFloat(newItemForm.price),
+      image_url: newItemForm.image_url,
+      preparation_time: null,
+      dietary_tags: [],
+      is_available: true,
+      is_featured: false,
+      sort_order: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    try {
+      await addMenuItemToSheet(newItem);
+      items = [newItem, ...items];
+      toast.success('Item added successfully');
+      showModal = false;
+      newItemForm = { name: '', price: '', category_id: '', description: '', image_url: '' };
+    } catch (e: any) {
+      toast.error('Failed to save item: ' + e.message);
+    } finally {
+      isSaving = false;
+    }
+  }
 </script>
 
 <div class="h-full flex flex-col gap-6">
   <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
     <div>
       <h1 class="text-3xl font-display font-bold text-[var(--color-text-primary)]">Menu Manager</h1>
-      <p class="text-[var(--color-text-secondary)] mt-1">Manage categories and menu items</p>
+      <p class="text-[var(--color-text-secondary)] mt-1">Manage categories and menu items directly via Google Sheets</p>
     </div>
     
     <div class="flex gap-3 w-full sm:w-auto">
@@ -60,39 +165,45 @@
         <Plus size={18} />
         <span class="hidden sm:inline">Add Item</span>
       </button>
+      <button class="w-10 h-10 rounded-lg bg-[var(--color-card)] border border-[var(--color-border)] flex items-center justify-center hover:bg-[var(--color-surface)] text-[var(--color-text-secondary)]" onclick={loadData} disabled={isLoading}>
+        <RefreshCw size={18} class={isLoading ? 'animate-spin' : ''} />
+      </button>
     </div>
   </div>
 
-  <div class="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
-    <!-- Categories Sidebar -->
-    <div class="w-full lg:w-64 flex-shrink-0 flex flex-col gap-4">
-      <div class="glass-strong p-4 rounded-xl">
-        <h3 class="font-bold mb-4 uppercase tracking-wider text-sm text-[var(--color-text-secondary)]">Categories</h3>
-        <div class="space-y-1">
-          <button 
-            class="w-full text-left px-3 py-2 rounded-lg transition-colors {selectedCategory === null ? 'bg-[var(--color-brand)]/20 text-[var(--color-brand)] font-medium' : 'hover:bg-[var(--color-card)]'}"
-            onclick={() => selectedCategory = null}
-          >
-            All Items
-          </button>
-          {#each MOCK_CATEGORIES as category}
-            <button 
-              class="w-full text-left px-3 py-2 rounded-lg transition-colors {selectedCategory === category.id ? 'bg-[var(--color-brand)]/20 text-[var(--color-brand)] font-medium' : 'hover:bg-[var(--color-card)]'}"
-              onclick={() => selectedCategory = category.id}
-            >
-              {category.name}
-            </button>
-          {/each}
-        </div>
-        <button class="w-full mt-4 py-2 border border-dashed border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-text-secondary)] transition-colors flex items-center justify-center gap-2">
-          <Plus size={16} /> Add Category
+  <div class="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden">
+    <!-- Category Sidebar -->
+    <div class="w-full lg:w-64 flex-shrink-0 flex flex-col gap-2 overflow-x-auto lg:overflow-y-auto pb-4 hide-scrollbar">
+      <button 
+        class="w-full text-left px-4 py-3 rounded-xl transition-all font-medium {selectedCategory === null ? 'bg-[var(--color-brand)] text-white shadow-lg' : 'bg-[var(--color-card)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)]'}"
+        onclick={() => selectedCategory = null}
+      >
+        All Items
+      </button>
+      
+      {#each categories as category}
+        <button 
+          class="w-full text-left px-4 py-3 rounded-xl transition-all font-medium flex items-center gap-3 {selectedCategory === category.id ? 'bg-[var(--color-brand)] text-white shadow-lg' : 'bg-[var(--color-card)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)]'}"
+          onclick={() => selectedCategory = category.id}
+        >
+          <span class="text-xl">{category.icon_emoji || '🍽️'}</span>
+          {category.name}
         </button>
-      </div>
+      {/each}
     </div>
 
     <!-- Items Grid -->
     <div class="flex-1 overflow-y-auto pb-12 pr-2">
-      {#if filteredItems.length === 0}
+      {#if isLoading}
+        <div class="h-64 flex items-center justify-center">
+          <RefreshCw size={32} class="animate-spin text-brand opacity-50" />
+        </div>
+      {:else if errorMsg}
+        <div class="glass h-64 flex flex-col items-center justify-center text-red-400 rounded-xl p-6 text-center">
+          <p class="font-bold mb-2">Error</p>
+          <p class="text-sm opacity-80">{errorMsg}</p>
+        </div>
+      {:else if filteredItems.length === 0}
         <div class="glass h-64 flex flex-col items-center justify-center text-[var(--color-text-secondary)] rounded-xl">
           <UtensilsCrossed size={48} class="mb-4 opacity-20" />
           <p>No items found.</p>
@@ -118,9 +229,6 @@
                 
                 <!-- Quick actions on hover -->
                 <div class="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                  <button class="p-1.5 bg-black/60 hover:bg-[var(--color-brand)] rounded text-white backdrop-blur-sm transition-colors" title="Edit">
-                    <Edit2 size={14} />
-                  </button>
                   <button 
                     class="p-1.5 bg-black/60 hover:bg-red-500 rounded text-white backdrop-blur-sm transition-colors" 
                     title="Delete"
@@ -175,6 +283,8 @@
 
 <!-- Modal Placeholder for Add Item -->
 {#if showModal}
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) showModal = false; }}>
     <div class="glass-strong bg-[var(--color-card)] w-full max-w-lg rounded-2xl border border-[var(--color-border)] p-6 shadow-2xl animate-slide-up" onclick={(e) => e.stopPropagation()}>
       <div class="flex justify-between items-center mb-6">
@@ -185,31 +295,42 @@
       <div class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <div class="col-span-2 space-y-1">
-            <label class="text-sm text-[var(--color-text-secondary)]">Name</label>
-            <input type="text" class="input-dark w-full" placeholder="Item name" />
+            <label class="text-sm text-[var(--color-text-secondary)]" for="name">Name</label>
+            <input id="name" type="text" class="input-dark w-full" bind:value={newItemForm.name} placeholder="Item name" />
           </div>
           <div class="space-y-1">
-            <label class="text-sm text-[var(--color-text-secondary)]">Price (₹)</label>
-            <input type="number" class="input-dark w-full" placeholder="0.00" />
+            <label class="text-sm text-[var(--color-text-secondary)]" for="price">Price (₹)</label>
+            <input id="price" type="number" class="input-dark w-full" bind:value={newItemForm.price} placeholder="0.00" />
           </div>
           <div class="space-y-1">
-            <label class="text-sm text-[var(--color-text-secondary)]">Category</label>
-            <select class="input-dark w-full appearance-none">
-              {#each MOCK_CATEGORIES as cat}
+            <label class="text-sm text-[var(--color-text-secondary)]" for="cat">Category</label>
+            <select id="cat" class="input-dark w-full appearance-none" bind:value={newItemForm.category_id}>
+              <option value="" disabled selected>Select category...</option>
+              {#each categories as cat}
                 <option value={cat.id}>{cat.name}</option>
               {/each}
             </select>
           </div>
           <div class="col-span-2 space-y-1">
-            <label class="text-sm text-[var(--color-text-secondary)]">Description</label>
-            <textarea class="input-dark w-full h-24 resize-none" placeholder="Delicious description..."></textarea>
+            <label class="text-sm text-[var(--color-text-secondary)]" for="img">Image URL</label>
+            <input id="img" type="text" class="input-dark w-full" bind:value={newItemForm.image_url} placeholder="Google Drive or Imgur link" />
+          </div>
+          <div class="col-span-2 space-y-1">
+            <label class="text-sm text-[var(--color-text-secondary)]" for="desc">Description</label>
+            <textarea id="desc" class="input-dark w-full h-24 resize-none" bind:value={newItemForm.description} placeholder="Delicious description..."></textarea>
           </div>
         </div>
       </div>
       
       <div class="flex justify-end gap-3 mt-8">
-        <button class="btn-ghost" onclick={() => showModal = false}>Cancel</button>
-        <button class="btn-brand" onclick={() => { toast.success('Item added'); showModal = false; }}>Save Item</button>
+        <button class="btn-ghost" onclick={() => showModal = false} disabled={isSaving}>Cancel</button>
+        <button class="btn-brand flex items-center gap-2" onclick={saveItem} disabled={isSaving}>
+          {#if isSaving}
+            <RefreshCw size={16} class="animate-spin" /> Saving...
+          {:else}
+            Save Item
+          {/if}
+        </button>
       </div>
     </div>
   </div>

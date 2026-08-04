@@ -129,3 +129,38 @@ function createAuthStore() {
 }
 
 export const adminUser = createAuthStore();
+
+// ─── Admin Settings State ─────────────────────────────────────
+type AdminSettings = {
+  googleSheetUrl: string;
+  spreadsheetId: string;
+  googleAppsScriptUrl: string;
+};
+
+function createSettingsStore() {
+  const defaultSettings: AdminSettings = {
+    googleSheetUrl: '',
+    spreadsheetId: '',
+    googleAppsScriptUrl: ''
+  };
+
+  const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('gf_admin_settings') : null;
+  const initial: AdminSettings = stored ? { ...defaultSettings, ...JSON.parse(stored) } : defaultSettings;
+  
+  const { subscribe, set, update } = writable<AdminSettings>(initial);
+
+  return {
+    subscribe,
+    updateSettings(settings: Partial<AdminSettings>) {
+      update(current => {
+        const next = { ...current, ...settings };
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('gf_admin_settings', JSON.stringify(next));
+        }
+        return next;
+      });
+    }
+  };
+}
+
+export const adminSettings = createSettingsStore();

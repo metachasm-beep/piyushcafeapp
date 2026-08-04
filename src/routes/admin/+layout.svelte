@@ -2,7 +2,7 @@
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { adminUser, pendingWaiterCount } from '$lib/stores/admin';
-  import { LayoutDashboard, ChefHat, UtensilsCrossed, QrCode, LogOut, Menu, X, Bell } from '@lucide/svelte';
+  import { LayoutDashboard, ChefHat, UtensilsCrossed, QrCode, LogOut, Menu, X, Bell, Settings } from '@lucide/svelte';
 
   let { children } = $props();
   let mobileMenuOpen = $state(false);
@@ -74,6 +74,14 @@
         >
           <QrCode size={20} />
           <span class="font-medium">Tables & QR</span>
+        </a>
+        <a 
+          href="/admin/settings" 
+          class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/admin/settings' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+          onclick={() => mobileMenuOpen = false}
+        >
+          <Settings size={20} />
+          <span class="font-medium">Settings</span>
         </a>
       </nav>
 

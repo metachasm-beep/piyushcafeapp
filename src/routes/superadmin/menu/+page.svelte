@@ -3,7 +3,7 @@
   import { supabase } from '$lib/supabase';
   import { formatCurrency, DIETARY_META } from '$lib/utils';
   import { toast } from 'svelte-sonner';
-  import { Plus, Search, Edit2, Trash2, Image as ImageIcon, UtensilsCrossed, RefreshCw, Save } from '@lucide/svelte';
+  import { Plus, Search, Edit2, Trash2, RefreshCw, Save, X } from 'lucide-svelte';
   import type { MenuItem, MenuCategory, DietaryTag, Restaurant } from '$lib/types';
 
   let restaurants = $state<Restaurant[]>([]);
@@ -32,7 +32,7 @@
     isLoading = true;
     const { data, error } = await supabase.from('restaurants').select('*').order('name');
     if (error) {
-      toast.error('Failed to load restaurants: ' + error.message);
+      toast.error('FAILED: ' + error.message);
     } else {
       restaurants = data;
       if (restaurants.length > 0) {
@@ -60,7 +60,7 @@
       categories = catRes.data;
       items = itemRes.data;
     } catch (e: any) {
-      errorMsg = e.message || 'Failed to load data';
+      errorMsg = e.message || 'FAILED TO LOAD DATA';
       toast.error(errorMsg);
     } finally {
       isLoading = false;
@@ -75,7 +75,7 @@
 
   onMount(() => {
     if (!supabase) {
-      errorMsg = 'Supabase client not initialized.';
+      errorMsg = 'SUPABASE NOT INIT';
       isLoading = false;
       return;
     }
@@ -87,23 +87,21 @@
     const newStatus = !item.is_available;
     const { error } = await supabase.from('menu_items').update({ is_available: newStatus }).eq('id', item.id);
     if (error) {
-      toast.error('Failed to update: ' + error.message);
+      toast.error('FAILED TO UPDATE');
     } else {
       const idx = items.findIndex(i => i.id === item.id);
       if (idx !== -1) items[idx].is_available = newStatus;
-      toast.success(`${item.name} marked as ${newStatus ? 'available' : 'unavailable'}`);
     }
   }
 
   async function deleteItem(id: string) {
     if (!supabase) return;
-    if (confirm('Are you sure you want to delete this item?')) {
+    if (confirm('CONFIRM DELETION?')) {
       const { error } = await supabase.from('menu_items').delete().eq('id', id);
       if (error) {
-        toast.error('Failed to delete: ' + error.message);
+        toast.error('FAILED TO DELETE');
       } else {
         items = items.filter(i => i.id !== id);
-        toast.success('Item deleted successfully');
       }
     }
   }
@@ -155,7 +153,7 @@
   async function saveItem() {
     if (!supabase || !selectedRestaurantId) return;
     if (!itemForm.name || !itemForm.price || !itemForm.category_id) {
-      toast.error('Name, Price, and Category are required');
+      toast.error('MISSING REQUIRED FIELDS');
       return;
     }
 
@@ -181,250 +179,226 @@
         if (error) throw error;
         const idx = items.findIndex(i => i.id === editingItemId);
         if (idx !== -1) items[idx] = data;
-        toast.success('Item updated successfully');
       } else {
         const { data, error } = await supabase.from('menu_items').insert(payload).select().single();
         if (error) throw error;
         items = [data, ...items];
-        toast.success('Item added successfully');
       }
       showModal = false;
     } catch (e: any) {
-      toast.error('Failed to save item: ' + e.message);
+      toast.error('SAVE FAILED');
     } finally {
       isSaving = false;
     }
   }
 </script>
 
-<div class="h-full flex flex-col gap-6">
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+<svelte:head>
+  <title>DATA CATALOG</title>
+</svelte:head>
+
+<div class="h-full flex flex-col font-mono text-text-primary uppercase">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-border pb-4 mb-4 gap-4">
     <div>
-      <h1 class="text-3xl font-display font-bold text-[var(--color-text-primary)]">Menu Manager</h1>
-      <p class="text-[var(--color-text-secondary)] mt-1">Manage categories and menu items via Supabase</p>
+      <h1 class="text-2xl font-bold tracking-widest">Data Catalog</h1>
+      <p class="text-xs text-text-secondary mt-1 tracking-wide">Menu Records DB</p>
     </div>
     
-    <div class="flex flex-wrap gap-3 w-full sm:w-auto items-center">
+    <div class="flex flex-wrap gap-2 w-full sm:w-auto items-center text-xs">
       {#if restaurants.length > 0}
-        <select class="input-dark rounded-lg py-2" bind:value={selectedRestaurantId}>
+        <select class="bg-transparent border border-border px-2 py-1 outline-none uppercase" bind:value={selectedRestaurantId}>
           {#each restaurants as res}
             <option value={res.id}>{res.name}</option>
           {/each}
         </select>
       {/if}
-      <div class="relative flex-1 sm:w-64">
-        <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]" size={18} />
+      <div class="relative flex-1 sm:w-48">
         <input 
           type="text" 
           bind:value={searchQuery} 
-          placeholder="Search items..." 
-          class="input-dark w-full pl-10 py-2 rounded-lg"
+          placeholder="QUERY..." 
+          class="bg-transparent border border-border w-full px-2 py-1 outline-none uppercase placeholder:text-text-secondary/50 focus:border-brand"
         />
       </div>
       <button 
-        class="btn-brand flex items-center gap-2 whitespace-nowrap"
+        class="border border-brand text-brand hover:bg-brand hover:text-black px-4 py-1 flex items-center gap-2 transition-colors disabled:opacity-50"
         onclick={openAddModal}
         disabled={!selectedRestaurantId}
       >
-        <Plus size={18} />
-        <span class="hidden sm:inline">Add Item</span>
+        <Plus size={14} /> ADD ROW
       </button>
-      <button class="w-10 h-10 rounded-lg bg-[var(--color-card)] border border-[var(--color-border)] flex items-center justify-center hover:bg-[var(--color-surface)] text-[var(--color-text-secondary)]" onclick={loadData} disabled={isLoading || !selectedRestaurantId}>
-        <RefreshCw size={18} class={isLoading ? 'animate-spin' : ''} />
+      <button class="border border-border p-1 hover:bg-surface disabled:opacity-50" onclick={loadData} disabled={isLoading || !selectedRestaurantId}>
+        <RefreshCw size={14} class={isLoading ? 'animate-spin' : ''} />
       </button>
     </div>
   </div>
 
-  <div class="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden">
+  <div class="flex-1 flex flex-col lg:flex-row border border-border">
     <!-- Category Sidebar -->
-    <div class="w-full lg:w-64 flex-shrink-0 flex flex-col gap-2 overflow-x-auto lg:overflow-y-auto pb-4 hide-scrollbar">
+    <div class="w-full lg:w-48 flex-shrink-0 flex flex-col border-b lg:border-b-0 lg:border-r border-border overflow-y-auto bg-surface">
+      <div class="p-2 border-b border-border text-[10px] text-text-secondary tracking-widest font-bold">
+        FILTERS
+      </div>
       <button 
-        class="w-full text-left px-4 py-3 rounded-xl transition-all font-medium {selectedCategory === null ? 'bg-[var(--color-brand)] text-white shadow-lg' : 'bg-[var(--color-card)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)]'}"
+        class="text-left px-4 py-2 text-xs border-b border-border/50 {selectedCategory === null ? 'bg-brand text-black font-bold' : 'hover:bg-card text-text-secondary'}"
         onclick={() => selectedCategory = null}
       >
-        All Items
+        ALL RECORDS
       </button>
       
       {#each categories as category}
         <button 
-          class="w-full text-left px-4 py-3 rounded-xl transition-all font-medium flex items-center gap-3 {selectedCategory === category.id ? 'bg-[var(--color-brand)] text-white shadow-lg' : 'bg-[var(--color-card)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)]'}"
+          class="text-left px-4 py-2 text-xs border-b border-border/50 {selectedCategory === category.id ? 'bg-brand text-black font-bold' : 'hover:bg-card text-text-secondary'}"
           onclick={() => selectedCategory = category.id}
         >
-          <span class="text-xl">{category.icon_emoji || '🍽️'}</span>
           {category.name}
         </button>
       {/each}
     </div>
 
-    <!-- Items Grid -->
-    <div class="flex-1 overflow-y-auto pb-12 pr-2">
+    <!-- Items Grid (Data Table) -->
+    <div class="flex-1 overflow-y-auto bg-black">
       {#if isLoading}
-        <div class="h-64 flex items-center justify-center">
-          <RefreshCw size={32} class="animate-spin text-brand opacity-50" />
+        <div class="h-full flex items-center justify-center">
+          <RefreshCw size={24} class="animate-spin text-brand opacity-50" />
         </div>
       {:else if errorMsg}
-        <div class="glass h-64 flex flex-col items-center justify-center text-red-400 rounded-xl p-6 text-center">
-          <p class="font-bold mb-2">Error</p>
-          <p class="text-sm opacity-80">{errorMsg}</p>
+        <div class="h-full flex flex-col items-center justify-center text-red-500 p-6 text-center text-xs">
+          <p class="font-bold">ERR: {errorMsg}</p>
         </div>
       {:else if filteredItems.length === 0}
-        <div class="glass h-64 flex flex-col items-center justify-center text-[var(--color-text-secondary)] rounded-xl">
-          <UtensilsCrossed size={48} class="mb-4 opacity-20" />
-          <p>No items found.</p>
+        <div class="h-full flex flex-col items-center justify-center text-text-secondary text-xs tracking-widest">
+          NO RECORDS FOUND.
         </div>
       {:else}
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {#each filteredItems as item (item.id)}
-            <div class="glass border border-[var(--color-border)] rounded-xl overflow-hidden flex flex-col group relative {item.is_available ? '' : 'opacity-75 grayscale-[30%]'}">
-              
-              {#if !item.is_available}
-                <div class="absolute top-2 right-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
-                  OUT OF STOCK
-                </div>
-              {/if}
-
-              <div class="h-40 bg-[var(--color-surface)] relative overflow-hidden flex items-center justify-center">
-                {#if item.image_url}
-                  <img src={item.image_url} alt={item.name} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                {:else}
-                  <ImageIcon size={48} class="text-[var(--color-border)]" />
-                {/if}
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                
-                <!-- Quick actions on hover -->
-                <div class="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                  <button 
-                    class="p-1.5 bg-black/60 hover:bg-[var(--color-brand)] rounded text-white backdrop-blur-sm transition-colors" 
-                    title="Edit"
-                    onclick={() => openEditModal(item)}
-                  >
-                    <Edit2 size={14} />
-                  </button>
-                  <button 
-                    class="p-1.5 bg-black/60 hover:bg-red-500 rounded text-white backdrop-blur-sm transition-colors" 
-                    title="Delete"
-                    onclick={() => deleteItem(item.id)}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-              
-              <div class="p-4 flex-1 flex flex-col">
-                <div class="flex justify-between items-start mb-1">
-                  <h3 class="font-bold text-lg leading-tight">{item.name}</h3>
-                  <div class="text-right">
-                    <span class="font-bold text-[var(--color-brand)]">{formatCurrency(item.price)}</span>
-                    {#if item.happy_hour_discount}
-                      <div class="text-[10px] text-green-400 font-bold uppercase">{item.happy_hour_discount}% HH Off</div>
-                    {/if}
+        <table class="w-full text-left border-collapse text-xs">
+          <thead class="sticky top-0 bg-surface z-10 border-b border-border">
+            <tr class="text-[10px] text-text-secondary tracking-widest">
+              <th class="p-2 font-normal w-12 border-r border-border">ID</th>
+              <th class="p-2 font-normal border-r border-border">NAME</th>
+              <th class="p-2 font-normal w-24 border-r border-border text-right">PRICE</th>
+              <th class="p-2 font-normal w-32 border-r border-border">TAGS</th>
+              <th class="p-2 font-normal w-24 border-r border-border text-center">STATUS</th>
+              <th class="p-2 font-normal w-24 text-center">CMD</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/30">
+            {#each filteredItems as item (item.id)}
+              <tr class="hover:bg-surface/30 {item.is_available ? '' : 'text-text-secondary/50'}">
+                <td class="p-2 border-r border-border/30 font-mono text-[10px] truncate max-w-[48px]">{item.id.slice(0, 4)}</td>
+                <td class="p-2 border-r border-border/30">
+                  <div class="font-bold text-brand truncate max-w-[200px]">{item.name}</div>
+                  <div class="text-[10px] text-text-secondary truncate max-w-[200px] mt-0.5">{item.description || 'N/A'}</div>
+                </td>
+                <td class="p-2 border-r border-border/30 text-right font-mono">
+                  {formatCurrency(item.price)}
+                  {#if item.happy_hour_discount}
+                    <div class="text-[9px] text-green-500 mt-0.5">-{item.happy_hour_discount}%</div>
+                  {/if}
+                </td>
+                <td class="p-2 border-r border-border/30">
+                  <div class="flex flex-wrap gap-1">
+                    {#each item.dietary_tags || [] as tag}
+                      {#if DIETARY_META[tag as DietaryTag]}
+                        <span class="text-[8px] font-bold px-1 rounded-none border" style="border-color: {DIETARY_META[tag as DietaryTag].color}; color: {DIETARY_META[tag as DietaryTag].color}">
+                          {tag}
+                        </span>
+                      {/if}
+                    {/each}
                   </div>
-                </div>
-                
-                <p class="text-xs text-[var(--color-text-secondary)] line-clamp-2 mb-3 flex-1">{item.description}</p>
-                
-                <div class="flex flex-wrap gap-1 mb-4">
-                  {#each item.dietary_tags || [] as tag}
-                    {#if DIETARY_META[tag as DietaryTag]}
-                      <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded" style="background-color: {DIETARY_META[tag as DietaryTag].color}20; color: {DIETARY_META[tag as DietaryTag].color}">
-                        {DIETARY_META[tag as DietaryTag].label}
-                      </span>
-                    {/if}
-                  {/each}
-                </div>
-                
-                <div class="flex items-center justify-between pt-3 border-t border-[var(--color-border)] mt-auto">
-                  <span class="text-sm font-medium {item.is_available ? 'text-green-400' : 'text-red-400'}">
-                    {item.is_available ? 'Available' : 'Unavailable'}
-                  </span>
-                  
-                  <label class="toggle relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      class="sr-only peer" 
-                      checked={item.is_available} 
-                      onchange={() => toggleAvailability(item)}
-                    >
-                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-brand)]"></div>
-                  </label>
-                </div>
-              </div>
-            </div>
-          {/each}
-        </div>
+                </td>
+                <td class="p-2 border-r border-border/30 text-center">
+                  <button 
+                    class="text-[10px] font-bold px-2 py-0.5 border {item.is_available ? 'border-green-500 text-green-500 hover:bg-green-500 hover:text-black' : 'border-text-secondary text-text-secondary hover:border-white hover:text-white'}"
+                    onclick={() => toggleAvailability(item)}
+                  >
+                    {item.is_available ? 'ONLINE' : 'OFFLINE'}
+                  </button>
+                </td>
+                <td class="p-2 text-center">
+                  <div class="flex gap-2 justify-center">
+                    <button class="text-text-secondary hover:text-white" onclick={() => openEditModal(item)}>
+                      <Edit2 size={14} />
+                    </button>
+                    <button class="text-text-secondary hover:text-red-500" onclick={() => deleteItem(item.id)}>
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
       {/if}
     </div>
   </div>
 </div>
 
-<!-- Modal Placeholder for Add/Edit Item -->
+<!-- Brutalist Modal -->
 {#if showModal}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) showModal = false; }}>
-    <div class="glass-strong bg-[var(--color-card)] w-full max-w-2xl rounded-2xl border border-[var(--color-border)] p-6 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto hide-scrollbar" onclick={(e) => e.stopPropagation()}>
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-display font-bold">{editingItemId ? 'Edit' : 'Add'} Menu Item</h2>
-        <button class="p-2 text-[var(--color-text-secondary)] hover:text-white" onclick={() => showModal = false}>✕</button>
+  <div class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 font-mono uppercase text-xs animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) showModal = false; }}>
+    <div class="bg-black border border-brand w-full max-w-2xl shadow-[0_0_15px_var(--color-brand)] max-h-[90vh] flex flex-col" onclick={(e) => e.stopPropagation()}>
+      <div class="flex justify-between items-center p-3 bg-brand text-black">
+        <h2 class="font-bold tracking-widest">{editingItemId ? 'EDIT RECORD' : 'NEW RECORD'}</h2>
+        <button class="hover:bg-black hover:text-brand p-1" onclick={() => showModal = false}>
+          <X size={16} />
+        </button>
       </div>
       
-      <div class="space-y-4">
+      <div class="p-6 space-y-4 overflow-y-auto text-text-primary">
         <div class="grid grid-cols-2 gap-4">
-          <div class="col-span-2 space-y-1">
-            <label class="text-sm text-[var(--color-text-secondary)]" for="name">Name</label>
-            <input id="name" type="text" class="input-dark w-full" bind:value={itemForm.name} placeholder="Item name" />
+          <div class="col-span-2 flex flex-col gap-1">
+            <label class="text-[10px] text-text-secondary tracking-widest" for="name">NAME</label>
+            <input id="name" type="text" class="bg-transparent border border-border p-2 outline-none focus:border-brand" bind:value={itemForm.name} />
           </div>
-          <div class="space-y-1">
-            <label class="text-sm text-[var(--color-text-secondary)]" for="price">Price (₹)</label>
-            <input id="price" type="number" step="0.01" class="input-dark w-full" bind:value={itemForm.price} placeholder="0.00" />
+          <div class="flex flex-col gap-1">
+            <label class="text-[10px] text-text-secondary tracking-widest" for="price">PRICE</label>
+            <input id="price" type="number" step="0.01" class="bg-transparent border border-border p-2 outline-none focus:border-brand" bind:value={itemForm.price} />
           </div>
-          <div class="space-y-1">
-            <label class="text-sm text-[var(--color-text-secondary)]" for="hh_discount">Happy Hour Discount %</label>
-            <input id="hh_discount" type="number" step="1" min="0" max="100" class="input-dark w-full" bind:value={itemForm.happy_hour_discount} placeholder="e.g. 20" />
+          <div class="flex flex-col gap-1">
+            <label class="text-[10px] text-text-secondary tracking-widest" for="hh_discount">HH DISCOUNT %</label>
+            <input id="hh_discount" type="number" step="1" min="0" max="100" class="bg-transparent border border-border p-2 outline-none focus:border-brand" bind:value={itemForm.happy_hour_discount} />
           </div>
-          <div class="col-span-2 space-y-1">
-            <label class="text-sm text-[var(--color-text-secondary)]" for="cat">Category</label>
-            <select id="cat" class="input-dark w-full appearance-none" bind:value={itemForm.category_id}>
-              <option value="" disabled selected>Select category...</option>
+          <div class="col-span-2 flex flex-col gap-1">
+            <label class="text-[10px] text-text-secondary tracking-widest" for="cat">CATEGORY</label>
+            <select id="cat" class="bg-black border border-border p-2 outline-none focus:border-brand" bind:value={itemForm.category_id}>
+              <option value="" disabled selected>SELECT...</option>
               {#each categories as cat}
                 <option value={cat.id}>{cat.name}</option>
               {/each}
             </select>
           </div>
-          
-          <div class="col-span-2 space-y-1">
-            <label class="text-sm text-[var(--color-text-secondary)]" for="img">Image URL</label>
-            <input id="img" type="text" class="input-dark w-full" bind:value={itemForm.image_url} placeholder="Image link" />
+          <div class="col-span-2 flex flex-col gap-1">
+            <label class="text-[10px] text-text-secondary tracking-widest" for="img">IMAGE URL (OPTIONAL)</label>
+            <input id="img" type="text" class="bg-transparent border border-border p-2 outline-none focus:border-brand" bind:value={itemForm.image_url} />
           </div>
-          <div class="col-span-2 space-y-1">
-            <span class="text-sm text-[var(--color-text-secondary)]">Dietary Tags</span>
-            <div class="flex flex-wrap gap-2 mt-2">
+          <div class="col-span-2 flex flex-col gap-1">
+            <span class="text-[10px] text-text-secondary tracking-widest">DIETARY TAGS</span>
+            <div class="flex flex-wrap gap-2 mt-1">
               {#each Object.entries(DIETARY_META) as [tag, meta]}
                 <button 
-                  class="px-3 py-1.5 rounded-full text-xs font-bold border transition-colors {itemForm.dietary_tags.includes(tag as DietaryTag) ? '' : 'opacity-50'}"
-                  style="background-color: {itemForm.dietary_tags.includes(tag as DietaryTag) ? meta.color + '30' : 'transparent'}; color: {meta.color}; border-color: {meta.color}"
+                  class="px-2 py-1 text-[10px] font-bold border transition-colors {itemForm.dietary_tags.includes(tag as DietaryTag) ? 'bg-surface' : 'opacity-50 hover:opacity-100'}"
+                  style="border-color: {meta.color}; color: {meta.color}"
                   onclick={() => toggleTag(tag as DietaryTag)}
                 >
-                  {meta.label}
+                  {tag}
                 </button>
               {/each}
             </div>
           </div>
-          <div class="col-span-2 space-y-1">
-            <label class="text-sm text-[var(--color-text-secondary)]" for="desc">Description</label>
-            <textarea id="desc" class="input-dark w-full h-24 resize-none" bind:value={itemForm.description} placeholder="Delicious description..."></textarea>
+          <div class="col-span-2 flex flex-col gap-1">
+            <label class="text-[10px] text-text-secondary tracking-widest" for="desc">DESCRIPTION</label>
+            <textarea id="desc" class="bg-transparent border border-border p-2 h-20 outline-none focus:border-brand resize-none" bind:value={itemForm.description}></textarea>
           </div>
         </div>
       </div>
       
-      <div class="flex justify-end gap-3 mt-8">
-        <button class="btn-ghost" onclick={() => showModal = false} disabled={isSaving}>Cancel</button>
-        <button class="btn-brand flex items-center gap-2" onclick={saveItem} disabled={isSaving}>
-          {#if isSaving}
-            <RefreshCw size={16} class="animate-spin" /> Saving...
-          {:else}
-            <Save size={16} /> {editingItemId ? 'Update' : 'Save'}
-          {/if}
+      <div class="flex border-t border-border mt-auto">
+        <button class="flex-1 py-3 text-center border-r border-border hover:bg-surface text-text-secondary" onclick={() => showModal = false} disabled={isSaving}>ABORT</button>
+        <button class="flex-1 py-3 text-center bg-brand text-black font-bold hover:bg-brand/80 disabled:opacity-50" onclick={saveItem} disabled={isSaving}>
+          {isSaving ? 'EXECUTING...' : 'COMMIT'}
         </button>
       </div>
     </div>

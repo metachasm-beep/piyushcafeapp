@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { supabase } from '$lib/supabase';
   import QRCode from 'qrcode';
-  import { QrCode, Users, Plus, Download, Printer, X, RefreshCw } from '@lucide/svelte';
+  import { QrCode, Users, Plus, Download, Printer, X, RefreshCw } from 'lucide-svelte';
   import { toast } from 'svelte-sonner';
   import type { Table, Restaurant } from '$lib/types';
 
@@ -21,7 +21,7 @@
     isLoading = true;
     const { data, error } = await supabase.from('restaurants').select('*').order('name');
     if (error) {
-      toast.error('Failed to load restaurants: ' + error.message);
+      toast.error('FAILED TO LOAD RESTAURANTS');
     } else {
       restaurants = data;
       if (restaurants.length > 0) {
@@ -43,7 +43,7 @@
       .order('table_number');
       
     if (error) {
-      toast.error('Failed to load tables: ' + error.message);
+      toast.error('FAILED TO LOAD TABLES');
     } else {
       tables = data || [];
     }
@@ -58,7 +58,7 @@
 
   onMount(() => {
     if (!supabase) {
-      toast.error('Supabase client not initialized.');
+      toast.error('SUPABASE NOT INIT');
       isLoading = false;
       return;
     }
@@ -81,8 +81,7 @@
       });
       qrModalOpen = true;
     } catch (err) {
-      toast.error('Failed to generate QR code');
-      console.error(err);
+      toast.error('FAILED TO GENERATE QR');
     }
   }
 
@@ -94,7 +93,7 @@
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success('QR Code downloaded');
+    toast.success('QR DOWNLOADED');
   }
 
   function printQR() {
@@ -103,11 +102,11 @@
     if (win) {
       win.document.write(`
         <html>
-          <head><title>Print QR - Table ${selectedTableForQr.table_number}</title></head>
-          <body style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; margin:0;">
-            <h1 style="font-size:3rem; margin-bottom:1rem;">Table ${selectedTableForQr.table_number}</h1>
-            <img src="${generatedQrUrl}" style="width:400px; height:400px;" />
-            <p style="margin-top:2rem; font-size:1.5rem; color:#555;">Scan to view menu & order</p>
+          <head><title>PRINT QR - TABLE ${selectedTableForQr.table_number}</title></head>
+          <body style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:monospace; margin:0; background:#fff; color:#000;">
+            <h1 style="font-size:2rem; margin-bottom:1rem; text-transform:uppercase; letter-spacing:0.1em;">${selectedTableForQr.display_name}</h1>
+            <img src="${generatedQrUrl}" style="width:300px; height:300px; border: 4px solid #000;" />
+            <p style="margin-top:2rem; font-size:1rem; text-transform:uppercase; letter-spacing:0.1em; font-weight:bold;">SCAN TO ACCESS TERMINAL</p>
           </body>
         </html>
       `);
@@ -131,7 +130,7 @@
   async function saveTable() {
     if (!supabase || !selectedRestaurantId) return;
     if (!newTableForm.table_number) {
-      toast.error('Table Number is required');
+      toast.error('TABLE NUMBER REQUIRED');
       return;
     }
 
@@ -139,7 +138,7 @@
     const payload = {
       restaurant_id: selectedRestaurantId,
       table_number: parseInt(newTableForm.table_number),
-      display_name: newTableForm.display_name || `Table ${newTableForm.table_number}`,
+      display_name: newTableForm.display_name || `TABLE ${newTableForm.table_number}`,
       capacity: parseInt(newTableForm.capacity) || 4,
       is_active: true
     };
@@ -149,146 +148,162 @@
       if (error) throw error;
       
       tables = [...tables, data].sort((a, b) => a.table_number - b.table_number);
-      toast.success('Table added successfully');
+      toast.success('TABLE ADDED');
       showAddForm = false;
       newTableForm = { table_number: '', display_name: '', capacity: '4' };
     } catch (e: any) {
-      toast.error('Failed to add table: ' + e.message);
+      toast.error('FAILED TO ADD TABLE');
     } finally {
       isSaving = false;
     }
   }
 </script>
 
-<div class="space-y-6">
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+<svelte:head>
+  <title>QR TERMINAL</title>
+</svelte:head>
+
+<div class="h-full flex flex-col font-mono text-text-primary uppercase">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-border pb-4 mb-4 gap-4">
     <div>
-      <h1 class="text-3xl font-display font-bold text-[var(--color-text-primary)]">Tables & QR Codes</h1>
-      <p class="text-[var(--color-text-secondary)] mt-1">Manage restaurant seating and access codes</p>
+      <h1 class="text-2xl font-bold tracking-widest">QR & Tables</h1>
+      <p class="text-xs text-text-secondary mt-1 tracking-wide">Access Code Management</p>
     </div>
     
-    <div class="flex items-center gap-3 w-full sm:w-auto">
+    <div class="flex flex-wrap gap-2 w-full sm:w-auto items-center text-xs">
       {#if restaurants.length > 0}
-        <select class="input-dark rounded-lg py-2 w-full sm:w-auto" bind:value={selectedRestaurantId}>
+        <select class="bg-transparent border border-border px-2 py-1 outline-none uppercase" bind:value={selectedRestaurantId}>
           {#each restaurants as res}
             <option value={res.id}>{res.name}</option>
           {/each}
         </select>
       {/if}
       
-      <button class="btn-brand flex items-center gap-2 whitespace-nowrap" onclick={() => showAddForm = !showAddForm} disabled={!selectedRestaurantId}>
-        <Plus size={18} />
-        <span class="hidden sm:inline">Add Table</span>
+      <button 
+        class="border border-brand text-brand hover:bg-brand hover:text-black px-4 py-1 flex items-center gap-2 transition-colors disabled:opacity-50"
+        onclick={() => showAddForm = !showAddForm}
+        disabled={!selectedRestaurantId}
+      >
+        <Plus size={14} /> NEW TABLE
       </button>
     </div>
   </div>
 
-  {#if showAddForm}
-    <div class="glass p-6 rounded-xl animate-slide-up border border-[var(--color-brand)]/30">
-      <h3 class="font-bold text-lg mb-4">Add New Table</h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div>
-          <label class="block text-sm text-[var(--color-text-secondary)] mb-1" for="table-num">Table Number</label>
-          <input id="table-num" type="number" class="input-dark w-full" placeholder="e.g. 7" bind:value={newTableForm.table_number} />
-        </div>
-        <div>
-          <label class="block text-sm text-[var(--color-text-secondary)] mb-1" for="table-name">Display Name</label>
-          <input id="table-name" type="text" class="input-dark w-full" placeholder="e.g. Balcony 1 (Optional)" bind:value={newTableForm.display_name} />
-        </div>
-        <div>
-          <label class="block text-sm text-[var(--color-text-secondary)] mb-1" for="table-cap">Capacity</label>
-          <input id="table-cap" type="number" class="input-dark w-full" placeholder="e.g. 4" bind:value={newTableForm.capacity} />
-        </div>
-      </div>
-      <div class="flex justify-end gap-3">
-        <button class="btn-ghost" onclick={() => showAddForm = false} disabled={isSaving}>Cancel</button>
-        <button class="btn-brand flex items-center gap-2" onclick={saveTable} disabled={isSaving}>
-          {#if isSaving}
-            <RefreshCw size={16} class="animate-spin" /> Saving...
-          {:else}
-            Save Table
-          {/if}
-        </button>
-      </div>
-    </div>
-  {/if}
-
-  {#if isLoading}
-    <div class="h-64 flex items-center justify-center">
-      <RefreshCw size={32} class="animate-spin text-brand opacity-50" />
-    </div>
-  {:else if tables.length === 0}
-    <div class="glass h-64 flex flex-col items-center justify-center text-[var(--color-text-secondary)] rounded-xl">
-      <p>No tables found for this restaurant.</p>
-    </div>
-  {:else}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {#each tables as table (table.id)}
-        <div class="glass p-5 rounded-xl border border-[var(--color-border)] flex flex-col relative overflow-hidden group">
-          
-          <div class="flex justify-between items-start mb-4">
-            <div>
-              <h3 class="font-display font-bold text-2xl text-[var(--color-brand)]">{table.display_name}</h3>
-              <p class="text-xs text-[var(--color-text-secondary)] uppercase tracking-wide">Table {table.table_number}</p>
-            </div>
-            <div class="flex items-center gap-1 text-[var(--color-text-secondary)] bg-[var(--color-surface)] px-2 py-1 rounded-md border border-[var(--color-border)]">
-              <Users size={14} />
-              <span class="text-sm font-bold">{table.capacity}</span>
-            </div>
+  <div class="flex-1 flex flex-col border border-border overflow-hidden">
+    {#if showAddForm}
+      <div class="p-4 bg-surface border-b border-border text-xs">
+        <h3 class="font-bold tracking-widest mb-4">ALLOCATE NEW TABLE</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div class="flex flex-col gap-1">
+            <label class="text-[10px] text-text-secondary tracking-widest" for="table-num">TABLE NUMBER</label>
+            <input id="table-num" type="number" class="bg-black border border-border p-2 outline-none focus:border-brand" bind:value={newTableForm.table_number} />
           </div>
-
-          <div class="mt-auto pt-4 flex gap-2">
-            <button 
-              class="flex-1 py-2 bg-[var(--color-card)] hover:bg-[var(--color-brand)] hover:text-white border border-[var(--color-border)] hover:border-[var(--color-brand)] rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 group/btn"
-              onclick={() => generateQR(table)}
-            >
-              <QrCode size={16} class="group-hover/btn:scale-110 transition-transform" />
-              Get QR Code
-            </button>
+          <div class="flex flex-col gap-1">
+            <label class="text-[10px] text-text-secondary tracking-widest" for="table-name">DISPLAY NAME</label>
+            <input id="table-name" type="text" class="bg-black border border-border p-2 outline-none focus:border-brand" placeholder="OPTIONAL" bind:value={newTableForm.display_name} />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-[10px] text-text-secondary tracking-widest" for="table-cap">CAPACITY</label>
+            <input id="table-cap" type="number" class="bg-black border border-border p-2 outline-none focus:border-brand" bind:value={newTableForm.capacity} />
           </div>
         </div>
-      {/each}
+        <div class="flex justify-end gap-2">
+          <button class="px-4 py-2 border border-border hover:bg-card text-text-secondary" onclick={() => showAddForm = false} disabled={isSaving}>ABORT</button>
+          <button class="px-4 py-2 bg-brand text-black font-bold hover:bg-brand/80 disabled:opacity-50 flex items-center gap-2" onclick={saveTable} disabled={isSaving}>
+            {#if isSaving}
+              <RefreshCw size={14} class="animate-spin" /> EXECUTING...
+            {:else}
+              COMMIT
+            {/if}
+          </button>
+        </div>
+      </div>
+    {/if}
+
+    <div class="flex-1 overflow-y-auto bg-black">
+      {#if isLoading}
+        <div class="h-full flex items-center justify-center">
+          <RefreshCw size={24} class="animate-spin text-brand opacity-50" />
+        </div>
+      {:else if tables.length === 0}
+        <div class="h-full flex flex-col items-center justify-center text-text-secondary text-xs tracking-widest">
+          NO TABLES FOUND.
+        </div>
+      {:else}
+        <table class="w-full text-left border-collapse text-xs">
+          <thead class="sticky top-0 bg-surface z-10 border-b border-border">
+            <tr class="text-[10px] text-text-secondary tracking-widest">
+              <th class="p-3 font-normal w-16 border-r border-border">NUM</th>
+              <th class="p-3 font-normal border-r border-border">DISPLAY NAME</th>
+              <th class="p-3 font-normal w-24 border-r border-border text-center">CAPACITY</th>
+              <th class="p-3 font-normal w-32 border-r border-border text-center">QR GEN</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/30">
+            {#each tables as table (table.id)}
+              <tr class="hover:bg-surface/30 group">
+                <td class="p-3 border-r border-border/30 font-bold text-brand">{table.table_number}</td>
+                <td class="p-3 border-r border-border/30">{table.display_name}</td>
+                <td class="p-3 border-r border-border/30 text-center text-text-secondary font-mono">{table.capacity} PAX</td>
+                <td class="p-3 text-center">
+                  <button 
+                    class="text-[10px] font-bold px-2 py-1 border border-border hover:border-brand hover:text-brand flex items-center justify-center gap-2 mx-auto w-full transition-colors"
+                    onclick={() => generateQR(table)}
+                  >
+                    <QrCode size={12} /> EXTRACT
+                  </button>
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      {/if}
     </div>
-  {/if}
+  </div>
 </div>
 
-<!-- QR Modal -->
+<!-- Brutalist QR Modal -->
 {#if qrModalOpen && selectedTableForQr}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) qrModalOpen = false; }}>
+  <div class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 font-mono uppercase text-xs animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) qrModalOpen = false; }}>
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <div role="dialog" class="bg-white text-black w-full max-w-sm rounded-2xl p-8 flex flex-col items-center animate-slide-up relative shadow-2xl cursor-default" onclick={(e) => e.stopPropagation()}>
+    <div role="dialog" class="bg-black border border-white w-full max-w-sm flex flex-col items-center animate-slide-up relative cursor-default" onclick={(e) => e.stopPropagation()}>
       
-      <button class="absolute top-4 right-4 text-gray-400 hover:text-black transition-colors" onclick={() => qrModalOpen = false}>
-        <X size={24} />
-      </button>
-
-      <div class="text-center mb-6 w-full mt-2">
-        <h2 class="text-3xl font-black">{selectedTableForQr.display_name}</h2>
-        <p class="text-gray-500 font-medium">Scan to order</p>
+      <div class="w-full bg-white text-black p-2 flex justify-between items-center font-bold tracking-widest border-b border-white">
+        <span>ACCESS MATRIX</span>
+        <button class="hover:text-red-500" onclick={() => qrModalOpen = false}>
+          <X size={16} />
+        </button>
       </div>
 
-      <div class="bg-white p-2 rounded-xl shadow-inner border border-gray-100 mb-8 w-full flex justify-center">
-        {#if generatedQrUrl}
-          <img src={generatedQrUrl} alt="QR Code" class="w-64 h-64 object-contain" />
-        {/if}
-      </div>
+      <div class="p-8 w-full flex flex-col items-center text-white">
+        <div class="text-center mb-6 w-full">
+          <h2 class="text-2xl font-bold">{selectedTableForQr.display_name}</h2>
+          <p class="text-[10px] text-gray-400 mt-1">TABLE NODE {selectedTableForQr.table_number}</p>
+        </div>
 
-      <div class="flex w-full gap-3">
-        <button 
-          class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors"
-          onclick={downloadQR}
-        >
-          <Download size={18} /> Download
-        </button>
-        <button 
-          class="flex-1 py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors"
-          onclick={printQR}
-        >
-          <Printer size={18} /> Print
-        </button>
+        <div class="bg-white p-4 mb-8">
+          {#if generatedQrUrl}
+            <img src={generatedQrUrl} alt="QR" class="w-48 h-48 rendering-pixelated" />
+          {/if}
+        </div>
+
+        <div class="flex w-full gap-2 text-[10px] font-bold">
+          <button 
+            class="flex-1 py-2 border border-white hover:bg-white hover:text-black transition-colors flex items-center justify-center gap-2"
+            onclick={downloadQR}
+          >
+            <Download size={14} /> DUMP PNG
+          </button>
+          <button 
+            class="flex-1 py-2 border border-brand text-brand hover:bg-brand hover:text-black transition-colors flex items-center justify-center gap-2"
+            onclick={printQR}
+          >
+            <Printer size={14} /> LPR/SPOOL
+          </button>
+        </div>
       </div>
     </div>
   </div>

@@ -15,7 +15,7 @@
   let currentPath = $derived(page.url.pathname);
   
   // Do not show sidebar on login page
-  let isLoginPage = $derived(currentPath === '/admin/login');
+  let isLoginPage = $derived(currentPath === '/owner/login');
 </script>
 
 {#if isLoginPage}

@@ -13,114 +13,131 @@
 			loading = false;
 		}
 		if (form?.success) {
-			toast.success('Restaurant and owner provisioned successfully!');
+			toast.success('NODE PROVISIONED SUCCESSFULLY');
 			loading = false;
 		}
 	});
 </script>
 
-<div class="min-h-screen bg-[var(--color-bg)] p-6 lg:p-12 text-[var(--color-text-primary)]">
-	<div class="max-w-6xl mx-auto space-y-12">
-		<header class="flex justify-between items-center">
-			<div>
-				<h1 class="text-4xl font-display text-[var(--color-brand)] mb-2">Superadmin Dashboard</h1>
-				<p class="text-[var(--color-text-secondary)]">Manage restaurants and owners</p>
+<svelte:head>
+	<title>RESTAURANT NODES</title>
+</svelte:head>
+
+<div class="max-w-[1400px] mx-auto space-y-6 font-mono text-text-primary animate-fade-in">
+	<header class="flex justify-between items-end border-b border-border pb-4">
+		<div>
+			<h1 class="text-2xl font-bold uppercase tracking-widest">Network Nodes</h1>
+			<p class="text-xs text-text-secondary mt-1 uppercase tracking-wide">Manage Restaurants & Owners</p>
+		</div>
+	</header>
+
+	<div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+		<!-- Provisioning Form (Sidebar) -->
+		<div class="lg:col-span-1 border border-border flex flex-col sticky top-6">
+			<div class="p-2 bg-surface border-b border-border">
+				<h2 class="text-xs font-bold uppercase tracking-widest">Provision Node</h2>
 			</div>
-		</header>
-
-		<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-			<!-- Provisioning Form -->
-			<div class="lg:col-span-1">
-				<div class="glass-strong p-6 rounded-2xl sticky top-6">
-					<h2 class="text-xl font-display mb-4">Provision New Restaurant</h2>
-					
-					<form 
-						method="POST" 
-						use:enhance={() => {
-							loading = true;
-							return async ({ update }) => {
-								await update({ reset: true });
-								loading = false;
-							};
-						}}
-						class="space-y-4"
-					>
-						<div>
-							<label for="restaurant_name" class="block text-sm text-[var(--color-text-secondary)] mb-1">Restaurant Name</label>
-							<input
-								id="restaurant_name"
-								name="restaurant_name"
-								type="text"
-								required
-								class="input-dark w-full"
-								placeholder="e.g. The Rustic Fork"
-							/>
-						</div>
-
-						<div>
-							<label for="email" class="block text-sm text-[var(--color-text-secondary)] mb-1">Owner Email</label>
-							<input
-								id="email"
-								name="email"
-								type="email"
-								required
-								class="input-dark w-full"
-								placeholder="owner@rusticfork.com"
-							/>
-						</div>
-
-						<div>
-							<label for="password" class="block text-sm text-[var(--color-text-secondary)] mb-1">Owner Password</label>
-							<input
-								id="password"
-								name="password"
-								type="password"
-								required
-								class="input-dark w-full"
-								placeholder="Temporary password"
-							/>
-						</div>
-
-						<button
-							type="submit"
-							disabled={loading}
-							class="btn-brand w-full mt-4"
-						>
-							{#if loading}
-								Provisioning...
-							{:else}
-								Create Restaurant & Owner
-							{/if}
-						</button>
-					</form>
+			
+			<form 
+				method="POST" 
+				use:enhance={() => {
+					loading = true;
+					return async ({ update }) => {
+						await update({ reset: true });
+						loading = false;
+					};
+				}}
+				class="flex flex-col p-4 gap-4"
+			>
+				<div class="flex flex-col gap-1">
+					<label for="restaurant_name" class="text-[10px] text-text-secondary uppercase tracking-widest">Node Name</label>
+					<input
+						id="restaurant_name"
+						name="restaurant_name"
+						type="text"
+						required
+						class="bg-transparent border border-border p-2 text-xs outline-none focus:border-brand transition-colors rounded-none"
+						placeholder="E.G. THE RUSTIC FORK"
+					/>
 				</div>
-			</div>
 
-			<!-- Restaurants List -->
-			<div class="lg:col-span-2 space-y-4">
-				<h2 class="text-xl font-display mb-4">Existing Restaurants</h2>
-				
-				{#if data.restaurants.length === 0}
-					<div class="glass p-8 rounded-2xl text-center text-[var(--color-text-secondary)]">
-						No restaurants provisioned yet.
-					</div>
-				{:else}
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-						{#each data.restaurants as restaurant (restaurant.id)}
-							<div class="glass p-6 rounded-2xl animate-fade-in">
-								<h3 class="text-lg font-bold text-[var(--color-brand)]">{restaurant.name}</h3>
-								<div class="text-sm text-[var(--color-text-secondary)] mt-2 break-all space-y-1">
-									<p><span class="font-bold">ID:</span> {restaurant.id}</p>
-									<p><span class="font-bold">Owner ID:</span> {restaurant.owner_id}</p>
-									{#if restaurant.created_at}
-										<p><span class="font-bold">Created:</span> {new Date(restaurant.created_at).toLocaleDateString()}</p>
-									{/if}
-								</div>
-							</div>
-						{/each}
-					</div>
-				{/if}
+				<div class="flex flex-col gap-1">
+					<label for="email" class="text-[10px] text-text-secondary uppercase tracking-widest">Owner Identity</label>
+					<input
+						id="email"
+						name="email"
+						type="email"
+						required
+						class="bg-transparent border border-border p-2 text-xs outline-none focus:border-brand transition-colors rounded-none"
+						placeholder="OWNER@RUSTICFORK.COM"
+					/>
+				</div>
+
+				<div class="flex flex-col gap-1">
+					<label for="password" class="text-[10px] text-text-secondary uppercase tracking-widest">Initial Credential</label>
+					<input
+						id="password"
+						name="password"
+						type="password"
+						required
+						class="bg-transparent border border-border p-2 text-xs outline-none focus:border-brand transition-colors rounded-none"
+						placeholder="••••••••"
+					/>
+				</div>
+
+				<button
+					type="submit"
+					disabled={loading}
+					class="mt-2 p-2 border border-brand text-brand hover:bg-brand hover:text-black uppercase text-xs tracking-widest font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
+				>
+					{#if loading}
+						EXECUTING...
+					{:else}
+						PROVISION
+					{/if}
+				</button>
+			</form>
+		</div>
+
+		<!-- Restaurants List (Data Table) -->
+		<div class="lg:col-span-3 border border-border flex flex-col">
+			<div class="flex justify-between items-center p-2 bg-surface border-b border-border">
+				<h2 class="text-xs font-bold uppercase tracking-widest">Active Nodes</h2>
+				<div class="text-[10px] text-text-secondary uppercase">Count: {data.restaurants.length}</div>
 			</div>
+			
+			{#if data.restaurants.length === 0}
+				<div class="p-8 text-center text-xs text-text-secondary uppercase tracking-widest">
+					NO NODES PROVISIONED.
+				</div>
+			{:else}
+				<div class="overflow-x-auto">
+					<table class="w-full text-left border-collapse text-xs">
+						<thead>
+							<tr class="bg-surface/50 border-b border-border/50 text-[10px] text-text-secondary">
+								<th class="p-3 font-normal uppercase tracking-widest">NODE ID</th>
+								<th class="p-3 font-normal uppercase tracking-widest">NAME</th>
+								<th class="p-3 font-normal uppercase tracking-widest">OWNER ID</th>
+								<th class="p-3 font-normal uppercase tracking-widest">CREATED</th>
+								<th class="p-3 font-normal uppercase tracking-widest">STATUS</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-border/30">
+							{#each data.restaurants as restaurant (restaurant.id)}
+								<tr class="hover:bg-surface/30 group">
+									<td class="p-3 font-mono text-[10px] text-text-secondary/70 truncate max-w-[100px]">{restaurant.id}</td>
+									<td class="p-3 font-bold text-brand uppercase">{restaurant.name}</td>
+									<td class="p-3 font-mono text-[10px] text-text-secondary/70 truncate max-w-[100px]">{restaurant.owner_id}</td>
+									<td class="p-3 text-text-secondary">
+										{restaurant.created_at ? new Date(restaurant.created_at).toISOString().split('T')[0] : 'N/A'}
+									</td>
+									<td class="p-3 text-green-500 font-bold">ONLINE</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{/if}
 		</div>
 	</div>
 </div>

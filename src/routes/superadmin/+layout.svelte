@@ -12,36 +12,38 @@
 	];
 </script>
 
-<div class="flex h-screen bg-bg text-text-primary overflow-hidden">
+<div class="flex h-screen bg-bg text-text-primary overflow-hidden font-mono">
 	<!-- Sidebar -->
-	<aside class="w-64 flex flex-col glass-strong border-r border-border h-full shrink-0">
-		<div class="p-6 border-b border-border">
-			<h1 class="text-xl font-display font-bold text-brand">Superadmin</h1>
-			<p class="text-sm text-text-secondary mt-1">Network Dashboard</p>
+	<aside class="w-64 flex flex-col bg-surface border-r border-border h-full shrink-0">
+		<div class="p-4 border-b border-border bg-card">
+			<h1 class="text-xl font-bold text-brand uppercase tracking-wider">Superadmin</h1>
+			<p class="text-xs text-text-secondary mt-1 uppercase">Network Terminal</p>
 		</div>
 
-		<nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+		<nav class="flex-1 p-2 space-y-1 overflow-y-auto">
 			{#each links as link}
 				<a
 					href={link.href}
-					class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 {page.url.pathname === link.href ? 'bg-brand/10 text-brand border border-brand/20' : 'text-text-secondary hover:text-text-primary hover:bg-surface'}"
+					class="flex items-center gap-3 px-3 py-2 transition-all duration-300 {page.url.pathname === link.href ? 'bg-brand text-black font-bold' : 'text-text-secondary hover:text-text-primary hover:bg-card'}"
 				>
-					<link.icon size={20} />
-					<span class="font-medium">{link.label}</span>
+					<link.icon size={16} />
+					<span class="text-sm uppercase tracking-wide">{link.label}</span>
 				</a>
 			{/each}
 		</nav>
 
-		<div class="p-4 border-t border-border">
-			<button class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:text-red-400 hover:bg-red-400/10 transition-colors">
-				<LogOut size={20} />
-				<span class="font-medium">Sign Out</span>
+		<div class="p-2 border-t border-border bg-card">
+			<button class="w-full flex items-center gap-3 px-3 py-2 text-text-secondary hover:text-red-400 hover:bg-red-950/30 transition-colors uppercase text-sm tracking-wide">
+				<LogOut size={16} />
+				<span>Sign Out</span>
 			</button>
 		</div>
 	</aside>
 
 	<!-- Main Content -->
 	<main class="flex-1 h-screen overflow-y-auto bg-bg relative">
-		{@render children()}
+		<div class="p-6 h-full">
+			{@render children()}
+		</div>
 	</main>
 </div>

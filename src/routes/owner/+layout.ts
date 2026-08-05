@@ -7,8 +7,8 @@ export const ssr = false;
 
 export const load: LayoutLoad = async ({ url }) => {
   const user = get(adminUser);
-  if (!user && url.pathname !== '/admin/login') {
-    redirect(302, '/admin/login');
+  if (!user && url.pathname !== '/owner/login') {
+    redirect(302, '/owner/login');
   }
   return {};
 };

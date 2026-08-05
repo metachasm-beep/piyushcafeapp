@@ -138,13 +138,13 @@
 </svelte:head>
 
 <!-- Sticky Header -->
-<header class="fixed top-0 inset-x-0 z-40 bg-black/60 backdrop-blur-xl border-b border-white/5">
-  <div class="px-4 py-3 flex items-center justify-between">
+<header class="fixed top-0 left-0 right-0 z-40 bg-bg/90 backdrop-blur-xl border-b border-border/50">
+  <div class="px-4 py-4 flex items-center justify-between">
     <div class="flex flex-col">
-      <h1 class="font-display text-xl font-bold bg-gradient-to-r from-orange-400 to-yellow-300 bg-clip-text text-transparent">
-        {restaurant.name}
+      <h1 class="font-display text-2xl font-bold tracking-tight text-text-primary">
+        {restaurant.name}<span class="text-brand">.</span>
       </h1>
-      <span class="text-xs text-brand/80 font-medium">Digital Menu</span>
+      <p class="text-xs text-text-secondary uppercase tracking-widest mt-0.5">Welcome</p>
     </div>
     <div class="badge border-brand/30 bg-brand/10 text-brand font-semibold px-3 py-1 shadow-[0_0_10px_rgba(249,115,22,0.2)]">
       {table.display_name ?? `Table ${table.table_number}`}
@@ -154,14 +154,14 @@
   <!-- Category Filter Bar -->
   <div class="flex overflow-x-auto hide-scrollbar px-4 py-2 gap-2 border-t border-white/5">
     <button 
-      class="cat-pill whitespace-nowrap {activeCategory === 'all' ? 'bg-brand text-white border-brand' : 'bg-surface/50 text-text-secondary border-white/10'}"
+      class="cat-pill whitespace-nowrap px-4 py-2 rounded-full font-medium transition-colors {activeCategory === 'all' ? 'bg-brand text-black' : 'bg-surface text-text-secondary border border-border hover:bg-card'}"
       onclick={() => scrollToCategory('all')}
     >
       🍽️ All
     </button>
     {#each categories as category}
       <button 
-        class="cat-pill whitespace-nowrap {activeCategory === category.id ? 'bg-brand text-white border-brand' : 'bg-surface/50 text-text-secondary border-white/10'}"
+        class="cat-pill whitespace-nowrap px-4 py-2 rounded-full font-medium transition-colors {activeCategory === category.id ? 'bg-brand text-black' : 'bg-surface text-text-secondary border border-border hover:bg-card'}"
         onclick={() => scrollToCategory(category.id)}
       >
         {category.icon_emoji} {category.name}
@@ -175,7 +175,7 @@
   <!-- Featured Section -->
   {#if featuredItems.length > 0 && activeCategory === 'all'}
     <section class="space-y-3">
-      <h2 class="font-display text-lg font-bold flex items-center gap-2 text-white">
+      <h2 class="font-display text-lg font-bold flex items-center gap-2 text-text-primary">
         ✨ Featured
       </h2>
       <div class="flex overflow-x-auto hide-scrollbar gap-4 pb-2">
@@ -190,23 +190,23 @@
               </div>
             </div>
             <div class="flex flex-col gap-1 flex-1">
-              <h3 class="font-display font-semibold text-lg text-white leading-tight">{item.name}</h3>
+              <h3 class="font-display font-semibold text-lg text-text-primary leading-tight">{item.name}</h3>
               <p class="text-xs text-text-secondary line-clamp-2">{item.description}</p>
             </div>
             <div class="flex items-center justify-between mt-auto pt-2">
               <span class="text-brand font-bold">{formatCurrency(item.price)}</span>
               {#if getCartItemQuantity(item.id) > 0}
-                <div class="flex items-center gap-2 bg-surface rounded-full p-1 border border-white/10">
-                  <button class="w-7 h-7 rounded-full bg-surface-light flex items-center justify-center text-white active:scale-95 transition-transform" onclick={() => cart.setQuantity(item.id, getCartItemQuantity(item.id) - 1)}>
+                <div class="flex items-center gap-2 bg-surface rounded-full p-1 border border-border">
+                  <button class="w-7 h-7 rounded-full bg-surface-light flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => cart.setQuantity(item.id, getCartItemQuantity(item.id) - 1)}>
                     <Minus size={14} />
                   </button>
                   <span class="w-4 text-center font-medium text-sm">{getCartItemQuantity(item.id)}</span>
-                  <button class="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-white active:scale-95 transition-transform" onclick={() => cart.setQuantity(item.id, getCartItemQuantity(item.id) + 1)}>
+                  <button class="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => cart.setQuantity(item.id, getCartItemQuantity(item.id) + 1)}>
                     <Plus size={14} />
                   </button>
                 </div>
               {:else}
-                <button class="w-8 h-8 rounded-full bg-brand/20 text-brand flex items-center justify-center hover:bg-brand hover:text-white transition-colors active:scale-95" onclick={() => cart.addItem(item, 1)}>
+                <button class="w-8 h-8 rounded-full bg-brand/20 text-brand flex items-center justify-center hover:bg-brand hover:text-text-primary transition-colors active:scale-95" onclick={() => cart.addItem(item, 1)}>
                   <Plus size={18} />
                 </button>
               {/if}
@@ -222,7 +222,7 @@
     {@const items = itemsByCategory().get(category.id) || []}
     {#if items.length > 0 && (activeCategory === 'all' || activeCategory === category.id)}
       <section id="category-{category.id}" class="space-y-4 scroll-mt-32">
-        <h2 class="font-display text-xl font-bold flex items-center gap-2 border-b border-white/5 pb-2 text-white">
+        <h2 class="font-display text-xl font-bold flex items-center gap-2 border-b border-border pb-2 text-text-primary">
           {category.icon_emoji} {category.name}
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -230,7 +230,7 @@
             <div class="glass p-3 rounded-2xl flex gap-4 relative overflow-hidden group {item.is_available ? '' : 'opacity-60 grayscale'}">
               {#if !item.is_available}
                 <div class="absolute inset-0 z-10 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-                  <span class="bg-black/80 text-white px-3 py-1.5 rounded-lg text-sm font-semibold tracking-wider">OUT OF STOCK</span>
+                  <span class="bg-black/80 text-text-primary px-3 py-1.5 rounded-lg text-sm font-semibold tracking-wider">OUT OF STOCK</span>
                 </div>
               {/if}
               <div class="w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-xl bg-surface overflow-hidden relative">
@@ -242,7 +242,7 @@
                     <DietaryBadge {tag} />
                   {/each}
                 </div>
-                <h3 class="font-display font-semibold text-white leading-tight mb-1">{item.name}</h3>
+                <h3 class="font-display font-semibold text-text-primary leading-tight mb-1">{item.name}</h3>
                 <p class="text-xs text-text-secondary line-clamp-2 mb-2">{item.description}</p>
                 <div class="mt-auto flex items-center justify-between">
                   <div class="flex flex-col">
@@ -255,17 +255,17 @@
                   </div>
                   {#if item.is_available}
                     {#if getCartItemQuantity(item.id) > 0}
-                      <div class="flex items-center gap-2 bg-surface rounded-full p-1 border border-white/10 z-20">
-                        <button class="w-6 h-6 rounded-full bg-surface-light flex items-center justify-center text-white active:scale-95 transition-transform" onclick={() => cart.setQuantity(item.id, getCartItemQuantity(item.id) - 1)}>
+                      <div class="flex items-center gap-2 bg-surface rounded-full p-1 border border-border z-20">
+                        <button class="w-6 h-6 rounded-full bg-surface-light flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => cart.setQuantity(item.id, getCartItemQuantity(item.id) - 1)}>
                           <Minus size={12} />
                         </button>
                         <span class="w-3 text-center font-medium text-xs">{getCartItemQuantity(item.id)}</span>
-                        <button class="w-6 h-6 rounded-full bg-brand flex items-center justify-center text-white active:scale-95 transition-transform" onclick={() => cart.setQuantity(item.id, getCartItemQuantity(item.id) + 1)}>
+                        <button class="w-6 h-6 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => cart.setQuantity(item.id, getCartItemQuantity(item.id) + 1)}>
                           <Plus size={12} />
                         </button>
                       </div>
                     {:else}
-                      <button class="w-8 h-8 rounded-full bg-surface border border-white/10 text-white flex items-center justify-center z-20 active:scale-95 transition-transform" onclick={() => cart.addItem(item, 1)}>
+                      <button class="w-8 h-8 rounded-full bg-surface border border-border text-text-primary flex items-center justify-center z-20 active:scale-95 transition-transform" onclick={() => cart.addItem(item, 1)}>
                         <Plus size={16} />
                       </button>
                     {/if}
@@ -284,7 +284,7 @@
 <div class="fixed bottom-6 right-4 flex flex-col gap-3 z-40">
   <!-- Call Waiter FAB -->
   <button 
-    class="w-12 h-12 rounded-full glass-strong shadow-lg flex items-center justify-center text-white transition-transform active:scale-90 {waiterCalled ? 'text-brand animate-pulse-ring' : ''} {waiterCooldown && !waiterCalled ? 'opacity-50' : ''}"
+    class="w-12 h-12 rounded-full glass-strong shadow-lg flex items-center justify-center text-text-primary transition-transform active:scale-90 {waiterCalled ? 'text-brand animate-pulse-ring' : ''} {waiterCooldown && !waiterCalled ? 'opacity-50' : ''}"
     onclick={handleCallWaiter}
     title="Call Waiter"
   >
@@ -295,7 +295,7 @@
   {#if $cartCount > 0 && !isCartOpen}
     <div transition:fly={{ y: 20, duration: 300 }}>
       <button 
-        class="w-14 h-14 rounded-full bg-brand shadow-[0_4px_20px_rgba(249,115,22,0.4)] flex items-center justify-center text-white transition-transform active:scale-90 relative animate-bounce-in"
+        class="w-14 h-14 rounded-full bg-brand shadow-[0_4px_20px_rgba(249,115,22,0.4)] flex items-center justify-center text-text-primary transition-transform active:scale-90 relative animate-bounce-in"
         onclick={() => isCartOpen = true}
       >
         <ShoppingCart size={24} />
@@ -315,7 +315,7 @@
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick={() => isCartOpen = false}></div>
     
     <div 
-      class="bg-card w-full max-h-[85vh] rounded-t-3xl shadow-2xl relative flex flex-col overflow-hidden border-t border-white/10"
+      class="bg-card w-full max-h-[85vh] rounded-t-3xl shadow-2xl relative flex flex-col overflow-hidden border-t border-border"
       transition:fly={{ y: '100%', duration: 300, opacity: 1 }}
     >
       <!-- Handle for dragging (visual only) -->
@@ -323,11 +323,11 @@
         <div class="w-12 h-1.5 bg-white/20 rounded-full"></div>
       </button>
       
-      <div class="px-6 pb-4 flex items-center justify-between border-b border-white/5">
-        <h2 class="font-display text-2xl font-bold text-white flex items-center gap-2">
-          Your Order <span class="bg-brand text-white text-sm px-2 py-0.5 rounded-full">{$cartCount}</span>
+      <div class="px-6 pb-4 flex items-center justify-between border-b border-border">
+        <h2 class="font-display text-2xl font-bold text-text-primary flex items-center gap-2">
+          Your Order <span class="bg-brand text-text-primary text-sm px-2 py-0.5 rounded-full">{$cartCount}</span>
         </h2>
-        <button class="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-text-secondary hover:text-white" onclick={() => isCartOpen = false}>
+        <button class="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-text-secondary hover:text-text-primary" onclick={() => isCartOpen = false}>
           <X size={18} />
         </button>
       </div>
@@ -341,15 +341,15 @@
                 <img src={item.menu_item.image_url} alt={item.menu_item.name} class="w-full h-full object-cover" />
               </div>
               <div class="flex-1 flex flex-col">
-                <h4 class="font-medium text-white">{item.menu_item.name}</h4>
+                <h4 class="font-medium text-text-primary">{item.menu_item.name}</h4>
                 <span class="text-brand font-semibold text-sm">{formatCurrency(item.menu_item.price)}</span>
               </div>
-              <div class="flex items-center gap-3 bg-surface rounded-full p-1 border border-white/5">
-                <button class="w-7 h-7 rounded-full bg-surface-light flex items-center justify-center text-white active:scale-95" onclick={() => cart.setQuantity(item.menu_item.id, item.quantity - 1)}>
+              <div class="flex items-center gap-3 bg-surface rounded-full p-1 border border-border">
+                <button class="w-7 h-7 rounded-full bg-surface-light flex items-center justify-center text-text-primary active:scale-95" onclick={() => cart.setQuantity(item.menu_item.id, item.quantity - 1)}>
                   <Minus size={14} />
                 </button>
                 <span class="w-4 text-center font-medium text-sm">{item.quantity}</span>
-                <button class="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-white active:scale-95" onclick={() => cart.setQuantity(item.menu_item.id, item.quantity + 1)}>
+                <button class="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95" onclick={() => cart.setQuantity(item.menu_item.id, item.quantity + 1)}>
                   <Plus size={14} />
                 </button>
               </div>
@@ -372,7 +372,7 @@
       </div>
 
       <!-- Footer -->
-      <div class="p-6 bg-surface/50 border-t border-white/5 space-y-4 backdrop-blur-md">
+      <div class="p-6 bg-surface/50 border-t border-border space-y-4 backdrop-blur-md">
         <div class="flex justify-between text-text-secondary text-sm">
           <span>Subtotal</span>
           <span>{formatCurrency($cartTotal)}</span>
@@ -381,7 +381,7 @@
           <span>Taxes (10%)</span>
           <span>{formatCurrency($cartTotal * 0.1)}</span>
         </div>
-        <div class="flex justify-between text-white font-bold text-lg pt-2 border-t border-white/5">
+        <div class="flex justify-between text-text-primary font-bold text-lg pt-2 border-t border-border">
           <span>Total</span>
           <span class="text-brand">{formatCurrency($cartTotal * 1.1)}</span>
         </div>
@@ -411,34 +411,34 @@
     
     <div class="glass w-full max-w-md rounded-3xl p-6 relative z-10 space-y-6">
       <div class="flex justify-between items-center">
-        <h3 class="font-display text-xl font-bold text-white">Payment</h3>
-        <button class="text-text-secondary hover:text-white" onclick={() => showCheckoutModal = false} disabled={isProcessingPayment}>
+        <h3 class="font-display text-xl font-bold text-text-primary">Payment</h3>
+        <button class="text-text-secondary hover:text-text-primary" onclick={() => showCheckoutModal = false} disabled={isProcessingPayment}>
           <X size={20} />
         </button>
       </div>
 
-      <div class="text-center py-4 border-b border-white/10">
+      <div class="text-center py-4 border-b border-border">
         <p class="text-text-secondary text-sm">Amount to Pay</p>
         <p class="text-3xl font-display font-bold text-brand">{formatCurrency($cartTotal * 1.1)}</p>
       </div>
 
       <div class="grid grid-cols-3 gap-2">
         <button 
-          class="flex flex-col items-center gap-2 p-3 rounded-xl border {paymentMethod === 'upi' ? 'bg-brand/20 border-brand text-brand' : 'bg-surface border-white/10 text-text-secondary'}"
+          class="flex flex-col items-center gap-2 p-3 rounded-xl border {paymentMethod === 'upi' ? 'bg-brand/20 border-brand text-brand' : 'bg-surface border-border text-text-secondary'}"
           onclick={() => paymentMethod = 'upi'}
         >
           <Smartphone size={20} />
           <span class="text-xs font-medium">UPI</span>
         </button>
         <button 
-          class="flex flex-col items-center gap-2 p-3 rounded-xl border {paymentMethod === 'card' ? 'bg-brand/20 border-brand text-brand' : 'bg-surface border-white/10 text-text-secondary'}"
+          class="flex flex-col items-center gap-2 p-3 rounded-xl border {paymentMethod === 'card' ? 'bg-brand/20 border-brand text-brand' : 'bg-surface border-border text-text-secondary'}"
           onclick={() => paymentMethod = 'card'}
         >
           <CreditCard size={20} />
           <span class="text-xs font-medium">Card</span>
         </button>
         <button 
-          class="flex flex-col items-center gap-2 p-3 rounded-xl border {paymentMethod === 'cash' ? 'bg-brand/20 border-brand text-brand' : 'bg-surface border-white/10 text-text-secondary'}"
+          class="flex flex-col items-center gap-2 p-3 rounded-xl border {paymentMethod === 'cash' ? 'bg-brand/20 border-brand text-brand' : 'bg-surface border-border text-text-secondary'}"
           onclick={() => paymentMethod = 'cash'}
         >
           <Banknote size={20} />

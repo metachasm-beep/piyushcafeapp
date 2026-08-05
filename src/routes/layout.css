@@ -3,30 +3,31 @@
 /*  Tailwind CSS v4 (@theme) + custom utilities                 */
 /* ──────────────────────────────────────────────────────────── */
 
+@import '@fontsource/geist-sans';
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
 /* ─── Design Tokens ────────────────────────────────────────── */
 @theme {
   /* Brand */
-  --color-brand:           #F97316;
-  --color-brand-hover:     #EA6C0A;
-  --color-brand-dim:       #7c3a0a;
-  --color-brand-glow:      rgba(249, 115, 22, 0.25);
-  --color-gold:            #FBBF24;
+  --color-brand:           #fb923c;
+  --color-brand-hover:     #f97316;
+  --color-brand-dim:       #7c2d12;
+  --color-brand-glow:      rgba(251, 146, 60, 0.25);
+  --color-gold:            #fbbf24;
 
-  /* Dark surfaces */
-  --color-bg:              #0c0c0c;
-  --color-surface:         #161616;
-  --color-card:            #1e1e1e;
-  --color-card-hover:      #262626;
-  --color-border:          rgba(255, 255, 255, 0.07);
-  --color-border-strong:   rgba(255, 255, 255, 0.14);
+  /* Dark surfaces - Deep Zinc */
+  --color-bg:              #09090b;
+  --color-surface:         #18181b;
+  --color-card:            #27272a;
+  --color-card-hover:      #3f3f46;
+  --color-border:          rgba(255, 255, 255, 0.08);
+  --color-border-strong:   rgba(255, 255, 255, 0.16);
 
   /* Text */
-  --color-text-primary:    #f5f5f5;
-  --color-text-secondary:  #a3a3a3;
-  --color-text-muted:      #525252;
+  --color-text-primary:    #fafafa;
+  --color-text-secondary:  #a1a1aa;
+  --color-text-muted:      #52525b;
 
   /* Semantic */
   --color-success:         #10b981;
@@ -42,18 +43,18 @@
   /* Radius */
   --radius-sm:             6px;
   --radius-md:             12px;
-  --radius-lg:             18px;
+  --radius-lg:             16px;
   --radius-xl:             24px;
   --radius-full:           9999px;
 
   /* Shadows */
-  --shadow-glow:           0 0 20px rgba(249, 115, 22, 0.3);
-  --shadow-card:           0 4px 24px rgba(0, 0, 0, 0.4);
-  --shadow-float:          0 8px 40px rgba(0, 0, 0, 0.6);
+  --shadow-glow:           0 0 20px rgba(251, 146, 60, 0.2);
+  --shadow-card:           0 4px 20px rgba(0, 0, 0, 0.5);
+  --shadow-float:          0 12px 40px rgba(0, 0, 0, 0.7);
 
   /* Font families */
-  --font-sans:             'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-display:          'Playfair Display', 'Georgia', serif;
+  --font-sans:             'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-display:          'Geist', ui-sans-serif, system-ui, sans-serif;
 
   /* Transitions */
   --ease-spring:           cubic-bezier(0.34, 1.56, 0.64, 1);

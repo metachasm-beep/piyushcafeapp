@@ -18,10 +18,6 @@
   let orderId = $derived($session.activeOrderId);
   let order = $derived($adminOrders.find(o => o.id === orderId));
   
-  let showPaymentModal = $state(false);
-  let paymentMethod = $state<'upi'|'card'|'cash'>('upi');
-  let isProcessingPayment = $state(false);
-  
   let waiterCalled = $state(false);
   
   // Real-time Simulation
@@ -74,16 +70,7 @@
     }
   }
 
-  async function handlePayment() {
-    isProcessingPayment = true;
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    isProcessingPayment = false;
-    showPaymentModal = false;
-    if (orderId) {
-      adminOrders.updateStatus(orderId, 'paid');
-      toast.success('Payment Successful! 🎉');
-    }
-  }
+
 
   function handleBack() {
     if (order && !['served', 'paid', 'cancelled'].includes(order.status)) {
@@ -96,8 +83,7 @@
     { id: 'pending', label: 'Order Placed', icon: Clock, msg: 'Your order has been received! 🎉 Sit back and relax.' },
     { id: 'preparing', label: 'Preparing', icon: ChefHat, msg: 'Our chefs are working on your order 👨‍🍳' },
     { id: 'ready', label: 'Ready!', icon: Utensils, msg: 'Your food is ready! 🔔 A waiter will bring it.' },
-    { id: 'served', label: 'Served', icon: ThumbsUp, msg: 'Enjoy your meal! 😊' },
-    { id: 'paid', label: 'Paid', icon: CheckCircle, msg: 'Payment successful. Thank you for dining with us!' }
+    { id: 'served', label: 'Served', icon: ThumbsUp, msg: 'Enjoy your meal! 😊' }
   ];
 
   let currentStageIndex = $derived(
@@ -206,100 +192,13 @@
       >
         <Bell size={20} class={waiterCalled ? 'text-brand animate-pulse' : ''} />
       </button>
-      {#if order.status !== 'paid'}
-        <button 
-          class="flex-1 btn-brand shadow-[0_0_20px_rgba(249,115,22,0.3)] py-4 text-lg"
-          onclick={() => showPaymentModal = true}
-        >
-          Pay {formatCurrency(order.total_amount)}
-        </button>
-      {:else}
-        <button class="flex-1 bg-surface-light text-white font-medium rounded-xl border border-white/10 py-4 opacity-70 cursor-not-allowed flex justify-center items-center gap-2">
-          <CheckCircle size={20} /> Bill Paid
-        </button>
-      {/if}
+      <button class="flex-1 bg-surface-light text-white font-medium rounded-xl border border-white/10 py-4 opacity-70 cursor-not-allowed flex justify-center items-center gap-2">
+        <CheckCircle size={20} /> Order Confirmed
+      </button>
     </div>
   </div>
 
-  <!-- Payment Modal -->
-  {#if showPaymentModal}
-    <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-4 sm:p-0" transition:fade={{ duration: 200 }}>
-      <!-- svelte-ignore a11y_click_events_have_key_events -->
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick={() => !isProcessingPayment && (showPaymentModal = false)}></div>
-      
-      <div class="glass w-full max-w-md rounded-3xl p-6 relative z-10 space-y-6" transition:scale={{ start: 0.95, duration: 200 }}>
-        <div class="flex justify-between items-center">
-          <h3 class="font-display text-xl font-bold text-white">Payment</h3>
-          <button class="text-text-secondary hover:text-white" onclick={() => showPaymentModal = false} disabled={isProcessingPayment}>
-            <X size={20} />
-          </button>
-        </div>
 
-        <div class="text-center py-4 border-b border-white/10">
-          <p class="text-text-secondary text-sm">Amount to Pay</p>
-          <p class="text-3xl font-display font-bold text-brand">{formatCurrency(order.total_amount)}</p>
-        </div>
-
-        <div class="grid grid-cols-3 gap-2">
-          <button 
-            class="flex flex-col items-center gap-2 p-3 rounded-xl border {paymentMethod === 'upi' ? 'bg-brand/20 border-brand text-brand' : 'bg-surface border-white/10 text-text-secondary'}"
-            onclick={() => paymentMethod = 'upi'}
-          >
-            <Smartphone size={20} />
-            <span class="text-xs font-medium">UPI</span>
-          </button>
-          <button 
-            class="flex flex-col items-center gap-2 p-3 rounded-xl border {paymentMethod === 'card' ? 'bg-brand/20 border-brand text-brand' : 'bg-surface border-white/10 text-text-secondary'}"
-            onclick={() => paymentMethod = 'card'}
-          >
-            <CreditCard size={20} />
-            <span class="text-xs font-medium">Card</span>
-          </button>
-          <button 
-            class="flex flex-col items-center gap-2 p-3 rounded-xl border {paymentMethod === 'cash' ? 'bg-brand/20 border-brand text-brand' : 'bg-surface border-white/10 text-text-secondary'}"
-            onclick={() => paymentMethod = 'cash'}
-          >
-            <Banknote size={20} />
-            <span class="text-xs font-medium">Cash</span>
-          </button>
-        </div>
-
-        <div class="min-h-[120px] flex flex-col justify-center">
-          {#if paymentMethod === 'upi'}
-            <div class="space-y-3" transition:slide>
-              <label class="text-sm text-text-secondary">Enter UPI ID</label>
-              <input type="text" class="input-dark w-full" value="goldenfork@upi" />
-            </div>
-          {:else if paymentMethod === 'card'}
-            <div class="space-y-3" transition:slide>
-              <input type="text" class="input-dark w-full" placeholder="Card Number" value="**** **** **** 4242" />
-              <div class="flex gap-3">
-                <input type="text" class="input-dark w-1/2" placeholder="MM/YY" value="12/26" />
-                <input type="text" class="input-dark w-1/2" placeholder="CVV" value="***" />
-              </div>
-            </div>
-          {:else}
-            <div class="text-center text-text-secondary text-sm" transition:slide>
-              Our waiter will come to your table to collect cash.
-            </div>
-          {/if}
-        </div>
-
-        <button 
-          class="btn-brand w-full py-4 text-lg relative overflow-hidden flex justify-center items-center h-14"
-          onclick={handlePayment}
-          disabled={isProcessingPayment}
-        >
-          {#if isProcessingPayment}
-            <div class="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-          {:else}
-            {paymentMethod === 'cash' ? 'Request Bill' : 'Pay Now'}
-          {/if}
-        </button>
-      </div>
-    </div>
-  {/if}
 {:else}
   <div class="h-screen flex items-center justify-center flex-col gap-4">
     <div class="w-8 h-8 border-2 border-brand/20 border-t-brand rounded-full animate-spin"></div>

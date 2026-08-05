@@ -40,7 +40,7 @@
 <div class="h-[calc(100vh-2rem)] flex flex-col gap-4 overflow-hidden -m-4 p-4 lg:-m-8 lg:p-8">
   
   {#if $pendingWaiterCount > 0}
-    <div class="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex items-center justify-between flex-shrink-0 animate-pulse-ring cursor-pointer" onclick={() => {
+    <button type="button" class="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex items-center justify-between flex-shrink-0 animate-pulse-ring cursor-pointer w-full" onclick={() => {
       const pending = $waiterRequests.find(r => r.status === 'pending');
       if(pending) waiterRequests.acknowledge(pending.id);
     }}>
@@ -48,7 +48,7 @@
         <AlertTriangle class="text-red-400" />
         <span class="text-red-200 font-medium">{$pendingWaiterCount} Waiter Request(s) Pending! Click to acknowledge.</span>
       </div>
-    </div>
+    </button>
   {/if}
 
   <header class="flex-shrink-0">

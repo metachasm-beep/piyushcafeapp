@@ -9,7 +9,7 @@
 
   function handleLogout() {
     adminUser.logout();
-    goto('/admin/login');
+    goto('/owner/login');
   }
 
   let currentPath = $derived(page.url.pathname);
@@ -44,44 +44,28 @@
 
       <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
         <a 
-          href="/admin" 
-          class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/admin' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+          href="/owner" 
+          class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
           onclick={() => mobileMenuOpen = false}
         >
           <LayoutDashboard size={20} />
           <span class="font-medium">Dashboard</span>
         </a>
         <a 
-          href="/admin/kitchen" 
-          class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/admin/kitchen' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+          href="/owner/kitchen" 
+          class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/kitchen' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
           onclick={() => mobileMenuOpen = false}
         >
           <ChefHat size={20} />
           <span class="font-medium">Kitchen Display</span>
         </a>
         <a 
-          href="/admin/menu" 
-          class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/admin/menu' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+          href="/owner/inventory" 
+          class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/inventory' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
           onclick={() => mobileMenuOpen = false}
         >
           <UtensilsCrossed size={20} />
-          <span class="font-medium">Menu Manager</span>
-        </a>
-        <a 
-          href="/admin/tables" 
-          class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/admin/tables' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
-          onclick={() => mobileMenuOpen = false}
-        >
-          <QrCode size={20} />
-          <span class="font-medium">Tables & QR</span>
-        </a>
-        <a 
-          href="/admin/settings" 
-          class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/admin/settings' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
-          onclick={() => mobileMenuOpen = false}
-        >
-          <Settings size={20} />
-          <span class="font-medium">Settings</span>
+          <span class="font-medium">Inventory</span>
         </a>
       </nav>
 

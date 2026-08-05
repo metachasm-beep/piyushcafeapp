@@ -56,6 +56,7 @@ export type MenuItem = {
   is_featured: boolean;
   dietary_tags: DietaryTag[];
   preparation_time: number | null;
+  happy_hour_discount?: number | null;
   sort_order: number;
   created_at: string;
   updated_at: string;

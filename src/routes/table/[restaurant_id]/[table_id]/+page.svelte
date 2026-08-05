@@ -1,10 +1,11 @@
 <script lang="ts">
   import { fade, fly, slide } from 'svelte/transition';
-  import { ShoppingCart, Bell, Plus, Minus, X } from '@lucide/svelte';
+  import { ShoppingCart, Bell, Plus, Minus, X, Smartphone, CreditCard, Banknote } from '@lucide/svelte';
   import { toast } from 'svelte-sonner';
   import { goto } from '$app/navigation';
   
   import { session } from '$lib/stores/session';
+  import { createOrder } from '$lib/db';
   import { cart, cartCount, cartTotal } from '$lib/stores/cart';
   import { adminOrders, waiterRequests } from '$lib/stores/admin';
   import { formatCurrency, generateUUID } from '$lib/utils';
@@ -14,7 +15,10 @@
   import type { Order, OrderItemWithMenuItem } from '$lib/types';
 
   let { data }: { data: PageData } = $props();
-  let { restaurant, table, categories, menuItems } = data;
+  let restaurant = $derived(data.restaurant);
+  let table = $derived(data.table);
+  let categories = $derived(data.categories);
+  let menuItems = $derived(data.menuItems);
 
   // Initialize session
   $effect(() => {
@@ -23,6 +27,9 @@
 
   let activeCategory = $state('all');
   let isCartOpen = $state(false);
+  let showCheckoutModal = $state(false);
+  let paymentMethod = $state<'upi'|'card'|'cash'>('upi');
+  let isProcessingPayment = $state(false);
   let specialInstructions = $state('');
   
   let waiterCalled = $state(false);
@@ -82,42 +89,43 @@
 
   function placeOrder() {
     if ($cartCount === 0) return;
-    
-    const orderId = generateUUID();
-    const orderItems: OrderItemWithMenuItem[] = $cart.map((c, i) => ({
-      id: generateUUID(),
-      order_id: orderId,
-      menu_item_id: c.menu_item.id,
-      quantity: c.quantity,
-      unit_price: c.menu_item.price,
-      special_instructions: c.special_instructions || null,
-      created_at: new Date().toISOString(),
-      menu_item: c.menu_item
-    }));
-
-    const newOrder: Order = {
-      id: orderId,
-      restaurant_id: restaurant.id,
-      table_id: table.id,
-      status: 'pending',
-      total_amount: $cartTotal,
-      payment_method: null,
-      payment_status: 'unpaid',
-      payment_reference: null,
-      customer_session: null,
-      special_notes: specialInstructions || null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      table,
-      order_items: orderItems
-    };
-
-    adminOrders.addOrder(newOrder);
-    session.setActiveOrder(orderId);
-    cart.clear();
+    showCheckoutModal = true;
     isCartOpen = false;
-    toast.success('Order placed! 🎉');
-    goto(`/table/${restaurant.id}/${table.id}/order`);
+  }
+
+  async function handlePayment() {
+    isProcessingPayment = true;
+    
+    // Simulate payment processing for UPI/Card
+    if (paymentMethod !== 'cash') {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    
+    try {
+      const items = $cart.map(c => ({
+        menu_item_id: c.menu_item.id,
+        quantity: c.quantity,
+        subtotal: c.menu_item.price * c.quantity
+      }));
+      
+      const order = await createOrder(
+        restaurant.id, 
+        table.id, 
+        $cartTotal * 1.1, // Include taxes
+        paymentMethod, 
+        items
+      );
+      
+      session.setActiveOrder(order.id);
+      cart.clear();
+      showCheckoutModal = false;
+      toast.success('Payment Successful! 🎉 Order placed.');
+      goto(`/table/${restaurant.id}/${table.id}/order`);
+    } catch (e) {
+      toast.error('Failed to place order. Please try again.');
+    } finally {
+      isProcessingPayment = false;
+    }
   }
   
   function getCartItemQuantity(itemId: string) {
@@ -390,6 +398,86 @@
           <Bell size={16} /> Need assistance? Call Waiter
         </button>
       </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Checkout Modal -->
+{#if showCheckoutModal}
+  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-4 sm:p-0" transition:fade={{ duration: 200 }}>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick={() => !isProcessingPayment && (showCheckoutModal = false)}></div>
+    
+    <div class="glass w-full max-w-md rounded-3xl p-6 relative z-10 space-y-6">
+      <div class="flex justify-between items-center">
+        <h3 class="font-display text-xl font-bold text-white">Payment</h3>
+        <button class="text-text-secondary hover:text-white" onclick={() => showCheckoutModal = false} disabled={isProcessingPayment}>
+          <X size={20} />
+        </button>
+      </div>
+
+      <div class="text-center py-4 border-b border-white/10">
+        <p class="text-text-secondary text-sm">Amount to Pay</p>
+        <p class="text-3xl font-display font-bold text-brand">{formatCurrency($cartTotal * 1.1)}</p>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <button 
+          class="flex flex-col items-center gap-2 p-3 rounded-xl border {paymentMethod === 'upi' ? 'bg-brand/20 border-brand text-brand' : 'bg-surface border-white/10 text-text-secondary'}"
+          onclick={() => paymentMethod = 'upi'}
+        >
+          <Smartphone size={20} />
+          <span class="text-xs font-medium">UPI</span>
+        </button>
+        <button 
+          class="flex flex-col items-center gap-2 p-3 rounded-xl border {paymentMethod === 'card' ? 'bg-brand/20 border-brand text-brand' : 'bg-surface border-white/10 text-text-secondary'}"
+          onclick={() => paymentMethod = 'card'}
+        >
+          <CreditCard size={20} />
+          <span class="text-xs font-medium">Card</span>
+        </button>
+        <button 
+          class="flex flex-col items-center gap-2 p-3 rounded-xl border {paymentMethod === 'cash' ? 'bg-brand/20 border-brand text-brand' : 'bg-surface border-white/10 text-text-secondary'}"
+          onclick={() => paymentMethod = 'cash'}
+        >
+          <Banknote size={20} />
+          <span class="text-xs font-medium">Cash</span>
+        </button>
+      </div>
+
+      <div class="min-h-[120px] flex flex-col justify-center">
+        {#if paymentMethod === 'upi'}
+          <div class="space-y-3">
+            <label class="text-sm text-text-secondary" for="upi-input">Enter UPI ID</label>
+            <input id="upi-input" type="text" class="input-dark w-full" value="goldenfork@upi" />
+          </div>
+        {:else if paymentMethod === 'card'}
+          <div class="space-y-3">
+            <input type="text" class="input-dark w-full" placeholder="Card Number" value="**** **** **** 4242" />
+            <div class="flex gap-3">
+              <input type="text" class="input-dark w-1/2" placeholder="MM/YY" value="12/26" />
+              <input type="text" class="input-dark w-1/2" placeholder="CVV" value="***" />
+            </div>
+          </div>
+        {:else}
+          <div class="text-center text-text-secondary text-sm">
+            Our waiter will come to your table to collect cash.
+          </div>
+        {/if}
+      </div>
+
+      <button 
+        class="btn-brand w-full py-4 text-lg relative overflow-hidden flex justify-center items-center h-14"
+        onclick={handlePayment}
+        disabled={isProcessingPayment}
+      >
+        {#if isProcessingPayment}
+          <div class="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+        {:else}
+          {paymentMethod === 'cash' ? 'Place Order (Cash)' : 'Confirm Payment'}
+        {/if}
+      </button>
     </div>
   </div>
 {/if}

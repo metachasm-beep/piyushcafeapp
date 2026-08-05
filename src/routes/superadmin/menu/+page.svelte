@@ -201,228 +201,228 @@
   <title>Menu | Terminal</title>
 </svelte:head>
 
-<div class="h-full flex flex-col gap-6 animate-fade-in font-sans text-slate-900 pb-12">
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-slate-200 pb-4">
-    <div>
-      <h1 class="text-2xl font-bold tracking-tight uppercase">Menu Definitions</h1>
-      <p class="text-xs text-slate-500 mt-1 font-mono uppercase tracking-widest">Global item catalog configuration</p>
+<div class="h-full flex flex-col gap-12 animate-fade-in font-sans text-slate-900 pb-16">
+  <!-- Editorial Header -->
+  <header class="border-b-2 border-slate-900 pb-6 flex flex-col md:flex-row md:justify-between md:items-end gap-6">
+    <div class="max-w-2xl">
+      <h1 class="text-5xl md:text-6xl font-display font-black tracking-tighter leading-none italic pr-4">Menu<br />Dictionary.</h1>
+      <p class="text-sm text-slate-500 mt-6 font-mono uppercase tracking-widest leading-relaxed">
+        Global item catalog and classification configuration.
+      </p>
     </div>
     
-    <div class="flex flex-wrap gap-2 w-full sm:w-auto items-center">
+    <div class="flex flex-wrap gap-4 items-center border-l border-slate-200 pl-6 shrink-0">
       {#if restaurants.length > 0}
-        <select class="bg-white border border-slate-200 rounded-none px-3 py-1.5 outline-none focus:border-blue-500 transition-colors text-xs font-mono uppercase tracking-widest" bind:value={selectedRestaurantId}>
+        <select class="bg-transparent border-b border-slate-300 px-2 py-1 outline-none focus:border-slate-900 transition-colors text-xs font-mono uppercase tracking-widest" bind:value={selectedRestaurantId}>
           {#each restaurants as res}
             <option value={res.id}>{res.name}</option>
           {/each}
         </select>
       {/if}
-      <div class="relative flex-1 sm:w-64">
-        <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-        <input 
-          type="text" 
-          bind:value={searchQuery} 
-          placeholder="SEARCH ITEMS..." 
-          class="w-full bg-slate-50 border border-slate-200 rounded-none pl-9 pr-3 py-1.5 text-xs font-mono uppercase outline-none focus:border-blue-500 focus:bg-white transition-colors placeholder:text-slate-400"
-        />
-      </div>
-      <button class="p-1.5 border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors disabled:opacity-50" onclick={loadData} disabled={isLoading || !selectedRestaurantId}>
-        <RefreshCw size={16} class={isLoading ? 'animate-spin' : ''} />
+      <button class="text-xs font-mono uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors disabled:opacity-50" onclick={loadData} disabled={isLoading || !selectedRestaurantId}>
+        [ Refresh ]
       </button>
       <button 
-        class="bg-blue-600 text-white font-mono uppercase tracking-widest text-xs px-4 py-1.5 flex items-center gap-2 hover:bg-blue-700 transition-colors disabled:opacity-50"
+        class="text-xs font-mono uppercase tracking-widest text-emerald-600 hover:text-emerald-500 transition-colors disabled:opacity-50"
         onclick={openAddModal}
         disabled={!selectedRestaurantId}
       >
-        <Plus size={14} /> Append Record
+        [ Append Record ]
       </button>
     </div>
-  </div>
+  </header>
 
-  <div class="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden">
-    <!-- Category Sidebar (Dense List) -->
-    <div class="w-full lg:w-56 flex-shrink-0 border border-slate-200 bg-white flex lg:flex-col overflow-x-auto lg:overflow-y-auto hide-scrollbar">
-      <div class="bg-slate-50 border-b border-slate-200 p-2 text-[10px] font-mono uppercase tracking-widest text-slate-500">Categories</div>
-      <button 
-        class="text-left px-4 py-3 text-xs font-mono uppercase tracking-wide transition-colors whitespace-nowrap border-b border-slate-100 {selectedCategory === null ? 'bg-blue-50 text-blue-700 font-bold border-l-2 border-l-blue-600' : 'text-slate-600 hover:bg-slate-50 border-l-2 border-l-transparent'}"
-        onclick={() => selectedCategory = null}
-      >
-        * ALL RECORDS
-      </button>
+  <div class="flex-1 flex flex-col lg:flex-row gap-16 overflow-hidden">
+    
+    <!-- Editorial Category Sidebar -->
+    <div class="w-full lg:w-48 flex-shrink-0 flex lg:flex-col overflow-x-auto lg:overflow-y-auto hide-scrollbar gap-4">
+      <h3 class="font-display text-2xl font-bold italic text-slate-300 hidden lg:block mb-4">Index</h3>
       
-      {#each categories as category}
+      <div class="relative flex-1 lg:flex-none mb-4 lg:mb-8">
+        <input 
+          type="text" 
+          bind:value={searchQuery} 
+          placeholder="SEARCH..." 
+          class="w-full bg-transparent border-b border-slate-300 py-1 text-xs font-mono uppercase outline-none focus:border-slate-900 transition-colors placeholder:text-slate-300"
+        />
+      </div>
+
+      <div class="flex lg:flex-col gap-2">
         <button 
-          class="text-left px-4 py-3 text-xs font-mono uppercase tracking-wide transition-colors whitespace-nowrap flex items-center gap-2 border-b border-slate-100 {selectedCategory === category.id ? 'bg-blue-50 text-blue-700 font-bold border-l-2 border-l-blue-600' : 'text-slate-600 hover:bg-slate-50 border-l-2 border-l-transparent'}"
-          onclick={() => selectedCategory = category.id}
+          class="text-left py-2 text-xs font-mono uppercase tracking-widest transition-colors whitespace-nowrap {selectedCategory === null ? 'text-emerald-600 font-bold' : 'text-slate-400 hover:text-slate-900'}"
+          onclick={() => selectedCategory = null}
         >
-          <span class="opacity-50">{category.icon_emoji || '-'}</span>
-          {category.name}
+          * All Records
         </button>
-      {/each}
+        
+        {#each categories as category}
+          <button 
+            class="text-left py-2 text-xs font-mono uppercase tracking-widest transition-colors whitespace-nowrap flex items-center gap-2 {selectedCategory === category.id ? 'text-emerald-600 font-bold' : 'text-slate-400 hover:text-slate-900'}"
+            onclick={() => selectedCategory = category.id}
+          >
+            <span class="opacity-50">{category.icon_emoji || '-'}</span>
+            {category.name}
+          </button>
+        {/each}
+      </div>
     </div>
 
-    <!-- Items Grid (Spreadsheet Style) -->
-    <div class="flex-1 overflow-y-auto hide-scrollbar border border-slate-200 bg-white">
+    <!-- Editorial Items Ledger -->
+    <div class="flex-1 overflow-y-auto hide-scrollbar">
       {#if isLoading}
         <div class="h-64 flex items-center justify-center">
-          <RefreshCw size={24} class="animate-spin text-slate-400" />
+          <RefreshCw size={24} class="animate-spin text-slate-300" />
         </div>
       {:else if errorMsg}
-        <div class="h-64 flex flex-col items-center justify-center text-red-600 p-6 text-center bg-red-50 font-mono text-sm">
+        <div class="py-24 flex flex-col items-center justify-center text-red-500 font-mono text-sm border-t border-b border-slate-200">
           <p class="font-bold mb-2">ERR_LOAD</p>
           <p class="opacity-80">{errorMsg}</p>
         </div>
       {:else if filteredItems.length === 0}
-        <div class="h-64 flex flex-col items-center justify-center text-slate-400">
-          <UtensilsCrossed size={32} class="mb-2 opacity-50" />
-          <p class="text-xs font-mono uppercase tracking-widest">0 RECORDS</p>
+        <div class="py-24 flex flex-col items-center justify-center text-slate-300 border-t border-b border-slate-200">
+          <h3 class="font-display text-3xl font-bold italic mb-2">Empty Section</h3>
+          <p class="text-xs font-mono uppercase tracking-widest">0 Records Found</p>
         </div>
       {:else}
-        <table class="w-full text-left border-collapse">
-          <thead class="sticky top-0 bg-slate-50 z-10">
-            <tr class="border-b border-slate-200 text-[10px] font-mono uppercase tracking-widest text-slate-500">
-              <th class="p-3 w-12 text-center border-r border-slate-200">IMG</th>
-              <th class="p-3 border-r border-slate-200">Identifier</th>
-              <th class="p-3 border-r border-slate-200 hidden md:table-cell">Metadata</th>
-              <th class="p-3 border-r border-slate-200 text-right">Value (INR)</th>
-              <th class="p-3 border-r border-slate-200 text-center">Status</th>
-              <th class="p-3 text-center">CMD</th>
-            </tr>
-          </thead>
-          <tbody class="text-sm divide-y divide-slate-100">
-            {#each filteredItems as item (item.id)}
-              <tr class="hover:bg-slate-50 transition-colors group {item.is_available ? '' : 'opacity-60 bg-slate-50/50'}">
-                <td class="p-2 border-r border-slate-200">
-                  <div class="w-10 h-10 bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto overflow-hidden rounded-none">
-                    {#if item.image_url}
-                      <img src={item.image_url} alt="img" class="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all" />
-                    {:else}
-                      <ImageIcon size={16} class="text-slate-300" />
-                    {/if}
+        <div class="divide-y divide-slate-100">
+          {#each filteredItems as item (item.id)}
+            <div class="py-6 flex flex-col sm:flex-row gap-6 group {item.is_available ? '' : 'opacity-50'}">
+              
+              <div class="w-16 h-16 bg-slate-100 flex items-center justify-center shrink-0">
+                {#if item.image_url}
+                  <img src={item.image_url} alt="img" class="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all" />
+                {:else}
+                  <ImageIcon size={20} class="text-slate-300" />
+                {/if}
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-baseline gap-4 mb-2">
+                  <h4 class="text-xl font-display font-bold text-slate-900 group-hover:text-emerald-700 transition-colors truncate">{item.name}</h4>
+                  <div class="font-mono text-lg font-medium shrink-0">
+                    {formatCurrency(item.price)}
                   </div>
-                </td>
-                <td class="p-3 border-r border-slate-200">
-                  <div class="font-bold text-slate-900 uppercase tracking-tight">{item.name}</div>
-                  <div class="text-[10px] font-mono text-slate-400 mt-1 truncate max-w-xs">{item.description || '-'}</div>
-                </td>
-                <td class="p-3 border-r border-slate-200 hidden md:table-cell">
-                  <div class="flex flex-wrap gap-1">
+                </div>
+                
+                <p class="text-xs font-mono text-slate-500 mb-3 max-w-xl line-clamp-2">{item.description || 'No description provided.'}</p>
+                
+                <div class="flex flex-wrap items-center gap-4 text-[10px] font-mono uppercase tracking-widest">
+                  <div class="flex gap-2 text-slate-400">
                     {#each item.dietary_tags || [] as tag}
                       {#if DIETARY_META[tag as DietaryTag]}
-                        <span class="text-[9px] uppercase font-mono tracking-widest px-1.5 py-0.5 border border-slate-300 text-slate-600 bg-white">
-                          {DIETARY_META[tag as DietaryTag].label}
-                        </span>
+                        <span>[{DIETARY_META[tag as DietaryTag].label}]</span>
                       {/if}
                     {/each}
-                    {#if !item.dietary_tags?.length}
-                      <span class="text-slate-300 text-xs">-</span>
-                    {/if}
                   </div>
-                </td>
-                <td class="p-3 border-r border-slate-200 text-right">
-                  <div class="font-mono font-medium text-slate-900">{formatCurrency(item.price)}</div>
+                  
                   {#if item.happy_hour_discount}
-                    <div class="text-[9px] font-mono uppercase tracking-widest text-blue-600 mt-0.5">-{item.happy_hour_discount}%</div>
+                    <span class="text-emerald-600">-{item.happy_hour_discount}% HH</span>
                   {/if}
-                </td>
-                <td class="p-3 border-r border-slate-200 text-center">
-                  <button 
-                    onclick={() => toggleAvailability(item)}
-                    class="text-[10px] font-mono uppercase tracking-widest px-2 py-1 border transition-colors {item.is_available ? 'border-green-600 text-green-700 bg-green-50' : 'border-slate-300 text-slate-500 bg-white'}"
-                  >
-                    {item.is_available ? 'ACTIVE' : 'IDLE'}
+                </div>
+              </div>
+
+              <div class="flex sm:flex-col items-center sm:items-end justify-between gap-4 shrink-0 sm:w-24">
+                <button 
+                  onclick={() => toggleAvailability(item)}
+                  class="text-[10px] font-mono uppercase tracking-widest transition-colors {item.is_available ? 'text-emerald-600 hover:text-emerald-800' : 'text-slate-400 hover:text-slate-600 line-through'}"
+                >
+                  {item.is_available ? 'Active' : 'Out of Stock'}
+                </button>
+                
+                <div class="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400">
+                  <button class="hover:text-slate-900 transition-colors" title="Edit" onclick={() => openEditModal(item)}>
+                    <Edit2 size={16} />
                   </button>
-                </td>
-                <td class="p-2 text-center">
-                  <div class="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button class="p-1.5 border border-slate-200 hover:border-blue-600 hover:text-blue-600 text-slate-400 transition-colors" title="Edit" onclick={() => openEditModal(item)}>
-                      <Edit2 size={14} />
-                    </button>
-                    <button class="p-1.5 border border-slate-200 hover:border-red-600 hover:text-red-600 text-slate-400 transition-colors" title="Delete" onclick={() => deleteItem(item.id)}>
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
+                  <button class="hover:text-red-600 transition-colors" title="Delete" onclick={() => deleteItem(item.id)}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          {/each}
+        </div>
       {/if}
     </div>
   </div>
 </div>
 
-<!-- Brutalist Edit Modal -->
+<!-- Editorial Edit Modal -->
 {#if showModal}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4" onclick={(e) => { if(e.target === e.currentTarget) showModal = false; }}>
-    <div class="bg-white border-2 border-slate-900 w-full max-w-2xl p-6 shadow-[8px_8px_0_0_rgba(15,23,42,1)]" onclick={(e) => e.stopPropagation()}>
+  <div class="fixed inset-0 bg-[#f8f9fa]/95 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) showModal = false; }}>
+    <div class="w-full max-w-2xl bg-white p-12 relative shadow-2xl" onclick={(e) => e.stopPropagation()}>
       
-      <div class="flex justify-between items-center mb-6 border-b-2 border-slate-900 pb-4">
+      <div class="flex justify-between items-start mb-10 border-b-2 border-slate-900 pb-6">
         <div>
-          <h2 class="text-lg font-bold uppercase tracking-tight">{editingItemId ? 'Edit Record' : 'Initialize Record'}</h2>
-          <p class="text-[10px] font-mono uppercase tracking-widest text-slate-500 mt-1">Menu Dictionary Form</p>
+          <h2 class="text-4xl font-display font-black tracking-tighter italic">{editingItemId ? 'Edit Record.' : 'Initialize.'}</h2>
+          <p class="text-xs font-mono uppercase tracking-widest text-slate-500 mt-2">Menu Dictionary Form</p>
         </div>
-        <button class="p-1 hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200" onclick={() => showModal = false}><X size={16} /></button>
+        <button class="text-slate-400 hover:text-slate-900 transition-colors" onclick={() => showModal = false}><X size={24} strokeWidth={1} /></button>
       </div>
       
-      <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 font-mono text-sm">
-        <div class="grid grid-cols-2 gap-4">
-          <div class="col-span-2 space-y-1">
-            <label class="block text-xs uppercase tracking-widest text-slate-600" for="name">Identifier (Name)</label>
-            <input id="name" type="text" class="w-full bg-slate-50 border-2 border-slate-900 p-2 outline-none focus:bg-white transition-colors rounded-none" bind:value={itemForm.name} placeholder="ITEM_NAME" />
+      <div class="space-y-8 max-h-[60vh] overflow-y-auto pr-4 font-mono text-sm hide-scrollbar">
+        <div class="grid grid-cols-2 gap-8">
+          
+          <div class="col-span-2 space-y-3">
+            <label class="block text-[10px] uppercase tracking-widest text-slate-500" for="name">Identifier (Name)</label>
+            <input id="name" type="text" class="w-full bg-transparent border-b border-slate-300 py-2 outline-none focus:border-slate-900 transition-colors placeholder:text-slate-300 text-lg" bind:value={itemForm.name} placeholder="Item Name" />
           </div>
-          <div class="space-y-1">
-            <label class="block text-xs uppercase tracking-widest text-slate-600" for="price">Value (INR)</label>
-            <input id="price" type="number" step="0.01" class="w-full bg-slate-50 border-2 border-slate-900 p-2 outline-none focus:bg-white transition-colors rounded-none" bind:value={itemForm.price} placeholder="0.00" />
+
+          <div class="space-y-3">
+            <label class="block text-[10px] uppercase tracking-widest text-slate-500" for="price">Value (INR)</label>
+            <input id="price" type="number" step="0.01" class="w-full bg-transparent border-b border-slate-300 py-2 outline-none focus:border-slate-900 transition-colors placeholder:text-slate-300 text-lg" bind:value={itemForm.price} placeholder="0.00" />
           </div>
-          <div class="space-y-1">
-            <label class="block text-xs uppercase tracking-widest text-slate-600" for="hh_discount">HH Discount %</label>
-            <input id="hh_discount" type="number" step="1" min="0" max="100" class="w-full bg-slate-50 border-2 border-slate-900 p-2 outline-none focus:bg-white transition-colors rounded-none" bind:value={itemForm.happy_hour_discount} placeholder="0" />
-          </div>
-          <div class="col-span-2 space-y-1">
-            <label class="block text-xs uppercase tracking-widest text-slate-600" for="cat">Classification</label>
-            <select id="cat" class="w-full bg-slate-50 border-2 border-slate-900 p-2 outline-none focus:bg-white transition-colors rounded-none uppercase" bind:value={itemForm.category_id}>
-              <option value="" disabled selected>SELECT...</option>
+
+          <div class="space-y-3">
+            <label class="block text-[10px] uppercase tracking-widest text-slate-500" for="cat">Classification</label>
+            <select id="cat" class="w-full bg-transparent border-b border-slate-300 py-2 outline-none focus:border-slate-900 transition-colors text-lg uppercase" bind:value={itemForm.category_id}>
+              <option value="" disabled selected>Select...</option>
               {#each categories as cat}
                 <option value={cat.id}>{cat.name}</option>
               {/each}
             </select>
           </div>
           
-          <div class="col-span-2 space-y-1">
-            <label class="block text-xs uppercase tracking-widest text-slate-600" for="img">Asset URL</label>
-            <input id="img" type="text" class="w-full bg-slate-50 border-2 border-slate-900 p-2 outline-none focus:bg-white transition-colors rounded-none" bind:value={itemForm.image_url} placeholder="https://..." />
+          <div class="col-span-2 space-y-3">
+            <label class="block text-[10px] uppercase tracking-widest text-slate-500" for="img">Asset URL</label>
+            <input id="img" type="text" class="w-full bg-transparent border-b border-slate-300 py-2 outline-none focus:border-slate-900 transition-colors placeholder:text-slate-300" bind:value={itemForm.image_url} placeholder="https://..." />
+          </div>
+
+          <div class="space-y-3">
+            <label class="block text-[10px] uppercase tracking-widest text-slate-500" for="hh_discount">HH Discount %</label>
+            <input id="hh_discount" type="number" step="1" min="0" max="100" class="w-full bg-transparent border-b border-slate-300 py-2 outline-none focus:border-slate-900 transition-colors placeholder:text-slate-300" bind:value={itemForm.happy_hour_discount} placeholder="0" />
           </div>
           
-          <div class="col-span-2 space-y-1 mt-2">
-            <span class="block text-xs uppercase tracking-widest text-slate-600 mb-2">Metadata Tags</span>
-            <div class="flex flex-wrap gap-2">
+          <div class="col-span-2 space-y-3 mt-4">
+            <span class="block text-[10px] uppercase tracking-widest text-slate-500 mb-4">Metadata Tags</span>
+            <div class="flex flex-wrap gap-4">
               {#each Object.entries(DIETARY_META) as [tag, meta]}
                 <button 
-                  class="px-2 py-1 text-[10px] uppercase tracking-widest border-2 transition-all rounded-none {itemForm.dietary_tags.includes(tag as DietaryTag) ? 'border-blue-600 bg-blue-50 text-blue-700 font-bold' : 'border-slate-200 bg-white text-slate-500 hover:border-slate-400'}"
+                  class="text-[10px] uppercase tracking-widest transition-colors {itemForm.dietary_tags.includes(tag as DietaryTag) ? 'text-emerald-600 font-bold border-b border-emerald-600 pb-1' : 'text-slate-400 hover:text-slate-900 pb-1'}"
                   onclick={() => toggleTag(tag as DietaryTag)}
                 >
-                  {meta.label}
+                  [{meta.label}]
                 </button>
               {/each}
             </div>
           </div>
           
-          <div class="col-span-2 space-y-1 mt-2">
-            <label class="block text-xs uppercase tracking-widest text-slate-600" for="desc">Description</label>
-            <textarea id="desc" class="w-full bg-slate-50 border-2 border-slate-900 p-2 outline-none focus:bg-white transition-colors rounded-none h-24 resize-none" bind:value={itemForm.description} placeholder="Enter details..."></textarea>
+          <div class="col-span-2 space-y-3 mt-4">
+            <label class="block text-[10px] uppercase tracking-widest text-slate-500" for="desc">Description</label>
+            <textarea id="desc" class="w-full bg-transparent border border-slate-300 p-4 outline-none focus:border-slate-900 transition-colors h-32 resize-none placeholder:text-slate-300" bind:value={itemForm.description} placeholder="Enter detailed description..."></textarea>
           </div>
         </div>
       </div>
       
-      <div class="flex gap-2 mt-6 pt-4 border-t-2 border-slate-900">
-        <button class="flex-1 py-2 border-2 border-slate-900 bg-white hover:bg-slate-100 uppercase tracking-widest text-xs font-bold transition-colors rounded-none" onclick={() => showModal = false} disabled={isSaving}>Abort</button>
-        <button class="flex-1 py-2 border-2 border-slate-900 bg-blue-600 text-white hover:bg-blue-700 uppercase tracking-widest text-xs font-bold transition-colors disabled:opacity-50 flex justify-center items-center gap-2 rounded-none" onclick={saveItem} disabled={isSaving}>
+      <div class="flex gap-6 mt-10 pt-8 border-t-2 border-slate-900">
+        <button class="text-xs font-mono uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors" onclick={() => showModal = false} disabled={isSaving}>[ Abort ]</button>
+        <button class="text-xs font-mono uppercase tracking-widest text-emerald-600 hover:text-emerald-500 transition-colors disabled:opacity-50" onclick={saveItem} disabled={isSaving}>
           {#if isSaving}
-            <RefreshCw size={14} class="animate-spin" /> EXECUTING...
+            [ Executing... ]
           {:else}
-            COMMIT RECORD
+            [ Commit Record ]
           {/if}
         </button>
       </div>

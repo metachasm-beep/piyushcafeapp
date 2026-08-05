@@ -130,90 +130,93 @@
 	<title>Tables | Terminal</title>
 </svelte:head>
 
-<div class="space-y-6 animate-fade-in font-sans text-slate-900 pb-12">
-	<div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-200 pb-4">
-		<div>
-			<h1 class="text-2xl font-bold tracking-tight uppercase">Table Infrastructure</h1>
-			<p class="text-xs text-slate-500 mt-1 font-mono uppercase tracking-widest">Physical endpoints and QR routing</p>
+<div class="space-y-16 animate-fade-in font-sans text-slate-900 pb-16">
+	<!-- Editorial Header -->
+	<header class="border-b-2 border-slate-900 pb-6 flex flex-col md:flex-row md:justify-between md:items-end gap-6">
+		<div class="max-w-2xl">
+			<h1 class="text-5xl md:text-6xl font-display font-black tracking-tighter leading-none italic pr-4">Table<br />Infrastructure.</h1>
+			<p class="text-sm text-slate-500 mt-6 font-mono uppercase tracking-widest leading-relaxed">
+				Physical endpoints and QR routing for the selected node.
+			</p>
 		</div>
 		
-		<div class="flex items-center gap-2">
+		<div class="flex items-center gap-4 border-l border-slate-200 pl-6 shrink-0">
 			{#if restaurants.length > 0}
-				<select class="bg-white border border-slate-200 px-3 py-1.5 outline-none focus:border-blue-500 transition-colors text-xs font-mono uppercase tracking-widest rounded-none" bind:value={selectedRestaurantId}>
+				<select class="bg-transparent border-b border-slate-300 px-2 py-1 outline-none focus:border-slate-900 transition-colors text-xs font-mono uppercase tracking-widest" bind:value={selectedRestaurantId}>
 					{#each restaurants as res}
 						<option value={res.id}>{res.name}</option>
 					{/each}
 				</select>
 			{/if}
-			<button class="p-1.5 border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors disabled:opacity-50" onclick={loadTables} disabled={isLoading || !selectedRestaurantId}>
-				<RefreshCw size={16} class={isLoading ? 'animate-spin' : ''} />
+			<button class="text-xs font-mono uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors disabled:opacity-50" onclick={loadTables} disabled={isLoading || !selectedRestaurantId}>
+				[ Refresh ]
 			</button>
 			<button 
-				class="bg-blue-600 text-white font-mono uppercase tracking-widest text-xs px-4 py-1.5 flex items-center gap-2 hover:bg-blue-700 transition-colors disabled:opacity-50"
+				class="text-xs font-mono uppercase tracking-widest text-emerald-600 hover:text-emerald-500 transition-colors disabled:opacity-50"
 				onclick={() => showAddModal = true}
 				disabled={!selectedRestaurantId}
 			>
-				<Plus size={14} /> Provision Table
+				[ Provision Table ]
 			</button>
 		</div>
-	</div>
+	</header>
 
-	<!-- Strict Table List -->
-	<div class="border border-slate-200 bg-white">
-		<div class="grid grid-cols-12 bg-slate-50 border-b border-slate-200 text-[10px] font-mono uppercase tracking-widest text-slate-500">
-			<div class="col-span-1 p-3 border-r border-slate-200 text-center">ID</div>
-			<div class="col-span-4 p-3 border-r border-slate-200">Table Configuration</div>
-			<div class="col-span-2 p-3 border-r border-slate-200 text-center">Capacity</div>
-			<div class="col-span-2 p-3 border-r border-slate-200 text-center">Status</div>
-			<div class="col-span-3 p-3 text-center">Routing (QR)</div>
-		</div>
-
+	<!-- Editorial Ledger -->
+	<div>
 		{#if isLoading}
-			<div class="p-12 flex justify-center">
-				<RefreshCw size={24} class="animate-spin text-slate-400" />
+			<div class="py-24 flex justify-center border-t border-b border-slate-200">
+				<RefreshCw size={24} class="animate-spin text-slate-300" />
 			</div>
 		{:else if tables.length === 0}
-			<div class="p-12 flex flex-col items-center justify-center text-center">
-				<Hash size={32} class="text-slate-300 mb-4" />
-				<h3 class="text-sm font-mono uppercase tracking-widest text-slate-500">No endpoints configured</h3>
+			<div class="py-24 flex flex-col items-center justify-center text-center border-t border-b border-slate-200">
+				<h3 class="font-display text-3xl font-bold italic text-slate-300 mb-2">No Endpoints</h3>
+				<p class="text-xs font-mono uppercase tracking-widest text-slate-400">Configure a table to begin</p>
 			</div>
 		{:else}
-			<div class="divide-y divide-slate-100">
+			<div class="divide-y border-b border-slate-200">
 				{#each tables as table (table.id)}
-					<div class="grid grid-cols-12 text-sm hover:bg-slate-50 transition-colors {table.is_active ? '' : 'opacity-60'}">
-						<!-- ID -->
-						<div class="col-span-1 p-3 border-r border-slate-200 flex items-center justify-center font-mono font-bold text-slate-900 bg-slate-50/50">
-							{table.table_number.toString().padStart(2, '0')}
+					<div class="py-8 flex flex-col md:flex-row md:items-center gap-8 group {table.is_active ? '' : 'opacity-50'}">
+						
+						<!-- Massive Serif ID -->
+						<div class="w-24 shrink-0 flex items-baseline gap-1">
+							<span class="text-xs font-mono text-slate-300 mb-4">No.</span>
+							<span class="text-6xl font-display font-bold italic text-slate-900 group-hover:text-emerald-700 transition-colors tracking-tighter">
+								{table.table_number}
+							</span>
 						</div>
 						
-						<!-- Name -->
-						<div class="col-span-4 p-3 border-r border-slate-200 flex flex-col justify-center">
-							<span class="font-bold uppercase tracking-tight">{table.display_name}</span>
-							<span class="text-[10px] font-mono text-slate-400 truncate">{table.id}</span>
+						<!-- Details -->
+						<div class="flex-1 flex flex-col justify-center">
+							<span class="text-2xl font-bold uppercase tracking-tight text-slate-900">{table.display_name}</span>
+							<span class="text-[10px] font-mono text-slate-400 truncate mt-1">ID: {table.id}</span>
 						</div>
 
 						<!-- Capacity -->
-						<div class="col-span-2 p-3 border-r border-slate-200 flex items-center justify-center gap-2 font-mono text-slate-600">
-							<Users size={14} class="text-slate-400" /> {table.capacity} PAX
+						<div class="w-32 flex flex-col gap-1">
+							<span class="text-[10px] font-mono uppercase tracking-widest text-slate-400">Capacity</span>
+							<span class="font-mono text-sm text-slate-900 flex items-center gap-2">
+								<Users size={14} class="text-slate-300" /> {table.capacity} PAX
+							</span>
 						</div>
 
-						<!-- Status -->
-						<div class="col-span-2 p-3 border-r border-slate-200 flex items-center justify-center">
+						<!-- Status Toggle -->
+						<div class="w-32 flex flex-col gap-1">
+							<span class="text-[10px] font-mono uppercase tracking-widest text-slate-400">Status</span>
 							<button 
-								class="text-[10px] font-mono uppercase tracking-widest px-2 py-1 border transition-colors {table.is_active ? 'border-green-600 text-green-700 bg-green-50' : 'border-slate-300 text-slate-500 bg-white'}"
+								class="text-left text-xs font-mono uppercase tracking-widest transition-colors {table.is_active ? 'text-emerald-600' : 'text-slate-400 line-through hover:text-slate-900'}"
 								onclick={() => toggleTableStatus(table)}
 							>
-								{table.is_active ? 'ACTIVE' : 'IDLE'}
+								{table.is_active ? 'Active' : 'Idle'}
 							</button>
 						</div>
 
-						<!-- Routing -->
-						<div class="col-span-3 p-3 flex items-center justify-center">
+						<!-- Actions -->
+						<div class="w-40 flex justify-end shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
 							<button 
-								class="flex items-center gap-2 px-3 py-1.5 border border-slate-900 bg-white hover:bg-slate-900 hover:text-white transition-colors text-xs font-mono uppercase tracking-widest"
+								class="text-xs font-mono uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors flex items-center gap-2"
 								onclick={() => generateQR(table)}
 							>
-								<QrCode size={14} /> GENERATE QR
+								[ GENERATE QR ]
 							</button>
 						</div>
 					</div>
@@ -223,46 +226,45 @@
 	</div>
 </div>
 
-<!-- Provision Modal -->
+<!-- Editorial Provision Modal -->
 {#if showAddModal}
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4" onclick={(e) => { if(e.target === e.currentTarget) showAddModal = false; }}>
-		<div class="bg-white border-2 border-slate-900 w-full max-w-sm p-6 shadow-[8px_8px_0_0_rgba(15,23,42,1)]" onclick={(e) => e.stopPropagation()}>
-			<div class="border-b-2 border-slate-900 pb-4 mb-6 flex justify-between items-start">
-				<div>
-					<h2 class="text-lg font-bold uppercase tracking-tight">Provision Endpoint</h2>
-					<p class="text-[10px] font-mono uppercase tracking-widest text-slate-500 mt-1">Table configuration</p>
-				</div>
-				<button class="p-1 hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200" onclick={() => showAddModal = false}><X size={16} /></button>
+	<div class="fixed inset-0 bg-[#f8f9fa]/95 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) showAddModal = false; }}>
+		<div class="w-full max-w-xl bg-white p-12 md:p-16 relative shadow-2xl" onclick={(e) => e.stopPropagation()}>
+			
+			<div class="border-b-2 border-slate-900 pb-6 mb-10">
+				<h2 class="text-4xl font-display font-black tracking-tighter italic">Provision.</h2>
+				<p class="text-xs font-mono uppercase tracking-widest text-slate-500 mt-4">Table Endpoint Configuration</p>
 			</div>
 
-			<div class="space-y-4 font-mono text-sm">
-				<div class="grid grid-cols-2 gap-4">
-					<div class="col-span-1 space-y-1">
-						<label class="block text-xs uppercase tracking-widest text-slate-600" for="tnum">Table ID (Num)</label>
-						<input id="tnum" type="number" class="w-full bg-slate-50 border-2 border-slate-900 p-2 outline-none focus:bg-white transition-colors rounded-none" bind:value={newTable.table_number} placeholder="1" />
+			<div class="space-y-8 font-mono text-sm">
+				<div class="grid grid-cols-2 gap-8">
+					<div class="col-span-1 space-y-3">
+						<label class="block text-[10px] uppercase tracking-widest text-slate-500" for="tnum">Table ID (Num)</label>
+						<input id="tnum" type="number" class="w-full bg-transparent border-b border-slate-300 py-2 outline-none focus:border-slate-900 transition-colors placeholder:text-slate-300 text-lg" bind:value={newTable.table_number} placeholder="1" />
 					</div>
-					<div class="col-span-1 space-y-1">
-						<label class="block text-xs uppercase tracking-widest text-slate-600" for="tcap">Max Capacity</label>
-						<input id="tcap" type="number" class="w-full bg-slate-50 border-2 border-slate-900 p-2 outline-none focus:bg-white transition-colors rounded-none" bind:value={newTable.capacity} placeholder="4" />
+					<div class="col-span-1 space-y-3">
+						<label class="block text-[10px] uppercase tracking-widest text-slate-500" for="tcap">Max Capacity</label>
+						<input id="tcap" type="number" class="w-full bg-transparent border-b border-slate-300 py-2 outline-none focus:border-slate-900 transition-colors placeholder:text-slate-300 text-lg" bind:value={newTable.capacity} placeholder="4" />
 					</div>
 				</div>
-				<div class="space-y-1">
-					<label class="block text-xs uppercase tracking-widest text-slate-600" for="tname">Display Label</label>
-					<input id="tname" type="text" class="w-full bg-slate-50 border-2 border-slate-900 p-2 outline-none focus:bg-white transition-colors rounded-none" bind:value={newTable.display_name} placeholder="Table 1" />
+				<div class="space-y-3">
+					<label class="block text-[10px] uppercase tracking-widest text-slate-500" for="tname">Display Label</label>
+					<input id="tname" type="text" class="w-full bg-transparent border-b border-slate-300 py-2 outline-none focus:border-slate-900 transition-colors placeholder:text-slate-300 text-lg" bind:value={newTable.display_name} placeholder="Table 1" />
 				</div>
 				
-				<div class="pt-4 mt-6 border-t-2 border-slate-900">
+				<div class="pt-8 flex gap-6 mt-10 border-t-2 border-slate-900">
+					<button class="text-xs font-mono uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors" onclick={() => showAddModal = false} disabled={isSaving}>[ Abort ]</button>
 					<button 
-						class="w-full py-2 border-2 border-slate-900 bg-blue-600 text-white hover:bg-blue-700 uppercase tracking-widest text-xs font-bold transition-colors disabled:opacity-50 flex justify-center items-center gap-2 rounded-none"
+						class="text-xs font-mono uppercase tracking-widest text-emerald-600 hover:text-emerald-500 transition-colors disabled:opacity-50"
 						onclick={addTable}
 						disabled={isSaving}
 					>
 						{#if isSaving}
-							<RefreshCw size={14} class="animate-spin" /> EXECUTING...
+							[ Executing... ]
 						{:else}
-							COMMIT ENDPOINT
+							[ Commit Endpoint ]
 						{/if}
 					</button>
 				</div>
@@ -271,41 +273,41 @@
 	</div>
 {/if}
 
-<!-- Brutalist QR Printable Modal -->
+<!-- Editorial QR Printable Modal -->
 {#if showQrModal && selectedTableForQr}
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 print:p-0 print:bg-white" onclick={(e) => { if(e.target === e.currentTarget) showQrModal = false; }}>
-		<div class="bg-white border-4 border-slate-900 w-full max-w-sm p-8 shadow-[12px_12px_0_0_rgba(15,23,42,1)] print:shadow-none print:border-none" onclick={(e) => e.stopPropagation()}>
+	<div class="fixed inset-0 bg-[#f8f9fa]/95 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:p-0 print:bg-white animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) showQrModal = false; }}>
+		<div class="bg-white border w-full max-w-sm p-12 relative shadow-2xl print:shadow-none print:border-none" onclick={(e) => e.stopPropagation()}>
 			
 			<div class="text-center print:block">
 				<!-- Header -->
-				<div class="border-b-4 border-slate-900 pb-4 mb-8">
-					<h2 class="text-3xl font-black uppercase tracking-tighter">Scan To Order</h2>
-					<p class="text-sm font-mono uppercase tracking-widest text-slate-500 mt-2">Digital Menu System</p>
+				<div class="mb-10">
+					<h2 class="text-4xl font-display font-black italic tracking-tighter">Scan to<br/>Order.</h2>
+					<p class="text-xs font-mono uppercase tracking-widest text-slate-500 mt-4 border-b border-slate-200 pb-4 inline-block">Digital Menu System</p>
 				</div>
 				
 				<!-- QR Code -->
-				<div class="bg-slate-50 border-4 border-slate-900 p-4 mx-auto w-64 h-64 mb-8">
+				<div class="mx-auto w-64 h-64 mb-10">
 					{#if qrDataUrl}
 						<img src={qrDataUrl} alt="Table QR Code" class="w-full h-full [image-rendering:pixelated]" />
 					{/if}
 				</div>
 				
 				<!-- Footer Data -->
-				<div class="bg-slate-900 text-white p-4 font-mono uppercase tracking-widest">
-					<div class="text-xl font-bold">{selectedTableForQr.display_name}</div>
-					<div class="text-[10px] mt-2 opacity-70">ENDPOINT ID: {selectedTableForQr.table_number.toString().padStart(4, '0')}</div>
+				<div class="text-center font-mono">
+					<div class="text-2xl font-bold uppercase tracking-tight text-slate-900">{selectedTableForQr.display_name}</div>
+					<div class="text-[10px] mt-2 text-slate-400 uppercase tracking-widest">Endpoint: {selectedTableForQr.table_number.toString().padStart(4, '0')}</div>
 				</div>
 			</div>
 
 			<!-- Actions (hidden when printing) -->
-			<div class="mt-8 flex gap-2 print:hidden border-t-2 border-slate-900 pt-6">
-				<button class="flex-1 py-3 border-2 border-slate-900 bg-white hover:bg-slate-100 flex justify-center items-center gap-2 uppercase font-mono tracking-widest text-xs font-bold transition-colors" onclick={() => showQrModal = false}>
-					Close
+			<div class="mt-12 flex gap-6 print:hidden border-t-2 border-slate-900 pt-8 justify-center">
+				<button class="text-xs font-mono uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors" onclick={() => showQrModal = false}>
+					[ Close ]
 				</button>
-				<button class="flex-1 py-3 border-2 border-slate-900 bg-blue-600 text-white hover:bg-blue-700 flex justify-center items-center gap-2 uppercase font-mono tracking-widest text-xs font-bold transition-colors" onclick={handlePrint}>
-					<Printer size={16} /> Print
+				<button class="text-xs font-mono uppercase tracking-widest text-emerald-600 hover:text-emerald-500 transition-colors" onclick={handlePrint}>
+					[ Print ]
 				</button>
 			</div>
 		</div>

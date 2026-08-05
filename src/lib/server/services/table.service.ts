@@ -63,3 +63,22 @@ export async function updateTableStatus(id: string, is_active: boolean): Promise
 		throw new Error("Failed to update table status.");
 	}
 }
+
+export async function updateTable(
+	id: string,
+	input: Partial<Pick<TableInput, "display_name" | "capacity" | "table_number">>
+): Promise<Table> {
+	const sanitized = sanitizeObject(input as Record<string, unknown>) as Partial<TableInput>;
+
+	if (!supabase) {
+		return { id, ...sanitized } as unknown as Table;
+	}
+
+	const { data, error } = await supabase.from("tables").update(sanitized).eq("id", id).select().single();
+
+	if (error) {
+		console.error(JSON.stringify({ level: "error", context: "updateTable", msg: error.message, id }));
+		throw new Error("Failed to update table.");
+	}
+	return data as Table;
+}

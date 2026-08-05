@@ -60,7 +60,7 @@ Outer tile radius minus padding equals inner media radius.
 1. **Table menu** — restaurant + table header, compressed sticky filters, sticky section labels, compact expandable rows
 2. **Cart / checkout sheets** — shared handle, radius, enter timing; calm payment tiles
 3. **Order tracking** — quiet status hero, soft stage rail
-4. **Owner / superadmin** — may still use earlier indigo skins; migrate to these tokens when redesigning
+4. **Owner / superadmin** — `--sa-*` tokens in `src/lib/styles/superadmin.css` (teal accent, WARN/ERR secondaries, density modes)
 
 ## Motion
 

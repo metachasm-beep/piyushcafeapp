@@ -1,7 +1,5 @@
 ﻿/**
  * superadmin/menu/+page.server.ts
- * Secure Form Actions for Menu CRUD.
- * Applies: api-design-principles, api-security-best-practices, backend-security-coder
  */
 import type { Actions, PageServerLoad } from "./$types";
 import { fail } from "@sveltejs/kit";
@@ -15,17 +13,38 @@ import {
 	toggleMenuItemAvailability
 } from "$lib/server/services/menu.service";
 import { supabase } from "$lib/supabase";
+import { MOCK_RESTAURANT, MOCK_CATEGORIES, MOCK_MENU_ITEMS } from "$lib/mock-data";
 
-export const load: PageServerLoad = async () => {
-	// Pre-load restaurants list for the selector
-	if (!supabase) {
-		return { restaurants: [], categories: [], menuItems: [] };
+export const load: PageServerLoad = async ({ url }) => {
+	const restaurants = supabase
+		? (
+				await supabase.from("restaurants").select("id, name").order("name")
+			).data ?? [{ id: MOCK_RESTAURANT.id, name: MOCK_RESTAURANT.name }]
+		: [{ id: MOCK_RESTAURANT.id, name: MOCK_RESTAURANT.name }];
+
+	const restaurantId = url.searchParams.get("restaurant") || restaurants[0]?.id || MOCK_RESTAURANT.id;
+
+	try {
+		const [categories, menuItems] = await Promise.all([
+			fetchCategories(restaurantId),
+			fetchMenuItems(restaurantId)
+		]);
+		return {
+			restaurants,
+			restaurantId,
+			categories,
+			menuItems,
+			loadError: null as string | null
+		};
+	} catch (e) {
+		return {
+			restaurants,
+			restaurantId,
+			categories: MOCK_CATEGORIES,
+			menuItems: MOCK_MENU_ITEMS,
+			loadError: (e as Error).message
+		};
 	}
-	const { data: restaurants } = await supabase
-		.from("restaurants")
-		.select("id, name")
-		.order("name");
-	return { restaurants: restaurants ?? [] };
 };
 
 export const actions: Actions = {
@@ -42,6 +61,7 @@ export const actions: Actions = {
 			return fail(422, {
 				action: "create",
 				errors: parsed.error.flatten().fieldErrors,
+				error: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? "Validation failed",
 				data: raw
 			});
 		}
@@ -69,6 +89,7 @@ export const actions: Actions = {
 			return fail(422, {
 				action: "update",
 				errors: parsed.error.flatten().fieldErrors,
+				error: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? "Validation failed",
 				data: raw
 			});
 		}

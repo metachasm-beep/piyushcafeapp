@@ -44,18 +44,21 @@ export const MenuItemSchema = z.object({
 	description: z.string().max(500).optional().default(""),
 	price: z.coerce.number().positive("Price must be positive"),
 	image_url: z.string().url("Must be a valid URL").optional().or(z.literal("")),
-	category_id: z.string().uuid("Invalid category ID").optional().nullable(),
-	is_available: z.coerce.boolean().default(true),
+	category_id: z.string().min(1, "Category is required"),
+	is_available: z
+		.union([z.boolean(), z.literal("true"), z.literal("false"), z.literal("on"), z.literal("")])
+		.transform((v) => v === true || v === "true" || v === "on")
+		.default(true),
 	dietary_tags: z.array(z.string()).default([]),
 	happy_hour_discount: z.coerce.number().min(0).max(100).optional().default(0),
-	restaurant_id: z.string().uuid("Invalid restaurant ID")
+	restaurant_id: z.string().min(1, "Restaurant is required")
 });
 
 export const TableSchema = z.object({
 	table_number: z.coerce.number().int().positive("Table number must be a positive integer"),
 	display_name: z.string().min(1, "Display name is required").max(60),
 	capacity: z.coerce.number().int().min(1).max(50).default(4),
-	restaurant_id: z.string().uuid("Invalid restaurant ID")
+	restaurant_id: z.string().min(1, "Restaurant is required")
 });
 
 export const OrderSchema = z.object({

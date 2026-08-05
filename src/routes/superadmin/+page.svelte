@@ -65,114 +65,104 @@
 	<title>Global Telemetry</title>
 </svelte:head>
 
-<div class="space-y-6 animate-fade-in pb-12 font-sans text-slate-900">
-	<header class="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 border-b border-slate-200 pb-4">
-		<div>
-			<h1 class="text-2xl font-bold tracking-tight uppercase">Global Telemetry</h1>
-			<p class="text-xs text-slate-500 mt-1 font-mono uppercase tracking-widest">Real-time metrics across all nodes</p>
+<div class="space-y-16 animate-fade-in pb-16 font-sans text-slate-900">
+	<!-- Editorial Header -->
+	<header class="border-b-2 border-slate-900 pb-6 flex flex-col md:flex-row md:justify-between md:items-end gap-6">
+		<div class="max-w-2xl">
+			<h1 class="text-5xl md:text-7xl font-display font-black tracking-tighter leading-none italic pr-4">Global<br />Telemetry.</h1>
+			<p class="text-sm text-slate-500 mt-6 font-mono uppercase tracking-widest leading-relaxed">
+				Real-time performance metrics and system events across the entire restaurant network.
+			</p>
 		</div>
-		<div class="flex gap-2">
-			<button class="px-4 py-1.5 text-xs font-mono uppercase tracking-widest border border-slate-200 hover:bg-slate-50 transition-colors" onclick={() => { import('svelte-sonner').then(m => m.toast.success('Report exported to CSV')) }}>Export Report</button>
-			<button class="px-4 py-1.5 text-xs font-mono uppercase tracking-widest bg-blue-600 text-white hover:bg-blue-700 transition-colors" onclick={() => { import('$app/navigation').then(m => m.goto('/superadmin/restaurants')) }}>New Node</button>
+		<div class="flex gap-4 border-l border-slate-200 pl-6 shrink-0">
+			<button class="text-xs font-mono uppercase tracking-widest text-slate-500 hover:text-slate-900 transition-colors" onclick={() => { import('svelte-sonner').then(m => m.toast.success('Report exported to CSV')) }}>[ Export Report ]</button>
+			<button class="text-xs font-mono uppercase tracking-widest text-emerald-600 hover:text-emerald-500 transition-colors" onclick={() => { import('$app/navigation').then(m => m.goto('/superadmin/restaurants')) }}>[ Provision Node ]</button>
 		</div>
 	</header>
 
-	<!-- Dense Stats Table -->
-	<div class="border border-slate-200">
-		<div class="grid grid-cols-1 md:grid-cols-4 bg-slate-50 border-b border-slate-200 text-[10px] font-mono uppercase tracking-widest text-slate-500 md:divide-x divide-y md:divide-y-0 divide-slate-200">
-			{#each stats as stat}
-				<div class="p-2 hidden md:block">{stat.label}</div>
-			{/each}
+	<!-- Asymmetric Stats Ledger -->
+	<div class="grid grid-cols-1 md:grid-cols-12 gap-12 border-b border-slate-200 pb-16">
+		<div class="md:col-span-3">
+			<h2 class="font-display text-2xl font-bold italic text-slate-400">Key<br/>Indicators</h2>
 		</div>
-		<div class="grid grid-cols-1 md:grid-cols-4 md:divide-x divide-y md:divide-y-0 divide-slate-200 bg-white">
+		<div class="md:col-span-9 grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-16">
 			{#each stats as stat}
-				<div class="p-4 flex flex-col justify-between h-28 hover:bg-slate-50 transition-colors cursor-default">
-					<div class="text-[10px] font-mono text-slate-500 mb-2 md:hidden uppercase">{stat.label}</div>
-					<div class="text-3xl font-mono font-medium tracking-tight {stat.color}">
+				<div class="flex flex-col group relative">
+					<div class="flex justify-between items-baseline border-b border-slate-200 pb-2 mb-4 group-hover:border-slate-900 transition-colors">
+						<span class="text-[10px] font-mono uppercase tracking-widest text-slate-500">{stat.label}</span>
+						<stat.icon size={14} class="text-slate-300 group-hover:text-slate-900 transition-colors" />
+					</div>
+					<div class="text-5xl font-mono font-medium tracking-tight text-slate-900">
 						{stat.isCurrency ? formatCurrency(stat.value) : stat.value.toLocaleString()}
 					</div>
-					<div class="flex justify-between items-end mt-2">
-						<stat.icon size={16} class="text-slate-400" />
-						{#if stat.trend !== 0}
-							<div class="flex items-center gap-1 text-[11px] font-mono font-semibold {stat.trendColor}">
-								{#if stat.trend > 0}
-									<ArrowUpRight size={14} />
-								{:else}
-									<ArrowDownRight size={14} />
-								{/if}
-								{Math.abs(stat.trend)}%
-							</div>
-						{:else}
-							<div class="text-[11px] font-mono text-slate-400">--</div>
-						{/if}
-					</div>
+					{#if stat.trend !== 0}
+						<div class="mt-4 flex items-center gap-2 text-xs font-mono font-semibold {stat.trendColor === 'text-blue-600' ? 'text-emerald-600' : stat.trendColor}">
+							{#if stat.trend > 0}
+								<ArrowUpRight size={14} />
+							{:else}
+								<ArrowDownRight size={14} />
+							{/if}
+							{Math.abs(stat.trend)}% vs last month
+						</div>
+					{/if}
 				</div>
 			{/each}
 		</div>
 	</div>
 
-	<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-		<!-- Main Chart Area (Clinical Style) -->
-		<div class="lg:col-span-2 border border-slate-200 flex flex-col h-[400px] bg-white">
-			<div class="flex justify-between items-center p-3 bg-slate-50 border-b border-slate-200">
-				<div class="flex items-center gap-2">
-					<Activity size={14} class="text-slate-500" />
-					<h2 class="text-xs font-bold font-mono uppercase tracking-widest">Revenue Stream (7D)</h2>
-				</div>
-				<select class="bg-white border border-slate-200 text-[10px] font-mono uppercase tracking-widest px-2 py-1 outline-none focus:border-blue-500">
-					<option>7 DAYS</option>
-					<option>30 DAYS</option>
-					<option>YTD</option>
-				</select>
+	<!-- Bottom Section: Chart & Logs -->
+	<div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+		
+		<!-- Revenue Stream -->
+		<div class="lg:col-span-8 flex flex-col gap-6">
+			<div class="flex justify-between items-end border-b border-slate-200 pb-4">
+				<h2 class="font-display text-3xl font-bold italic">Revenue Stream</h2>
+				<span class="text-[10px] font-mono uppercase tracking-widest text-slate-400">Past 7 Days</span>
 			</div>
-			<div class="flex-1 p-6 flex flex-col justify-end gap-1 relative overflow-hidden">
-				<!-- Minimalist Bar Chart -->
-				<div class="absolute inset-x-6 inset-y-8 flex items-end justify-between">
-					{#each Array(7) as _, i}
-						<div class="w-12 bg-slate-100 hover:bg-slate-200 border-t-2 border-blue-600 relative group transition-colors" style="height: {30 + Math.random() * 60}%">
-							<div class="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 text-[10px] font-mono font-medium text-slate-900 bg-white border border-slate-200 px-1 py-0.5 pointer-events-none">
-								${Math.floor(Math.random() * 5000 + 1000)}
-							</div>
-						</div>
-					{/each}
-				</div>
-				<div class="absolute inset-x-6 inset-y-8 pointer-events-none flex flex-col justify-between border-l border-b border-slate-200">
+			<div class="h-64 flex items-end gap-2 relative">
+				<!-- Editorial Chart (just bars, no background) -->
+				<div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
 					{#each Array(4) as _, i}
-						<div class="border-t border-dashed border-slate-200 w-full h-0 relative">
-							<span class="absolute -left-8 -top-2 text-[10px] font-mono text-slate-400 bg-white pr-1">{3 - i}k</span>
-						</div>
+						<div class="w-full h-px bg-slate-200/50"></div>
 					{/each}
 				</div>
+				{#each Array(7) as _, i}
+					<div class="flex-1 bg-slate-200 hover:bg-emerald-600 transition-colors relative group z-10" style="height: {30 + Math.random() * 60}%">
+						<div class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 text-[10px] font-mono font-medium text-emerald-700 pointer-events-none transition-opacity">
+							${Math.floor(Math.random() * 5000 + 1000)}
+						</div>
+					</div>
+				{/each}
 			</div>
 		</div>
 
 		<!-- Event Log -->
-		<div class="border border-slate-200 flex flex-col h-[400px] bg-white">
-			<div class="flex justify-between items-center p-3 bg-slate-50 border-b border-slate-200">
-				<h2 class="text-xs font-bold font-mono uppercase tracking-widest">System Events</h2>
-				<button class="text-[10px] font-mono uppercase tracking-widest text-blue-600 hover:underline" onclick={() => { import('svelte-sonner').then(m => m.toast.success('Log stream attached')) }}>Tail -f</button>
+		<div class="lg:col-span-4 flex flex-col gap-6">
+			<div class="flex justify-between items-end border-b border-slate-200 pb-4">
+				<h2 class="font-display text-2xl font-bold italic">System Log</h2>
+				<button class="text-[10px] font-mono uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors" onclick={() => { import('svelte-sonner').then(m => m.toast.success('Log stream attached')) }}>[ Tail -f ]</button>
 			</div>
 			
-			<div class="flex-1 overflow-y-auto">
-				<table class="w-full text-left border-collapse">
-					<thead>
-						<tr class="border-b border-slate-200 text-[10px] font-mono text-slate-500 uppercase tracking-widest bg-slate-50/50">
-							<th class="p-2 font-normal">Time</th>
-							<th class="p-2 font-normal">Node</th>
-							<th class="p-2 font-normal">Event</th>
-						</tr>
-					</thead>
-					<tbody class="text-xs divide-y divide-slate-100 font-mono">
-						{#each recentActivity as event}
-							<tr class="hover:bg-slate-50 transition-colors">
-								<td class="p-2 text-slate-400 w-20">{event.time}</td>
-								<td class="p-2 truncate max-w-[100px] font-medium" title={event.restaurant}>{event.restaurant}</td>
-								<td class="p-2 truncate max-w-[120px] {getStatusColor(event.status)}" title={event.action}>{event.action}</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
+			<div class="flex-1 bg-slate-900 text-slate-300 p-6 rounded-none font-mono text-[10px] sm:text-xs overflow-y-auto max-h-80 shadow-2xl">
+				<div class="space-y-3">
+					{#each recentActivity as event}
+						<div class="flex gap-4">
+							<span class="text-slate-500 w-16 shrink-0">{event.time}</span>
+							<div class="flex flex-col gap-1">
+								<span class="font-bold text-slate-100">{event.restaurant}</span>
+								<span class="{event.status === 'ERR' ? 'text-red-400' : event.status === 'WARN' ? 'text-amber-400' : 'text-emerald-400'}">
+									> {event.action} [{event.status}]
+								</span>
+							</div>
+						</div>
+					{/each}
+					<div class="flex gap-4 animate-pulse">
+						<span class="text-slate-500 w-16 shrink-0">Now</span>
+						<span class="text-slate-100">_</span>
+					</div>
+				</div>
 			</div>
 		</div>
+
 	</div>
 </div>

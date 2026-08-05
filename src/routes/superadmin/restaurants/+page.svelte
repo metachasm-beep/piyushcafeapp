@@ -2,10 +2,12 @@
 	import { enhance } from '$app/forms';
 	import { toast } from 'svelte-sonner';
 	import type { PageData, ActionData } from './$types';
+	import { Store, User, Calendar, Plus } from 'lucide-svelte';
 	
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	
 	let loading = $state(false);
+	let showAddModal = $state(false);
 	
 	$effect(() => {
 		if (form?.error) {
@@ -13,30 +15,85 @@
 			loading = false;
 		}
 		if (form?.success) {
-			toast.success('NODE PROVISIONED SUCCESSFULLY');
+			toast.success('Restaurant provisioned successfully!');
 			loading = false;
+			showAddModal = false;
 		}
 	});
 </script>
 
 <svelte:head>
-	<title>RESTAURANT NODES</title>
+	<title>Restaurants | Management Console</title>
 </svelte:head>
 
-<div class="max-w-[1400px] mx-auto space-y-6 font-mono text-text-primary animate-fade-in">
-	<header class="flex justify-between items-end border-b border-border pb-4">
+<div class="space-y-8 animate-fade-in pb-12 font-sans text-text-primary">
+	<header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-white/5 pb-6">
 		<div>
-			<h1 class="text-2xl font-bold uppercase tracking-widest">Network Nodes</h1>
-			<p class="text-xs text-text-secondary mt-1 uppercase tracking-wide">Manage Restaurants & Owners</p>
+			<h1 class="text-3xl font-display font-bold tracking-tight">Network Nodes</h1>
+			<p class="text-text-secondary mt-1 font-medium">Manage and provision new restaurant locations.</p>
 		</div>
+		
+		<button 
+			class="px-5 py-2 text-sm font-medium rounded-full bg-brand text-black hover:bg-brand-hover shadow-glow transition-all hover:scale-105 flex items-center gap-2"
+			onclick={() => showAddModal = true}
+		>
+			<Plus size={16} /> Provision Node
+		</button>
 	</header>
 
-	<div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-		<!-- Provisioning Form (Sidebar) -->
-		<div class="lg:col-span-1 border border-border flex flex-col sticky top-6">
-			<div class="p-2 bg-surface border-b border-border">
-				<h2 class="text-xs font-bold uppercase tracking-widest">Provision Node</h2>
+	<!-- Restaurants Grid -->
+	<div>
+		{#if data.restaurants.length === 0}
+			<div class="glass-panel p-12 rounded-3xl flex flex-col items-center justify-center text-center">
+				<Store size={48} class="text-white/20 mb-4" />
+				<h3 class="text-xl font-bold mb-2">No nodes found</h3>
+				<p class="text-text-secondary">Provision your first restaurant node to get started.</p>
+				<button class="mt-6 px-6 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors font-medium" onclick={() => showAddModal = true}>Provision Node</button>
 			</div>
+		{:else}
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+				{#each data.restaurants as restaurant (restaurant.id)}
+					<div class="glass-strong rounded-3xl p-6 flex flex-col group hover:-translate-y-1 hover:shadow-float transition-all duration-300 border border-white/5 hover:border-white/10 relative overflow-hidden">
+						<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand to-brand-hover opacity-0 group-hover:opacity-100 transition-opacity"></div>
+						
+						<div class="flex justify-between items-start mb-6">
+							<div class="p-3 bg-white/5 rounded-2xl text-brand group-hover:scale-110 transition-transform">
+								<Store size={24} />
+							</div>
+							<div class="px-3 py-1 rounded-full bg-green-500/10 text-green-400 text-xs font-semibold flex items-center gap-1.5">
+								<span class="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_8px_currentColor]"></span>
+								Online
+							</div>
+						</div>
+						
+						<h3 class="text-xl font-bold mb-4">{restaurant.name}</h3>
+						
+						<div class="space-y-3 mt-auto pt-4 border-t border-white/5">
+							<div class="flex items-center gap-3 text-sm text-text-secondary">
+								<User size={14} class="opacity-50" />
+								<span class="font-mono text-xs truncate">{restaurant.owner_id}</span>
+							</div>
+							<div class="flex items-center gap-3 text-sm text-text-secondary">
+								<Calendar size={14} class="opacity-50" />
+								<span>{restaurant.created_at ? new Date(restaurant.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}</span>
+							</div>
+						</div>
+					</div>
+				{/each}
+			</div>
+		{/if}
+	</div>
+</div>
+
+<!-- Add Modal -->
+{#if showAddModal}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="fixed inset-0 bg-black/40 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) showAddModal = false; }}>
+		<div class="glass-panel w-full max-w-md rounded-[2rem] p-8 shadow-float animate-slide-up relative" onclick={(e) => e.stopPropagation()}>
+			
+			<h2 class="text-2xl font-bold mb-1">Provision Node</h2>
+			<p class="text-sm text-text-secondary mb-8">Deploy a new restaurant and owner identity.</p>
 			
 			<form 
 				method="POST" 
@@ -47,97 +104,61 @@
 						loading = false;
 					};
 				}}
-				class="flex flex-col p-4 gap-4"
+				class="space-y-5"
 			>
-				<div class="flex flex-col gap-1">
-					<label for="restaurant_name" class="text-[10px] text-text-secondary uppercase tracking-widest">Node Name</label>
+				<div class="space-y-1.5">
+					<label for="restaurant_name" class="block text-sm font-medium text-text-secondary pl-1">Node Name</label>
 					<input
 						id="restaurant_name"
 						name="restaurant_name"
 						type="text"
 						required
-						class="bg-transparent border border-border p-2 text-xs outline-none focus:border-brand transition-colors rounded-none"
-						placeholder="E.G. THE RUSTIC FORK"
+						class="w-full bg-black/20 border border-white/10 rounded-2xl p-3.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/50 transition-all backdrop-blur-md"
+						placeholder="e.g. The Rustic Fork"
 					/>
 				</div>
 
-				<div class="flex flex-col gap-1">
-					<label for="email" class="text-[10px] text-text-secondary uppercase tracking-widest">Owner Identity</label>
+				<div class="space-y-1.5">
+					<label for="email" class="block text-sm font-medium text-text-secondary pl-1">Owner Identity (Email)</label>
 					<input
 						id="email"
 						name="email"
 						type="email"
 						required
-						class="bg-transparent border border-border p-2 text-xs outline-none focus:border-brand transition-colors rounded-none"
-						placeholder="OWNER@RUSTICFORK.COM"
+						class="w-full bg-black/20 border border-white/10 rounded-2xl p-3.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/50 transition-all backdrop-blur-md"
+						placeholder="owner@domain.com"
 					/>
 				</div>
 
-				<div class="flex flex-col gap-1">
-					<label for="password" class="text-[10px] text-text-secondary uppercase tracking-widest">Initial Credential</label>
+				<div class="space-y-1.5">
+					<label for="password" class="block text-sm font-medium text-text-secondary pl-1">Initial Credential</label>
 					<input
 						id="password"
 						name="password"
 						type="password"
 						required
-						class="bg-transparent border border-border p-2 text-xs outline-none focus:border-brand transition-colors rounded-none"
+						class="w-full bg-black/20 border border-white/10 rounded-2xl p-3.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/50 transition-all backdrop-blur-md"
 						placeholder="••••••••"
 					/>
 				</div>
 
-				<button
-					type="submit"
-					disabled={loading}
-					class="mt-2 p-2 border border-brand text-brand hover:bg-brand hover:text-black uppercase text-xs tracking-widest font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
-				>
-					{#if loading}
-						EXECUTING...
-					{:else}
-						PROVISION
-					{/if}
-				</button>
+				<div class="pt-4 flex gap-3">
+					<button type="button" class="flex-1 py-3.5 rounded-2xl bg-white/5 hover:bg-white/10 font-medium transition-colors" onclick={() => showAddModal = false} disabled={loading}>
+						Cancel
+					</button>
+					<button
+						type="submit"
+						disabled={loading}
+						class="flex-1 py-3.5 rounded-2xl bg-brand text-black font-semibold hover:bg-brand-hover hover:shadow-glow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+					>
+						{#if loading}
+							Deploying...
+						{:else}
+							Provision
+						{/if}
+					</button>
+				</div>
 			</form>
 		</div>
-
-		<!-- Restaurants List (Data Table) -->
-		<div class="lg:col-span-3 border border-border flex flex-col">
-			<div class="flex justify-between items-center p-2 bg-surface border-b border-border">
-				<h2 class="text-xs font-bold uppercase tracking-widest">Active Nodes</h2>
-				<div class="text-[10px] text-text-secondary uppercase">Count: {data.restaurants.length}</div>
-			</div>
-			
-			{#if data.restaurants.length === 0}
-				<div class="p-8 text-center text-xs text-text-secondary uppercase tracking-widest">
-					NO NODES PROVISIONED.
-				</div>
-			{:else}
-				<div class="overflow-x-auto">
-					<table class="w-full text-left border-collapse text-xs">
-						<thead>
-							<tr class="bg-surface/50 border-b border-border/50 text-[10px] text-text-secondary">
-								<th class="p-3 font-normal uppercase tracking-widest">NODE ID</th>
-								<th class="p-3 font-normal uppercase tracking-widest">NAME</th>
-								<th class="p-3 font-normal uppercase tracking-widest">OWNER ID</th>
-								<th class="p-3 font-normal uppercase tracking-widest">CREATED</th>
-								<th class="p-3 font-normal uppercase tracking-widest">STATUS</th>
-							</tr>
-						</thead>
-						<tbody class="divide-y divide-border/30">
-							{#each data.restaurants as restaurant (restaurant.id)}
-								<tr class="hover:bg-surface/30 group">
-									<td class="p-3 font-mono text-[10px] text-text-secondary/70 truncate max-w-[100px]">{restaurant.id}</td>
-									<td class="p-3 font-bold text-brand uppercase">{restaurant.name}</td>
-									<td class="p-3 font-mono text-[10px] text-text-secondary/70 truncate max-w-[100px]">{restaurant.owner_id}</td>
-									<td class="p-3 text-text-secondary">
-										{restaurant.created_at ? new Date(restaurant.created_at).toISOString().split('T')[0] : 'N/A'}
-									</td>
-									<td class="p-3 text-green-500 font-bold">ONLINE</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
-			{/if}
-		</div>
 	</div>
-</div>
+{/if}

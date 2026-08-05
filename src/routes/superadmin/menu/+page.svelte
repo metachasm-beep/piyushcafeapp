@@ -3,7 +3,7 @@
   import { supabase } from '$lib/supabase';
   import { formatCurrency, DIETARY_META } from '$lib/utils';
   import { toast } from 'svelte-sonner';
-  import { Plus, Search, Edit2, Trash2, RefreshCw, Save, X } from 'lucide-svelte';
+  import { Plus, Search, Edit2, Trash2, Image as ImageIcon, RefreshCw, X, UtensilsCrossed } from 'lucide-svelte';
   import type { MenuItem, MenuCategory, DietaryTag, Restaurant } from '$lib/types';
 
   let restaurants = $state<Restaurant[]>([]);
@@ -32,7 +32,7 @@
     isLoading = true;
     const { data, error } = await supabase.from('restaurants').select('*').order('name');
     if (error) {
-      toast.error('FAILED: ' + error.message);
+      toast.error('Failed to load restaurants: ' + error.message);
     } else {
       restaurants = data;
       if (restaurants.length > 0) {
@@ -60,7 +60,7 @@
       categories = catRes.data;
       items = itemRes.data;
     } catch (e: any) {
-      errorMsg = e.message || 'FAILED TO LOAD DATA';
+      errorMsg = e.message || 'Failed to load data';
       toast.error(errorMsg);
     } finally {
       isLoading = false;
@@ -75,7 +75,7 @@
 
   onMount(() => {
     if (!supabase) {
-      errorMsg = 'SUPABASE NOT INIT';
+      errorMsg = 'Supabase client not initialized.';
       isLoading = false;
       return;
     }
@@ -87,21 +87,23 @@
     const newStatus = !item.is_available;
     const { error } = await supabase.from('menu_items').update({ is_available: newStatus }).eq('id', item.id);
     if (error) {
-      toast.error('FAILED TO UPDATE');
+      toast.error('Failed to update: ' + error.message);
     } else {
       const idx = items.findIndex(i => i.id === item.id);
       if (idx !== -1) items[idx].is_available = newStatus;
+      toast.success(`${item.name} marked as ${newStatus ? 'available' : 'unavailable'}`);
     }
   }
 
   async function deleteItem(id: string) {
     if (!supabase) return;
-    if (confirm('CONFIRM DELETION?')) {
+    if (confirm('Are you sure you want to delete this item?')) {
       const { error } = await supabase.from('menu_items').delete().eq('id', id);
       if (error) {
-        toast.error('FAILED TO DELETE');
+        toast.error('Failed to delete: ' + error.message);
       } else {
         items = items.filter(i => i.id !== id);
+        toast.success('Item deleted successfully');
       }
     }
   }
@@ -153,7 +155,7 @@
   async function saveItem() {
     if (!supabase || !selectedRestaurantId) return;
     if (!itemForm.name || !itemForm.price || !itemForm.category_id) {
-      toast.error('MISSING REQUIRED FIELDS');
+      toast.error('Name, Price, and Category are required');
       return;
     }
 
@@ -179,14 +181,16 @@
         if (error) throw error;
         const idx = items.findIndex(i => i.id === editingItemId);
         if (idx !== -1) items[idx] = data;
+        toast.success('Item updated');
       } else {
         const { data, error } = await supabase.from('menu_items').insert(payload).select().single();
         if (error) throw error;
         items = [data, ...items];
+        toast.success('Item added');
       }
       showModal = false;
     } catch (e: any) {
-      toast.error('SAVE FAILED');
+      toast.error('Failed to save: ' + e.message);
     } finally {
       isSaving = false;
     }
@@ -194,211 +198,238 @@
 </script>
 
 <svelte:head>
-  <title>DATA CATALOG</title>
+  <title>Menu | Management Console</title>
 </svelte:head>
 
-<div class="h-full flex flex-col font-mono text-text-primary uppercase">
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-border pb-4 mb-4 gap-4">
+<div class="h-full flex flex-col gap-6 animate-fade-in font-sans text-text-primary">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-6">
     <div>
-      <h1 class="text-2xl font-bold tracking-widest">Data Catalog</h1>
-      <p class="text-xs text-text-secondary mt-1 tracking-wide">Menu Records DB</p>
+      <h1 class="text-3xl font-display font-bold tracking-tight">Menu Manager</h1>
+      <p class="text-text-secondary mt-1 font-medium">Curate and configure restaurant offerings.</p>
     </div>
     
-    <div class="flex flex-wrap gap-2 w-full sm:w-auto items-center text-xs">
+    <div class="flex flex-wrap gap-3 w-full sm:w-auto items-center">
       {#if restaurants.length > 0}
-        <select class="bg-transparent border border-border px-2 py-1 outline-none uppercase" bind:value={selectedRestaurantId}>
+        <select class="bg-black/20 backdrop-blur-md border border-white/10 rounded-full px-4 py-2 outline-none focus:border-brand transition-colors text-sm font-medium" bind:value={selectedRestaurantId}>
           {#each restaurants as res}
             <option value={res.id}>{res.name}</option>
           {/each}
         </select>
       {/if}
-      <div class="relative flex-1 sm:w-48">
+      <div class="relative flex-1 sm:w-64">
+        <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
         <input 
           type="text" 
           bind:value={searchQuery} 
-          placeholder="QUERY..." 
-          class="bg-transparent border border-border w-full px-2 py-1 outline-none uppercase placeholder:text-text-secondary/50 focus:border-brand"
+          placeholder="Search items..." 
+          class="w-full bg-black/20 backdrop-blur-md border border-white/10 rounded-full pl-10 pr-4 py-2 text-sm outline-none focus:border-brand transition-colors"
         />
       </div>
       <button 
-        class="border border-brand text-brand hover:bg-brand hover:text-black px-4 py-1 flex items-center gap-2 transition-colors disabled:opacity-50"
+        class="bg-brand text-black font-semibold rounded-full px-5 py-2 flex items-center gap-2 hover:bg-brand-hover hover:scale-105 shadow-glow transition-all text-sm disabled:opacity-50"
         onclick={openAddModal}
         disabled={!selectedRestaurantId}
       >
-        <Plus size={14} /> ADD ROW
+        <Plus size={16} /> Add Item
       </button>
-      <button class="border border-border p-1 hover:bg-surface disabled:opacity-50" onclick={loadData} disabled={isLoading || !selectedRestaurantId}>
-        <RefreshCw size={14} class={isLoading ? 'animate-spin' : ''} />
+      <button class="p-2.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors disabled:opacity-50" onclick={loadData} disabled={isLoading || !selectedRestaurantId}>
+        <RefreshCw size={16} class={isLoading ? 'animate-spin text-brand' : 'text-text-secondary'} />
       </button>
     </div>
   </div>
 
-  <div class="flex-1 flex flex-col lg:flex-row border border-border">
-    <!-- Category Sidebar -->
-    <div class="w-full lg:w-48 flex-shrink-0 flex flex-col border-b lg:border-b-0 lg:border-r border-border overflow-y-auto bg-surface">
-      <div class="p-2 border-b border-border text-[10px] text-text-secondary tracking-widest font-bold">
-        FILTERS
-      </div>
+  <div class="flex-1 flex flex-col lg:flex-row gap-8 overflow-hidden">
+    <!-- Category Sidebar (Floating Pills) -->
+    <div class="w-full lg:w-56 flex-shrink-0 flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto pb-4 hide-scrollbar">
       <button 
-        class="text-left px-4 py-2 text-xs border-b border-border/50 {selectedCategory === null ? 'bg-brand text-black font-bold' : 'hover:bg-card text-text-secondary'}"
+        class="text-left px-5 py-3 text-sm font-medium rounded-2xl transition-all whitespace-nowrap {selectedCategory === null ? 'bg-white text-black shadow-float' : 'bg-white/5 text-text-secondary hover:bg-white/10'}"
         onclick={() => selectedCategory = null}
       >
-        ALL RECORDS
+        All Items
       </button>
       
       {#each categories as category}
         <button 
-          class="text-left px-4 py-2 text-xs border-b border-border/50 {selectedCategory === category.id ? 'bg-brand text-black font-bold' : 'hover:bg-card text-text-secondary'}"
+          class="text-left px-5 py-3 text-sm font-medium rounded-2xl transition-all whitespace-nowrap flex items-center gap-3 {selectedCategory === category.id ? 'bg-white text-black shadow-float' : 'bg-white/5 text-text-secondary hover:bg-white/10'}"
           onclick={() => selectedCategory = category.id}
         >
+          <span class="text-lg">{category.icon_emoji || '🍽️'}</span>
           {category.name}
         </button>
       {/each}
     </div>
 
-    <!-- Items Grid (Data Table) -->
-    <div class="flex-1 overflow-y-auto bg-black">
+    <!-- Items Grid (Liquid Glass Cards) -->
+    <div class="flex-1 overflow-y-auto pb-12 pr-2 hide-scrollbar">
       {#if isLoading}
-        <div class="h-full flex items-center justify-center">
-          <RefreshCw size={24} class="animate-spin text-brand opacity-50" />
+        <div class="h-64 flex items-center justify-center">
+          <RefreshCw size={32} class="animate-spin text-brand opacity-50" />
         </div>
       {:else if errorMsg}
-        <div class="h-full flex flex-col items-center justify-center text-red-500 p-6 text-center text-xs">
-          <p class="font-bold">ERR: {errorMsg}</p>
+        <div class="glass-panel h-64 flex flex-col items-center justify-center text-red-400 rounded-3xl p-6 text-center">
+          <p class="font-bold mb-2">Error Loading Data</p>
+          <p class="text-sm opacity-80">{errorMsg}</p>
         </div>
       {:else if filteredItems.length === 0}
-        <div class="h-full flex flex-col items-center justify-center text-text-secondary text-xs tracking-widest">
-          NO RECORDS FOUND.
+        <div class="glass-panel h-64 flex flex-col items-center justify-center text-text-secondary rounded-3xl">
+          <UtensilsCrossed size={48} class="mb-4 opacity-20" />
+          <p class="font-medium">No items found.</p>
         </div>
       {:else}
-        <table class="w-full text-left border-collapse text-xs">
-          <thead class="sticky top-0 bg-surface z-10 border-b border-border">
-            <tr class="text-[10px] text-text-secondary tracking-widest">
-              <th class="p-2 font-normal w-12 border-r border-border">ID</th>
-              <th class="p-2 font-normal border-r border-border">NAME</th>
-              <th class="p-2 font-normal w-24 border-r border-border text-right">PRICE</th>
-              <th class="p-2 font-normal w-32 border-r border-border">TAGS</th>
-              <th class="p-2 font-normal w-24 border-r border-border text-center">STATUS</th>
-              <th class="p-2 font-normal w-24 text-center">CMD</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-border/30">
-            {#each filteredItems as item (item.id)}
-              <tr class="hover:bg-surface/30 {item.is_available ? '' : 'text-text-secondary/50'}">
-                <td class="p-2 border-r border-border/30 font-mono text-[10px] truncate max-w-[48px]">{item.id.slice(0, 4)}</td>
-                <td class="p-2 border-r border-border/30">
-                  <div class="font-bold text-brand truncate max-w-[200px]">{item.name}</div>
-                  <div class="text-[10px] text-text-secondary truncate max-w-[200px] mt-0.5">{item.description || 'N/A'}</div>
-                </td>
-                <td class="p-2 border-r border-border/30 text-right font-mono">
-                  {formatCurrency(item.price)}
-                  {#if item.happy_hour_discount}
-                    <div class="text-[9px] text-green-500 mt-0.5">-{item.happy_hour_discount}%</div>
-                  {/if}
-                </td>
-                <td class="p-2 border-r border-border/30">
-                  <div class="flex flex-wrap gap-1">
-                    {#each item.dietary_tags || [] as tag}
-                      {#if DIETARY_META[tag as DietaryTag]}
-                        <span class="text-[8px] font-bold px-1 rounded-none border" style="border-color: {DIETARY_META[tag as DietaryTag].color}; color: {DIETARY_META[tag as DietaryTag].color}">
-                          {tag}
-                        </span>
-                      {/if}
-                    {/each}
-                  </div>
-                </td>
-                <td class="p-2 border-r border-border/30 text-center">
+        <div class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+          {#each filteredItems as item (item.id)}
+            <div class="glass-strong border border-white/5 hover:border-white/10 rounded-3xl overflow-hidden flex flex-col group relative transition-all duration-300 hover:shadow-float {item.is_available ? '' : 'opacity-60 grayscale-[50%]'}">
+              
+              {#if !item.is_available}
+                <div class="absolute top-3 right-3 z-10 bg-red-500/20 backdrop-blur-md text-red-400 border border-red-500/30 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  Out of Stock
+                </div>
+              {/if}
+
+              <div class="h-48 bg-white/5 relative overflow-hidden flex items-center justify-center">
+                {#if item.image_url}
+                  <img src={item.image_url} alt={item.name} class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" />
+                {:else}
+                  <ImageIcon size={48} class="text-white/10" />
+                {/if}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                
+                <!-- Quick actions on hover -->
+                <div class="absolute top-3 left-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                   <button 
-                    class="text-[10px] font-bold px-2 py-0.5 border {item.is_available ? 'border-green-500 text-green-500 hover:bg-green-500 hover:text-black' : 'border-text-secondary text-text-secondary hover:border-white hover:text-white'}"
-                    onclick={() => toggleAvailability(item)}
+                    class="p-2 bg-black/40 hover:bg-brand rounded-full text-white backdrop-blur-md transition-colors" 
+                    title="Edit"
+                    onclick={() => openEditModal(item)}
                   >
-                    {item.is_available ? 'ONLINE' : 'OFFLINE'}
+                    <Edit2 size={16} />
                   </button>
-                </td>
-                <td class="p-2 text-center">
-                  <div class="flex gap-2 justify-center">
-                    <button class="text-text-secondary hover:text-white" onclick={() => openEditModal(item)}>
-                      <Edit2 size={14} />
-                    </button>
-                    <button class="text-text-secondary hover:text-red-500" onclick={() => deleteItem(item.id)}>
-                      <Trash2 size={14} />
-                    </button>
+                  <button 
+                    class="p-2 bg-black/40 hover:bg-red-500 rounded-full text-white backdrop-blur-md transition-colors" 
+                    title="Delete"
+                    onclick={() => deleteItem(item.id)}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+              
+              <div class="p-5 flex-1 flex flex-col relative z-10 -mt-6 bg-gradient-to-b from-transparent to-surface/80">
+                <div class="flex justify-between items-start mb-2">
+                  <h3 class="font-bold text-xl leading-tight truncate pr-4">{item.name}</h3>
+                  <div class="text-right shrink-0">
+                    <span class="font-bold text-brand text-lg">{formatCurrency(item.price)}</span>
+                    {#if item.happy_hour_discount}
+                      <div class="text-[10px] text-green-400 font-bold uppercase tracking-wide bg-green-500/10 px-2 py-0.5 rounded-full inline-block mt-1">-{item.happy_hour_discount}% HH</div>
+                    {/if}
                   </div>
-                </td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
+                </div>
+                
+                <p class="text-sm text-text-secondary line-clamp-2 mb-4 flex-1">{item.description}</p>
+                
+                <div class="flex flex-wrap gap-1.5 mb-5">
+                  {#each item.dietary_tags || [] as tag}
+                    {#if DIETARY_META[tag as DietaryTag]}
+                      <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded-full border border-current" style="color: {DIETARY_META[tag as DietaryTag].color}; background: {DIETARY_META[tag as DietaryTag].color}15">
+                        {DIETARY_META[tag as DietaryTag].label}
+                      </span>
+                    {/if}
+                  {/each}
+                </div>
+                
+                <div class="flex items-center justify-between pt-4 border-t border-white/5 mt-auto">
+                  <span class="text-sm font-semibold {item.is_available ? 'text-green-400' : 'text-red-400'}">
+                    {item.is_available ? 'Available' : 'Unavailable'}
+                  </span>
+                  
+                  <label class="toggle relative inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      class="sr-only peer" 
+                      checked={item.is_available} 
+                      onchange={() => toggleAvailability(item)}
+                    >
+                    <div class="w-12 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand shadow-inner"></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          {/each}
+        </div>
       {/if}
     </div>
   </div>
 </div>
 
-<!-- Brutalist Modal -->
+<!-- Liquid Glass Edit Modal -->
 {#if showModal}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 font-mono uppercase text-xs animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) showModal = false; }}>
-    <div class="bg-black border border-brand w-full max-w-2xl shadow-[0_0_15px_var(--color-brand)] max-h-[90vh] flex flex-col" onclick={(e) => e.stopPropagation()}>
-      <div class="flex justify-between items-center p-3 bg-brand text-black">
-        <h2 class="font-bold tracking-widest">{editingItemId ? 'EDIT RECORD' : 'NEW RECORD'}</h2>
-        <button class="hover:bg-black hover:text-brand p-1" onclick={() => showModal = false}>
-          <X size={16} />
-        </button>
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) showModal = false; }}>
+    <div class="glass-panel w-full max-w-2xl rounded-[2rem] p-8 shadow-float animate-slide-up relative overflow-hidden" onclick={(e) => e.stopPropagation()}>
+      <div class="absolute top-0 right-0 w-64 h-64 bg-brand/10 rounded-full blur-[80px] -z-10 -translate-y-1/2 translate-x-1/2"></div>
+      
+      <div class="flex justify-between items-center mb-8 border-b border-white/5 pb-4">
+        <h2 class="text-2xl font-display font-bold">{editingItemId ? 'Edit Item' : 'New Menu Item'}</h2>
+        <button class="p-2 bg-white/5 hover:bg-white/10 rounded-full text-text-secondary hover:text-white transition-colors" onclick={() => showModal = false}><X size={18} /></button>
       </div>
       
-      <div class="p-6 space-y-4 overflow-y-auto text-text-primary">
-        <div class="grid grid-cols-2 gap-4">
-          <div class="col-span-2 flex flex-col gap-1">
-            <label class="text-[10px] text-text-secondary tracking-widest" for="name">NAME</label>
-            <input id="name" type="text" class="bg-transparent border border-border p-2 outline-none focus:border-brand" bind:value={itemForm.name} />
+      <div class="space-y-5 max-h-[60vh] overflow-y-auto pr-2 hide-scrollbar">
+        <div class="grid grid-cols-2 gap-5">
+          <div class="col-span-2 space-y-1.5">
+            <label class="text-sm font-medium text-text-secondary pl-1" for="name">Name</label>
+            <input id="name" type="text" class="w-full bg-black/20 border border-white/10 rounded-2xl p-3 text-sm outline-none focus:border-brand transition-all backdrop-blur-sm" bind:value={itemForm.name} placeholder="Item name" />
           </div>
-          <div class="flex flex-col gap-1">
-            <label class="text-[10px] text-text-secondary tracking-widest" for="price">PRICE</label>
-            <input id="price" type="number" step="0.01" class="bg-transparent border border-border p-2 outline-none focus:border-brand" bind:value={itemForm.price} />
+          <div class="space-y-1.5">
+            <label class="text-sm font-medium text-text-secondary pl-1" for="price">Price (₹)</label>
+            <input id="price" type="number" step="0.01" class="w-full bg-black/20 border border-white/10 rounded-2xl p-3 text-sm outline-none focus:border-brand transition-all backdrop-blur-sm" bind:value={itemForm.price} placeholder="0.00" />
           </div>
-          <div class="flex flex-col gap-1">
-            <label class="text-[10px] text-text-secondary tracking-widest" for="hh_discount">HH DISCOUNT %</label>
-            <input id="hh_discount" type="number" step="1" min="0" max="100" class="bg-transparent border border-border p-2 outline-none focus:border-brand" bind:value={itemForm.happy_hour_discount} />
+          <div class="space-y-1.5">
+            <label class="text-sm font-medium text-text-secondary pl-1" for="hh_discount">Happy Hour Discount %</label>
+            <input id="hh_discount" type="number" step="1" min="0" max="100" class="w-full bg-black/20 border border-white/10 rounded-2xl p-3 text-sm outline-none focus:border-brand transition-all backdrop-blur-sm" bind:value={itemForm.happy_hour_discount} placeholder="e.g. 20" />
           </div>
-          <div class="col-span-2 flex flex-col gap-1">
-            <label class="text-[10px] text-text-secondary tracking-widest" for="cat">CATEGORY</label>
-            <select id="cat" class="bg-black border border-border p-2 outline-none focus:border-brand" bind:value={itemForm.category_id}>
-              <option value="" disabled selected>SELECT...</option>
+          <div class="col-span-2 space-y-1.5">
+            <label class="text-sm font-medium text-text-secondary pl-1" for="cat">Category</label>
+            <select id="cat" class="w-full bg-black/20 border border-white/10 rounded-2xl p-3 text-sm outline-none focus:border-brand transition-all backdrop-blur-sm appearance-none" bind:value={itemForm.category_id}>
+              <option value="" disabled selected>Select category...</option>
               {#each categories as cat}
                 <option value={cat.id}>{cat.name}</option>
               {/each}
             </select>
           </div>
-          <div class="col-span-2 flex flex-col gap-1">
-            <label class="text-[10px] text-text-secondary tracking-widest" for="img">IMAGE URL (OPTIONAL)</label>
-            <input id="img" type="text" class="bg-transparent border border-border p-2 outline-none focus:border-brand" bind:value={itemForm.image_url} />
+          
+          <div class="col-span-2 space-y-1.5">
+            <label class="text-sm font-medium text-text-secondary pl-1" for="img">Image URL</label>
+            <input id="img" type="text" class="w-full bg-black/20 border border-white/10 rounded-2xl p-3 text-sm outline-none focus:border-brand transition-all backdrop-blur-sm" bind:value={itemForm.image_url} placeholder="Image link" />
           </div>
-          <div class="col-span-2 flex flex-col gap-1">
-            <span class="text-[10px] text-text-secondary tracking-widest">DIETARY TAGS</span>
-            <div class="flex flex-wrap gap-2 mt-1">
+          <div class="col-span-2 space-y-1.5">
+            <span class="text-sm font-medium text-text-secondary pl-1">Dietary Tags</span>
+            <div class="flex flex-wrap gap-2 mt-2">
               {#each Object.entries(DIETARY_META) as [tag, meta]}
                 <button 
-                  class="px-2 py-1 text-[10px] font-bold border transition-colors {itemForm.dietary_tags.includes(tag as DietaryTag) ? 'bg-surface' : 'opacity-50 hover:opacity-100'}"
-                  style="border-color: {meta.color}; color: {meta.color}"
+                  class="px-4 py-2 rounded-full text-xs font-bold border transition-all {itemForm.dietary_tags.includes(tag as DietaryTag) ? 'scale-105' : 'opacity-50 hover:opacity-100 grayscale'}"
+                  style="background-color: {itemForm.dietary_tags.includes(tag as DietaryTag) ? meta.color + '20' : 'transparent'}; color: {meta.color}; border-color: {meta.color}"
                   onclick={() => toggleTag(tag as DietaryTag)}
                 >
-                  {tag}
+                  {meta.label}
                 </button>
               {/each}
             </div>
           </div>
-          <div class="col-span-2 flex flex-col gap-1">
-            <label class="text-[10px] text-text-secondary tracking-widest" for="desc">DESCRIPTION</label>
-            <textarea id="desc" class="bg-transparent border border-border p-2 h-20 outline-none focus:border-brand resize-none" bind:value={itemForm.description}></textarea>
+          <div class="col-span-2 space-y-1.5">
+            <label class="text-sm font-medium text-text-secondary pl-1" for="desc">Description</label>
+            <textarea id="desc" class="w-full bg-black/20 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-brand transition-all backdrop-blur-sm h-28 resize-none" bind:value={itemForm.description} placeholder="Delicious description..."></textarea>
           </div>
         </div>
       </div>
       
-      <div class="flex border-t border-border mt-auto">
-        <button class="flex-1 py-3 text-center border-r border-border hover:bg-surface text-text-secondary" onclick={() => showModal = false} disabled={isSaving}>ABORT</button>
-        <button class="flex-1 py-3 text-center bg-brand text-black font-bold hover:bg-brand/80 disabled:opacity-50" onclick={saveItem} disabled={isSaving}>
-          {isSaving ? 'EXECUTING...' : 'COMMIT'}
+      <div class="flex justify-end gap-3 mt-8 pt-4 border-t border-white/5">
+        <button class="px-6 py-2.5 rounded-full bg-white/5 hover:bg-white/10 font-medium transition-colors" onclick={() => showModal = false} disabled={isSaving}>Cancel</button>
+        <button class="px-6 py-2.5 rounded-full bg-brand text-black font-semibold hover:bg-brand-hover hover:shadow-glow transition-all disabled:opacity-50 flex items-center gap-2" onclick={saveItem} disabled={isSaving}>
+          {#if isSaving}
+            <RefreshCw size={16} class="animate-spin" /> Saving...
+          {:else}
+            {editingItemId ? 'Update Item' : 'Create Item'}
+          {/if}
         </button>
       </div>
     </div>

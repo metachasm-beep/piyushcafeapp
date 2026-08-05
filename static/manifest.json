@@ -29,7 +29,7 @@
       "name": "Kitchen Display",
       "short_name": "Kitchen",
       "description": "Open the Kitchen Display System",
-      "url": "/admin/kitchen",
+      "url": "/owner/kitchen",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]

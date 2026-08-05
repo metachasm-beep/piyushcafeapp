@@ -1,26 +1,19 @@
 <script lang="ts">
-  import { fade, slide, scale } from 'svelte/transition';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { toast } from 'svelte-sonner';
-  import { 
-    Bell, CreditCard, Smartphone, Banknote, CheckCircle, 
-    ArrowLeft, Clock, ChefHat, Utensils, ThumbsUp, X
-  } from '@lucide/svelte';
+  import { Bell, CheckCircle, ArrowLeft, Clock, ChefHat, Utensils, ThumbsUp } from '@lucide/svelte';
 
   import { session } from '$lib/stores/session';
   import { adminOrders, waiterRequests } from '$lib/stores/admin';
-  import { formatCurrency, timeAgo, generateUUID } from '$lib/utils';
-  
+  import { formatCurrency, generateUUID } from '$lib/utils';
+
   import StatusBadge from '$lib/components/StatusBadge.svelte';
 
-  // State
   let orderId = $derived($session.activeOrderId);
-  let order = $derived($adminOrders.find(o => o.id === orderId));
-  
+  let order = $derived($adminOrders.find((o) => o.id === orderId));
+
   let waiterCalled = $state(false);
-  
-  // Real-time Simulation
   let simulationInterval: ReturnType<typeof setInterval>;
 
   $effect(() => {
@@ -29,25 +22,26 @@
       return;
     }
 
-    // Simulate order progression for demo purposes
     simulationInterval = setInterval(() => {
-      const currentOrder = $adminOrders.find(o => o.id === orderId);
+      const currentOrder = $adminOrders.find((o) => o.id === orderId);
       if (!currentOrder) return;
-      
+
       if (currentOrder.status === 'pending') {
         adminOrders.updateStatus(orderId!, 'preparing');
-        toast.info('Chefs have started preparing your order! 👨‍🍳');
+        toast.info('Chefs have started preparing your order');
       } else if (currentOrder.status === 'preparing') {
         adminOrders.updateStatus(orderId!, 'ready');
-        toast.success('Your food is ready and on the way! 🔔');
+        toast.success('Your food is ready and on the way');
       } else if (currentOrder.status === 'ready') {
         adminOrders.updateStatus(orderId!, 'served');
-        toast.success('Your order has been served. Enjoy! 😊');
+        toast.success('Your order has been served. Enjoy!');
         clearInterval(simulationInterval);
       }
     }, 15000);
 
-    return () => { if (simulationInterval) clearInterval(simulationInterval); };
+    return () => {
+      if (simulationInterval) clearInterval(simulationInterval);
+    };
   });
 
   function handleCallWaiter() {
@@ -66,11 +60,9 @@
       });
       waiterCalled = true;
       toast.success('Waiter called!');
-      setTimeout(() => waiterCalled = false, 60000);
+      setTimeout(() => (waiterCalled = false), 60000);
     }
   }
-
-
 
   function handleBack() {
     if (order && !['served', 'paid', 'cancelled'].includes(order.status)) {
@@ -80,62 +72,82 @@
   }
 
   const STAGES = [
-    { id: 'pending', label: 'Order Placed', icon: Clock, msg: 'Your order has been received! 🎉 Sit back and relax.' },
-    { id: 'preparing', label: 'Preparing', icon: ChefHat, msg: 'Our chefs are working on your order 👨‍🍳' },
-    { id: 'ready', label: 'Ready!', icon: Utensils, msg: 'Your food is ready! 🔔 A waiter will bring it.' },
-    { id: 'served', label: 'Served', icon: ThumbsUp, msg: 'Enjoy your meal! 😊' }
+    { id: 'pending', label: 'Placed', icon: Clock, msg: 'Order received — sit back and relax.' },
+    { id: 'preparing', label: 'Preparing', icon: ChefHat, msg: 'Our chefs are working on your order.' },
+    { id: 'ready', label: 'Ready', icon: Utensils, msg: 'Your food is ready — a waiter will bring it.' },
+    { id: 'served', label: 'Served', icon: ThumbsUp, msg: 'Enjoy your meal!' }
   ];
 
-  let currentStageIndex = $derived(
-    !order ? 0 : Math.max(0, STAGES.findIndex(s => s.id === order.status))
-  );
+  let currentStageIndex = $derived(!order ? 0 : Math.max(0, STAGES.findIndex((s) => s.id === order.status)));
 </script>
 
 <svelte:head>
-  <title>Track Order - Restaurant PWA</title>
+  <title>Track Order · Demo Template</title>
 </svelte:head>
 
 {#if order}
-  <header class="fixed top-0 inset-x-0 z-40 bg-black/60 backdrop-blur-xl border-b border-white/5 px-4 py-4 flex items-center gap-4">
-    <button class="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-white active:scale-95" onclick={handleBack}>
-      <ArrowLeft size={20} />
+  <header
+    class="sg-glass"
+    style="position:fixed;top:0;inset-inline:0;z-index:40;border-bottom:1px solid rgba(99,102,241,0.1);padding:14px 16px;display:flex;align-items:center;gap:12px;"
+  >
+    <button
+      type="button"
+      style="width:40px;height:40px;border-radius:12px;border:1px solid rgba(99,102,241,0.15);background:rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;color:#4338ca;cursor:pointer;"
+      onclick={handleBack}
+    >
+      <ArrowLeft size={18} />
     </button>
-    <div class="flex-1">
-      <h1 class="font-display text-lg font-bold text-white">Order Tracking</h1>
-      <p class="text-xs text-text-secondary">#{order.id.slice(0, 8).toUpperCase()}</p>
+    <div style="flex:1;min-width:0;">
+      <h1 style="font-size:16px;font-weight:800;color:#1e1b4b;margin:0;letter-spacing:-0.02em;">Order Tracking</h1>
+      <p style="font-size:11px;font-family:'Geist Mono',monospace;color:#8b84c0;margin:2px 0 0;">
+        #{order.id.slice(0, 8).toUpperCase()}
+      </p>
     </div>
-    <div class="badge bg-brand/20 text-brand border-brand/30">{order.table_id}</div>
+    <span class="sg-badge-info">{order.table_id}</span>
   </header>
 
-  <main class="pt-24 pb-32 px-4 space-y-6 animate-fade-in max-w-lg mx-auto">
-    
-    <!-- Status Tracker -->
-    <section class="glass p-6 rounded-3xl space-y-8">
-      <div class="text-center space-y-2">
+  <main style="padding:88px 16px 120px;max-width:480px;margin:0 auto;">
+    <section class="sg-tile sg-tile-static" style="padding:28px 24px;margin-bottom:20px;">
+      <div style="text-align:center;margin-bottom:28px;">
         <StatusBadge status={order.status} />
-        <h2 class="text-xl font-display font-bold text-white mt-2">
+        <h2 style="font-size:18px;font-weight:800;color:#1e1b4b;margin:14px 0 0;letter-spacing:-0.02em;line-height:1.3;">
           {STAGES[currentStageIndex]?.msg || 'Order updated'}
         </h2>
       </div>
 
-      <div class="relative pt-4">
-        <!-- Connecting Line -->
-        <div class="absolute top-[28px] left-6 right-6 h-1 bg-surface-light rounded-full z-0 overflow-hidden">
-          <div class="h-full bg-brand transition-all duration-1000 ease-in-out" style="width: {(Math.min(currentStageIndex, 3) / 3) * 100}%"></div>
+      <div style="position:relative;padding-top:4px;">
+        <div
+          style="position:absolute;top:22px;left:28px;right:28px;height:3px;background:rgba(99,102,241,0.12);border-radius:99px;overflow:hidden;z-index:0;"
+        >
+          <div
+            style="height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6);transition:width 1s ease;width:{(Math.min(currentStageIndex, 3) / 3) * 100}%;"
+          ></div>
         </div>
 
-        <div class="relative z-10 flex justify-between">
+        <div style="position:relative;z-index:1;display:flex;justify-content:space-between;">
           {#each STAGES.slice(0, 4) as stage, i}
             {@const isCompleted = i <= currentStageIndex}
             {@const isCurrent = i === currentStageIndex}
-            <div class="flex flex-col items-center gap-2">
-              <div class="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 {isCompleted ? 'bg-brand text-white shadow-[0_0_15px_rgba(249,115,22,0.4)]' : 'bg-surface text-text-secondary border border-white/10'} {isCurrent ? 'scale-110' : ''} relative">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+              <div
+                style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all 0.4s;position:relative;{isCompleted
+                  ? 'background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;box-shadow:0 4px 14px rgba(99,102,241,0.35);'
+                  : 'background:rgba(255,255,255,0.7);color:#a5b4fc;border:1px solid rgba(99,102,241,0.15);'}{isCurrent
+                  ? 'transform:scale(1.08);'
+                  : ''}"
+              >
                 {#if isCurrent}
-                  <span class="absolute inset-0 rounded-full border-2 border-brand animate-ping opacity-50"></span>
+                  <span
+                    style="position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(99,102,241,0.4);animation:sg-ring 1.5s ease-out infinite;"
+                  ></span>
                 {/if}
-                <stage.icon size={18} />
+                <stage.icon size={16} />
               </div>
-              <span class="text-[10px] font-medium {isCompleted ? 'text-white' : 'text-text-secondary'} text-center w-16">
+              <span
+                style="font-size:10px;font-weight:600;font-family:'Geist Mono',monospace;text-align:center;width:56px;color:{isCompleted
+                  ? '#1e1b4b'
+                  : '#8b84c0'};"
+              >
                 {stage.label}
               </span>
             </div>
@@ -144,64 +156,99 @@
       </div>
     </section>
 
-    <!-- Order Summary -->
-    <section class="space-y-4">
-      <h3 class="font-display font-semibold text-lg text-white">Order Summary</h3>
-      <div class="glass rounded-2xl p-4 space-y-4">
-        {#each (order.order_items ?? []) as item}
-          <div class="flex gap-4 items-center">
-            <div class="w-14 h-14 rounded-lg bg-surface overflow-hidden flex-shrink-0">
-              <img src={item.menu_item.image_url} alt={item.menu_item.name} class="w-full h-full object-cover" />
+    <section>
+      <h3
+        style="font-size:13px;font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;color:#8b84c0;margin:0 0 12px;"
+      >
+        Order Summary
+      </h3>
+      <div class="sg-tile sg-tile-static" style="padding:18px;display:flex;flex-direction:column;gap:14px;">
+        {#each order.order_items ?? [] as item}
+          <div style="display:flex;gap:12px;align-items:center;">
+            <div style="width:52px;height:52px;border-radius:12px;overflow:hidden;background:rgba(99,102,241,0.08);flex-shrink:0;">
+              <img src={item.menu_item?.image_url} alt={item.menu_item?.name} style="width:100%;height:100%;object-fit:cover;" />
             </div>
-            <div class="flex-1">
-              <h4 class="font-medium text-white text-sm">{item.menu_item.name}</h4>
-              <p class="text-xs text-text-secondary">Qty: {item.quantity}</p>
+            <div style="flex:1;min-width:0;">
+              <h4 style="font-size:13px;font-weight:700;color:#1e1b4b;margin:0;">{item.menu_item?.name ?? item.menu_item_id}</h4>
+              <p style="font-size:11px;color:#8b84c0;margin:2px 0 0;">Qty: {item.quantity}</p>
             </div>
-            <div class="text-brand font-semibold text-sm">
-              {formatCurrency(item.menu_item.price * item.quantity)}
+            <div style="font-size:13px;font-weight:800;color:#6366f1;">
+              {formatCurrency((item.menu_item?.price ?? 0) * item.quantity)}
             </div>
           </div>
         {/each}
 
         {#if order.special_notes}
-          <div class="p-3 bg-surface/50 rounded-xl border border-white/5">
-            <p class="text-xs text-text-secondary"><span class="font-medium text-white">Notes:</span> {order.special_notes}</p>
+          <div style="padding:12px;background:rgba(99,102,241,0.05);border-radius:12px;border:1px solid rgba(99,102,241,0.1);">
+            <p style="font-size:12px;color:#8b84c0;margin:0;">
+              <span style="font-weight:700;color:#1e1b4b;">Notes:</span>
+              {order.special_notes}
+            </p>
           </div>
         {/if}
 
-        <div class="pt-4 border-t border-white/5 space-y-2">
-          <div class="flex justify-between text-sm text-text-secondary">
+        <div style="padding-top:12px;border-top:1px solid rgba(99,102,241,0.1);display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#8b84c0;">
             <span>Subtotal</span>
             <span>{formatCurrency(order.total_amount)}</span>
           </div>
-          <div class="flex justify-between text-lg font-bold text-white pt-2">
+          <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;color:#1e1b4b;padding-top:4px;">
             <span>Total</span>
-            <span class="text-brand">{formatCurrency(order.total_amount)}</span>
+            <span style="color:#6366f1;">{formatCurrency(order.total_amount)}</span>
           </div>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Bottom Actions -->
-  <div class="fixed bottom-0 inset-x-0 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 z-40 max-w-lg mx-auto">
-    <div class="flex gap-3">
-      <button 
-        class="w-14 rounded-xl glass-strong flex items-center justify-center text-white active:scale-95 transition-transform"
+  <div
+    class="sg-glass"
+    style="position:fixed;bottom:0;inset-inline:0;border-top:1px solid rgba(99,102,241,0.1);padding:14px 16px;z-index:40;max-width:480px;margin:0 auto;left:0;right:0;"
+  >
+    <div style="display:flex;gap:10px;">
+      <button
+        type="button"
+        class="sg-btn-ghost"
+        style="width:52px;padding:14px;"
         onclick={handleCallWaiter}
+        aria-label="Call waiter"
       >
-        <Bell size={20} class={waiterCalled ? 'text-brand animate-pulse' : ''} />
+        <span style="display:flex;color:{waiterCalled ? '#6366f1' : 'inherit'};">
+          <Bell size={18} />
+        </span>
       </button>
-      <button class="flex-1 bg-surface-light text-white font-medium rounded-xl border border-white/10 py-4 opacity-70 cursor-not-allowed flex justify-center items-center gap-2">
-        <CheckCircle size={20} /> Order Confirmed
+      <button
+        type="button"
+        style="flex:1;padding:14px;border-radius:12px;border:1px solid rgba(99,102,241,0.15);background:rgba(99,102,241,0.08);color:#4338ca;font-weight:700;font-size:14px;font-family:'Cabinet Grotesk',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;cursor:default;opacity:0.85;"
+        disabled
+      >
+        <CheckCircle size={18} /> Order Confirmed
       </button>
     </div>
   </div>
-
-
 {:else}
-  <div class="h-screen flex items-center justify-center flex-col gap-4">
-    <div class="w-8 h-8 border-2 border-brand/20 border-t-brand rounded-full animate-spin"></div>
-    <p class="text-text-secondary">Loading your order...</p>
+  <div style="min-height:100dvh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;">
+    <div
+      style="width:32px;height:32px;border:3px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;"
+    ></div>
+    <p style="font-size:13px;color:#8b84c0;font-family:'Geist Mono',monospace;">Loading your order…</p>
   </div>
 {/if}
+
+<style>
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes sg-ring {
+    0% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(1.35);
+      opacity: 0;
+    }
+  }
+</style>

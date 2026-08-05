@@ -1,9 +1,10 @@
 <script lang="ts">
   import { supabase } from '$lib/supabase';
   import type { MenuItem, MenuCategory } from '$lib/types';
+  import { MOCK_MENU_ITEMS, MOCK_CATEGORIES } from '$lib/mock-data';
   import { toast } from 'svelte-sonner';
-  import { RefreshCw, Search } from 'lucide-svelte';
-  import { adminUser } from '$lib/stores/admin';
+  import { RefreshCw, Search } from '@lucide/svelte';
+  import { formatCurrency } from '$lib/utils';
 
   let items = $state<MenuItem[]>([]);
   let categories = $state<MenuCategory[]>([]);
@@ -14,14 +15,20 @@
   async function loadInventory() {
     isLoading = true;
     try {
-      // In a real app, filter by $adminUser's restaurant_id
+      if (!supabase) {
+        categories = MOCK_CATEGORIES;
+        items = MOCK_MENU_ITEMS;
+        return;
+      }
       const { data: catData } = await supabase.from('menu_categories').select('*').order('sort_order');
       const { data: itemData } = await supabase.from('menu_items').select('*').order('sort_order');
-      
-      if (catData) categories = catData;
-      if (itemData) items = itemData;
-    } catch (err: any) {
-      toast.error('Failed to load inventory');
+
+      categories = catData ?? MOCK_CATEGORIES;
+      items = itemData ?? MOCK_MENU_ITEMS;
+    } catch {
+      categories = MOCK_CATEGORIES;
+      items = MOCK_MENU_ITEMS;
+      toast.error('Using demo inventory data');
     } finally {
       isLoading = false;
     }
@@ -33,20 +40,20 @@
 
   async function toggleAvailability(item: MenuItem) {
     const newValue = !item.is_available;
-    // Optimistic UI update
-    const idx = items.findIndex(i => i.id === item.id);
+    const idx = items.findIndex((i) => i.id === item.id);
     if (idx !== -1) {
       items[idx] = { ...item, is_available: newValue };
     }
-    
-    const { error } = await supabase
-      .from('menu_items')
-      .update({ is_available: newValue })
-      .eq('id', item.id);
-      
+
+    if (!supabase) {
+      toast.success(`${item.name} marked as ${newValue ? 'In Stock' : 'Out of Stock'}`);
+      return;
+    }
+
+    const { error } = await supabase.from('menu_items').update({ is_available: newValue }).eq('id', item.id);
+
     if (error) {
       toast.error(`Failed to update ${item.name}`);
-      // Revert
       if (idx !== -1) {
         items[idx] = { ...item, is_available: !newValue };
       }
@@ -56,7 +63,7 @@
   }
 
   let filteredItems = $derived(
-    items.filter(item => {
+    items.filter((item) => {
       const matchesCategory = selectedCategory ? item.category_id === selectedCategory : true;
       const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
@@ -64,77 +71,107 @@
   );
 </script>
 
-<div class="max-w-6xl mx-auto space-y-6 animate-fade-in pb-10">
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<svelte:head>
+  <title>Inventory · Owner Portal</title>
+</svelte:head>
+
+<div>
+  <div class="sg-page-header">
     <div>
-      <h2 class="text-2xl font-bold font-display">Inventory Management</h2>
-      <p class="text-[var(--color-text-secondary)]">Quickly mark items as out of stock.</p>
+      <h1 class="sg-page-title">Inventory</h1>
+      <p class="sg-page-subtitle">Mark items in or out of stock</p>
     </div>
-    <div class="flex items-center gap-3 w-full md:w-auto">
-      <div class="relative flex-1 md:w-64">
-        <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]" size={18} />
-        <input 
-          type="text" 
-          bind:value={searchQuery} 
-          placeholder="Search items..." 
-          class="input-dark w-full pl-10"
-        />
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <div style="position:relative;width:220px;max-width:100%;">
+        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8b84c0;pointer-events:none;display:flex;">
+          <Search size={16} />
+        </span>
+        <input type="text" bind:value={searchQuery} placeholder="Search items…" class="sg-input" style="padding-left:36px;" />
       </div>
-      <button class="p-3 bg-[var(--color-card)] rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-card-hover)] transition-colors" onclick={loadInventory}>
-        <RefreshCw size={20} class={isLoading ? 'animate-spin' : ''} />
+      <button type="button" class="sg-btn-ghost" style="padding:10px;" onclick={loadInventory} aria-label="Refresh">
+        <span class={isLoading ? 'spin' : ''} style="display:flex;">
+          <RefreshCw size={18} />
+        </span>
       </button>
     </div>
   </div>
 
-  <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-    <button 
-      class="px-4 py-2 rounded-full whitespace-nowrap transition-colors {selectedCategory === null ? 'bg-[var(--color-brand)] text-black font-bold' : 'bg-[var(--color-card)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-card-hover)]'}"
-      onclick={() => selectedCategory = null}
+  <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:16px;margin-bottom:8px;" class="sg-hide-scrollbar">
+    <button
+      type="button"
+      class="sg-cat-pill {selectedCategory === null ? 'sg-cat-pill-active' : ''}"
+      onclick={() => (selectedCategory = null)}
     >
       All Items
     </button>
     {#each categories as cat}
-      <button 
-        class="px-4 py-2 rounded-full whitespace-nowrap transition-colors {selectedCategory === cat.id ? 'bg-[var(--color-brand)] text-black font-bold' : 'bg-[var(--color-card)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-card-hover)]'}"
-        onclick={() => selectedCategory = cat.id}
+      <button
+        type="button"
+        class="sg-cat-pill {selectedCategory === cat.id ? 'sg-cat-pill-active' : ''}"
+        onclick={() => (selectedCategory = cat.id)}
       >
-        {cat.name}
+        {cat.icon_emoji ?? ''} {cat.name}
       </button>
     {/each}
   </div>
 
   {#if isLoading && items.length === 0}
-    <div class="flex items-center justify-center p-12">
-      <div class="w-12 h-12 border-4 border-[var(--color-brand)] border-t-transparent rounded-full animate-spin"></div>
+    <div style="display:flex;align-items:center;justify-content:center;padding:64px;">
+      <div
+        style="width:40px;height:40px;border:3px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;"
+      ></div>
     </div>
   {:else if filteredItems.length === 0}
-    <div class="bg-[var(--color-card)] border border-[var(--color-border)] rounded-2xl p-12 text-center text-[var(--color-text-secondary)]">
+    <div class="sg-tile sg-tile-static" style="padding:48px;text-align:center;color:#8b84c0;">
       No items found matching your filters.
     </div>
   {:else}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;">
       {#each filteredItems as item}
-        <div class="bg-[var(--color-card)] border border-[var(--color-border)] rounded-2xl p-4 flex flex-col gap-3 transition-colors relative overflow-hidden group">
-          <div class="flex items-start gap-3">
-            <div class="w-16 h-16 rounded-xl bg-gray-800 flex-shrink-0 relative overflow-hidden">
+        <div class="sg-tile" style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;align-items:flex-start;gap:12px;">
+            <div
+              style="width:64px;height:64px;border-radius:14px;background:rgba(99,102,241,0.08);flex-shrink:0;overflow:hidden;position:relative;"
+            >
               {#if item.image_url}
-                <img src={item.image_url} alt={item.name} class="w-full h-full object-cover {item.is_available ? '' : 'opacity-40 grayscale'}" />
+                <img
+                  src={item.image_url}
+                  alt={item.name}
+                  style="width:100%;height:100%;object-fit:cover;{item.is_available ? '' : 'opacity:0.4;filter:grayscale(1);'}"
+                />
               {:else}
-                <div class="w-full h-full flex items-center justify-center text-gray-500">No Img</div>
+                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#a5b4fc;font-size:11px;">
+                  No Img
+                </div>
               {/if}
             </div>
-            <div class="flex-1 min-w-0">
-              <h4 class="font-bold truncate text-[var(--color-text-primary)] {item.is_available ? '' : 'opacity-50'}">{item.name}</h4>
-              <p class="text-sm font-bold text-[var(--color-brand)] mt-1 {item.is_available ? '' : 'opacity-50'}">₹{item.price.toFixed(2)}</p>
+            <div style="flex:1;min-width:0;">
+              <h4
+                style="font-size:14px;font-weight:800;color:#1e1b4b;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;{item.is_available
+                  ? ''
+                  : 'opacity:0.5;'}"
+              >
+                {item.name}
+              </h4>
+              <p style="font-size:14px;font-weight:700;color:#6366f1;margin:6px 0 0;{item.is_available ? '' : 'opacity:0.5;'}">
+                {formatCurrency(item.price)}
+              </p>
             </div>
           </div>
-          
-          <div class="mt-auto pt-3 border-t border-[var(--color-border)] flex items-center justify-between">
-            <span class="text-sm font-medium {item.is_available ? 'text-green-400' : 'text-red-400'}">
+
+          <div
+            style="margin-top:auto;padding-top:12px;border-top:1px solid rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:space-between;"
+          >
+            <span class={item.is_available ? 'sg-badge-active' : 'sg-badge-inactive'}>
               {item.is_available ? 'In Stock' : 'Out of Stock'}
             </span>
-            <button 
-              class="px-3 py-1.5 rounded-lg text-sm font-bold transition-colors {item.is_available ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'}"
+            <button
+              type="button"
+              style="padding:6px 12px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Cabinet Grotesk',system-ui,sans-serif;border:1px solid {item.is_available
+                ? 'rgba(239,68,68,0.25)'
+                : 'rgba(34,197,94,0.25)'};background:{item.is_available
+                ? 'rgba(239,68,68,0.08)'
+                : 'rgba(34,197,94,0.08)'};color:{item.is_available ? '#dc2626' : '#16a34a'};"
               onclick={() => toggleAvailability(item)}
             >
               {item.is_available ? 'Mark OOS' : 'Restock'}
@@ -145,3 +182,14 @@
     </div>
   {/if}
 </div>
+
+<style>
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  :global(.spin) {
+    animation: spin 0.8s linear infinite;
+  }
+</style>

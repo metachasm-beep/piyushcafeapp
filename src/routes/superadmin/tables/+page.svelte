@@ -3,7 +3,6 @@
 	import { supabase } from '$lib/supabase';
 	import { toast } from 'svelte-sonner';
 	import QRCode from 'qrcode';
-	import { PUBLIC_APP_URL } from '$env/static/public';
 	import { Plus, Users, QrCode, Download, Printer, RefreshCw, X, Hash } from 'lucide-svelte';
 	import type { Table, Restaurant } from '$lib/types';
 
@@ -108,7 +107,8 @@
 
 	async function generateQR(table: Table) {
 		selectedTableForQr = table;
-		const url = `${PUBLIC_APP_URL}/table/${table.restaurant_id}/${table.id}`;
+		const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+		const url = `${baseUrl}/table/${table.restaurant_id}/${table.id}`;
 		try {
 			qrDataUrl = await QRCode.toDataURL(url, {
 				width: 400,

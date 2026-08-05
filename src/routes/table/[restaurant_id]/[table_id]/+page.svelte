@@ -5,7 +5,7 @@
   import { goto } from '$app/navigation';
   
   import { session } from '$lib/stores/session';
-  import { createOrder } from '$lib/db';
+  // Order placement is now handled through the secure /api/orders endpoint
   import { cart, cartCount, cartTotal } from '$lib/stores/cart';
   import { adminOrders, waiterRequests } from '$lib/stores/admin';
   import { formatCurrency, generateUUID } from '$lib/utils';
@@ -108,21 +108,32 @@
         subtotal: c.menu_item.price * c.quantity
       }));
       
-      const order = await createOrder(
-        restaurant.id, 
-        table.id, 
-        $cartTotal * 1.1, // Include taxes
-        paymentMethod, 
-        items
-      );
-      
-      session.setActiveOrder(order.id);
+      // Route through the secure server API endpoint (Zod-validated, saga-rollback enabled)
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          restaurant_id: restaurant.id,
+          table_id: table.id,
+          special_instructions: specialInstructions,
+          items
+        })
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody?.error ?? `Server error ${res.status}`);
+      }
+
+      const { orderId } = await res.json();
+      session.setActiveOrder(orderId);
       cart.clear();
       showCheckoutModal = false;
       toast.success('Payment Successful! 🎉 Order placed.');
       goto(`/table/${restaurant.id}/${table.id}/order`);
     } catch (e) {
-      toast.error('Failed to place order. Please try again.');
+      const msg = e instanceof Error ? e.message : 'Failed to place order. Please try again.';
+      toast.error(msg);
     } finally {
       isProcessingPayment = false;
     }

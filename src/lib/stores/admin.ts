@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // Admin Store — live KDS orders and waiter requests
 // In mock mode: uses in-memory reactive state
 // In production: Supabase real-time subscription channel

@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // Session Store — anonymous customer session
 // Persists a UUID to localStorage to identify the customer
 // Stores which table the customer is at

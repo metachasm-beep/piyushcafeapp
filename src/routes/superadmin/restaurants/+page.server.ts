@@ -1,4 +1,4 @@
-import { fail } from '@sveltejs/kit';
+﻿import { fail } from '@sveltejs/kit';
 import { createClient } from '@supabase/supabase-js';
 import { env } from '$env/dynamic/private';
 import { env as publicEnv } from '$env/dynamic/public';

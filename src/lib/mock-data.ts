@@ -1,4 +1,4 @@
-// =============================================================
+﻿// =============================================================
 // Comprehensive mock data for "The Golden Fork" restaurant
 // Used when PUBLIC_USE_MOCK=true (no Supabase connection needed)
 // =============================================================

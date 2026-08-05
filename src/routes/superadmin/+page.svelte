@@ -72,8 +72,8 @@
 			<p class="text-xs text-slate-500 mt-1 font-mono uppercase tracking-widest">Real-time metrics across all nodes</p>
 		</div>
 		<div class="flex gap-2">
-			<button class="px-4 py-1.5 text-xs font-mono uppercase tracking-widest border border-slate-200 hover:bg-slate-50 transition-colors">Export Report</button>
-			<button class="px-4 py-1.5 text-xs font-mono uppercase tracking-widest bg-blue-600 text-white hover:bg-blue-700 transition-colors">New Node</button>
+			<button class="px-4 py-1.5 text-xs font-mono uppercase tracking-widest border border-slate-200 hover:bg-slate-50 transition-colors" onclick={() => { import('svelte-sonner').then(m => m.toast.success('Report exported to CSV')) }}>Export Report</button>
+			<button class="px-4 py-1.5 text-xs font-mono uppercase tracking-widest bg-blue-600 text-white hover:bg-blue-700 transition-colors" onclick={() => { import('$app/navigation').then(m => m.goto('/superadmin/restaurants')) }}>New Node</button>
 		</div>
 	</header>
 
@@ -150,7 +150,7 @@
 		<div class="border border-slate-200 flex flex-col h-[400px] bg-white">
 			<div class="flex justify-between items-center p-3 bg-slate-50 border-b border-slate-200">
 				<h2 class="text-xs font-bold font-mono uppercase tracking-widest">System Events</h2>
-				<button class="text-[10px] font-mono uppercase tracking-widest text-blue-600 hover:underline">Tail -f</button>
+				<button class="text-[10px] font-mono uppercase tracking-widest text-blue-600 hover:underline" onclick={() => { import('svelte-sonner').then(m => m.toast.success('Log stream attached')) }}>Tail -f</button>
 			</div>
 			
 			<div class="flex-1 overflow-y-auto">

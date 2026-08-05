@@ -34,7 +34,7 @@
 		</nav>
 
 		<div class="p-4 border-t border-slate-200 bg-white">
-			<button class="w-full flex items-center gap-3 px-3 py-2 rounded-none text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors text-sm font-mono tracking-wide group">
+			<button class="w-full flex items-center gap-3 px-3 py-2 rounded-none text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors text-sm font-mono tracking-wide group" onclick={() => { import('$lib/stores/admin').then(m => m.adminUser.logout()); import('$app/navigation').then(m => m.goto('/admin/login')) }}>
 				<LogOut size={16} class="group-hover:-translate-x-1 transition-transform" />
 				<span>Sign Out</span>
 			</button>

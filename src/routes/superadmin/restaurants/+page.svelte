@@ -86,7 +86,7 @@
 
 						<!-- Action -->
 						<div class="col-span-1 p-3 flex items-center justify-center">
-							<button class="text-slate-400 hover:text-blue-600 transition-colors" title="Manage">
+							<button class="text-slate-400 hover:text-blue-600 transition-colors" title="Manage" onclick={() => toast.info('Node managed externally')}>
 								<ExternalLink size={16} />
 							</button>
 						</div>

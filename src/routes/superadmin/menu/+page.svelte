@@ -1,431 +1,231 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { supabase } from '$lib/supabase';
+  import { MOCK_MENU_ITEMS, MOCK_CATEGORIES, MOCK_RESTAURANT } from '$lib/mock-data';
   import { formatCurrency, DIETARY_META } from '$lib/utils';
   import { toast } from 'svelte-sonner';
-  import { Plus, Search, Edit2, Trash2, Image as ImageIcon, RefreshCw, X, UtensilsCrossed } from 'lucide-svelte';
-  import type { MenuItem, MenuCategory, DietaryTag, Restaurant } from '$lib/types';
-
-  let restaurants = $state<Restaurant[]>([]);
-  let selectedRestaurantId = $state<string | null>(null);
+  import { Plus, Search, Edit2, Trash2, X, RefreshCw } from 'lucide-svelte';
+  import type { MenuItem, MenuCategory } from '$lib/types';
 
   let items = $state<MenuItem[]>([]);
   let categories = $state<MenuCategory[]>([]);
   let isLoading = $state(true);
-  let isSaving = $state(false);
-  let errorMsg = $state('');
-
   let selectedCategory = $state<string | null>(null);
   let searchQuery = $state('');
+  let showModal = $state(false);
+  let editingItem = $state<MenuItem | null>(null);
+  let isSaving = $state(false);
 
   let filteredItems = $derived(
     items.filter(item => {
-      const matchesCategory = selectedCategory ? item.category_id === selectedCategory : true;
-      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
-      return matchesCategory && matchesSearch;
+      const matchesCat = selectedCategory ? item.category_id === selectedCategory : true;
+      const q = searchQuery.toLowerCase();
+      const matchesSearch = item.name.toLowerCase().includes(q) || (item.description ?? '').toLowerCase().includes(q);
+      return matchesCat && matchesSearch;
     })
   );
 
-  async function loadRestaurants() {
-    if (!supabase) return;
-    isLoading = true;
-    const { data, error } = await supabase.from('restaurants').select('*').order('name');
-    if (error) {
-      toast.error('Failed to load restaurants: ' + error.message);
-    } else {
-      restaurants = data;
-      if (restaurants.length > 0) {
-        selectedRestaurantId = restaurants[0].id;
-        await loadData();
-      } else {
-        isLoading = false;
-      }
-    }
-  }
-
-  async function loadData() {
-    if (!supabase || !selectedRestaurantId) return;
-    isLoading = true;
-    errorMsg = '';
-    try {
-      const [catRes, itemRes] = await Promise.all([
-        supabase.from('menu_categories').select('*').eq('restaurant_id', selectedRestaurantId).order('sort_order'),
-        supabase.from('menu_items').select('*').eq('restaurant_id', selectedRestaurantId).order('name')
-      ]);
-
-      if (catRes.error) throw catRes.error;
-      if (itemRes.error) throw itemRes.error;
-
-      categories = catRes.data;
-      items = itemRes.data;
-    } catch (e: any) {
-      errorMsg = e.message || 'Failed to load data';
-      toast.error(errorMsg);
-    } finally {
-      isLoading = false;
-    }
-  }
-
-  $effect(() => {
-    if (selectedRestaurantId && restaurants.length > 0) {
-      loadData();
-    }
-  });
-
-  onMount(() => {
+  onMount(async () => {
     if (!supabase) {
-      errorMsg = 'Supabase client not initialized.';
+      items = MOCK_MENU_ITEMS;
+      categories = MOCK_CATEGORIES;
       isLoading = false;
       return;
     }
-    loadRestaurants();
+    const [catRes, itemRes] = await Promise.all([
+      supabase.from('menu_categories').select('*').order('sort_order'),
+      supabase.from('menu_items').select('*').order('sort_order')
+    ]);
+    categories = catRes.data ?? MOCK_CATEGORIES;
+    items = itemRes.data ?? MOCK_MENU_ITEMS;
+    isLoading = false;
   });
 
+  function openAdd() { editingItem = null; showModal = true; }
+  function openEdit(item: MenuItem) { editingItem = { ...item }; showModal = true; }
+
   async function toggleAvailability(item: MenuItem) {
-    if (!supabase) return;
-    const newStatus = !item.is_available;
-    const { error } = await supabase.from('menu_items').update({ is_available: newStatus }).eq('id', item.id);
-    if (error) {
-      toast.error('Failed to update: ' + error.message);
-    } else {
-      const idx = items.findIndex(i => i.id === item.id);
-      if (idx !== -1) items[idx].is_available = newStatus;
-      toast.success(`${item.name} marked as ${newStatus ? 'available' : 'unavailable'}`);
-    }
+    const next = !item.is_available;
+    items = items.map(i => i.id === item.id ? { ...i, is_available: next } : i);
+    toast.success(next ? 'Item marked available' : 'Item marked unavailable');
+    if (supabase) await supabase.from('menu_items').update({ is_available: next }).eq('id', item.id);
   }
 
   async function deleteItem(id: string) {
-    if (!supabase) return;
-    if (confirm('Are you sure you want to delete this item?')) {
-      const { error } = await supabase.from('menu_items').delete().eq('id', id);
-      if (error) {
-        toast.error('Failed to delete: ' + error.message);
-      } else {
-        items = items.filter(i => i.id !== id);
-        toast.success('Item deleted successfully');
-      }
-    }
-  }
-  
-  let showModal = $state(false);
-  let editingItemId = $state<string | null>(null);
-
-  type FormType = {
-    name: string;
-    price: string;
-    category_id: string;
-    description: string;
-    image_url: string;
-    dietary_tags: DietaryTag[];
-    happy_hour_discount: string;
-  };
-  let itemForm = $state<FormType>({
-    name: '', price: '', category_id: '', description: '', image_url: '', dietary_tags: [], happy_hour_discount: ''
-  });
-
-  function openAddModal() {
-    editingItemId = null;
-    itemForm = { name: '', price: '', category_id: '', description: '', image_url: '', dietary_tags: [], happy_hour_discount: '' };
-    showModal = true;
+    if (!confirm('Delete this item?')) return;
+    items = items.filter(i => i.id !== id);
+    toast.success('Item deleted');
+    if (supabase) await supabase.from('menu_items').delete().eq('id', id);
   }
 
-  function openEditModal(item: MenuItem) {
-    editingItemId = item.id;
-    itemForm = {
-      name: item.name,
-      price: item.price.toString(),
-      category_id: item.category_id,
-      description: item.description || '',
-      image_url: item.image_url || '',
-      dietary_tags: item.dietary_tags || [],
-      happy_hour_discount: item.happy_hour_discount != null ? item.happy_hour_discount.toString() : ''
-    };
-    showModal = true;
-  }
-
-  function toggleTag(tag: DietaryTag) {
-    if (itemForm.dietary_tags.includes(tag)) {
-      itemForm.dietary_tags = itemForm.dietary_tags.filter(t => t !== tag);
-    } else {
-      itemForm.dietary_tags = [...itemForm.dietary_tags, tag];
-    }
-  }
-
-  async function saveItem() {
-    if (!supabase || !selectedRestaurantId) return;
-    if (!itemForm.name || !itemForm.price || !itemForm.category_id) {
-      toast.error('Name, Price, and Category are required');
-      return;
-    }
-
+  async function saveItem(e: SubmitEvent) {
+    e.preventDefault();
     isSaving = true;
-    const payload = {
-      restaurant_id: selectedRestaurantId,
-      category_id: itemForm.category_id,
-      name: itemForm.name,
-      description: itemForm.description,
-      price: parseFloat(itemForm.price),
-      image_url: itemForm.image_url || null,
-      dietary_tags: itemForm.dietary_tags,
-      happy_hour_discount: itemForm.happy_hour_discount ? parseFloat(itemForm.happy_hour_discount) : null,
-      is_available: true,
-      is_featured: false,
-      sort_order: 0,
-      updated_at: new Date().toISOString()
+    const fd = new FormData(e.target as HTMLFormElement);
+    const data: Partial<MenuItem> = {
+      name: fd.get('name') as string,
+      description: fd.get('description') as string,
+      price: parseFloat(fd.get('price') as string),
+      image_url: fd.get('image_url') as string,
+      is_available: fd.get('is_available') === 'true',
     };
-
-    try {
-      if (editingItemId) {
-        const { data, error } = await supabase.from('menu_items').update(payload).eq('id', editingItemId).select().single();
-        if (error) throw error;
-        const idx = items.findIndex(i => i.id === editingItemId);
-        if (idx !== -1) items[idx] = data;
-        toast.success('Item updated');
-      } else {
-        const { data, error } = await supabase.from('menu_items').insert(payload).select().single();
-        if (error) throw error;
-        items = [data, ...items];
-        toast.success('Item added');
-      }
-      showModal = false;
-    } catch (e: any) {
-      toast.error('Failed to save: ' + e.message);
-    } finally {
-      isSaving = false;
+    if (editingItem) {
+      items = items.map(i => i.id === editingItem!.id ? { ...i, ...data } : i);
+      toast.success('Item updated');
+      if (supabase) await supabase.from('menu_items').update(data).eq('id', editingItem.id);
+    } else {
+      const newItem = { ...data, id: crypto.randomUUID(), category_id: selectedCategory, restaurant_id: MOCK_RESTAURANT.id, sort_order: 0 } as MenuItem;
+      items = [...items, newItem];
+      toast.success('Item added');
+      if (supabase) await supabase.from('menu_items').insert(newItem);
     }
+    showModal = false;
+    isSaving = false;
+  }
+
+  function getCategoryName(id: string | null) {
+    return categories.find(c => c.id === id)?.name ?? 'Uncategorized';
   }
 </script>
 
-<svelte:head>
-  <title>Menu | Terminal</title>
-</svelte:head>
+<svelte:head><title>Menu Manager · Superadmin</title></svelte:head>
 
-<div class="h-full flex flex-col gap-12 animate-fade-in font-sans text-slate-900 pb-16">
-  <!-- Editorial Header -->
-  <header class="border-b-2 border-slate-900 pb-6 flex flex-col md:flex-row md:justify-between md:items-end gap-6">
-    <div class="max-w-2xl">
-      <h1 class="text-5xl md:text-6xl font-display font-black tracking-tighter leading-none italic pr-4">Menu<br />Dictionary.</h1>
-      <p class="text-sm text-slate-500 mt-6 font-mono uppercase tracking-widest leading-relaxed">
-        Global item catalog and classification configuration.
-      </p>
+<div style="font-family:'Cabinet Grotesk',system-ui,sans-serif;color:#1e1b4b;">
+  <!-- Header -->
+  <div class="sa-page-header">
+    <div>
+      <h1 class="sa-page-title">Menu Manager</h1>
+      <p class="sa-page-subtitle">{items.length} items across {categories.length} categories</p>
     </div>
-    
-    <div class="flex flex-wrap gap-4 items-center border-l border-slate-200 pl-6 shrink-0">
-      {#if restaurants.length > 0}
-        <select class="bg-transparent border-b border-slate-300 px-2 py-1 outline-none focus:border-slate-900 transition-colors text-xs font-mono uppercase tracking-widest" bind:value={selectedRestaurantId}>
-          {#each restaurants as res}
-            <option value={res.id}>{res.name}</option>
-          {/each}
-        </select>
-      {/if}
-      <button class="text-xs font-mono uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors disabled:opacity-50" onclick={loadData} disabled={isLoading || !selectedRestaurantId}>
-        [ Refresh ]
-      </button>
-      <button 
-        class="text-xs font-mono uppercase tracking-widest text-emerald-600 hover:text-emerald-500 transition-colors disabled:opacity-50"
-        onclick={openAddModal}
-        disabled={!selectedRestaurantId}
-      >
-        [ Append Record ]
-      </button>
+    <button class="sa-btn-primary" onclick={openAdd}>
+      <span style="display:flex;align-items:center;gap:6px;"><Plus size={15} strokeWidth={2.5} /> Add Item</span>
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+    <!-- Search -->
+    <div style="position:relative;flex:1;min-width:220px;">
+      <Search size={14} style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8b84c0;" />
+      <input
+        class="sa-input"
+        style="padding-left:36px;"
+        placeholder="Search menu items..."
+        bind:value={searchQuery}
+      />
     </div>
-  </header>
-
-  <div class="flex-1 flex flex-col lg:flex-row gap-16 overflow-hidden">
-    
-    <!-- Editorial Category Sidebar -->
-    <div class="w-full lg:w-48 flex-shrink-0 flex lg:flex-col overflow-x-auto lg:overflow-y-auto hide-scrollbar gap-4">
-      <h3 class="font-display text-2xl font-bold italic text-slate-300 hidden lg:block mb-4">Index</h3>
-      
-      <div class="relative flex-1 lg:flex-none mb-4 lg:mb-8">
-        <input 
-          type="text" 
-          bind:value={searchQuery} 
-          placeholder="SEARCH..." 
-          class="w-full bg-transparent border-b border-slate-300 py-1 text-xs font-mono uppercase outline-none focus:border-slate-900 transition-colors placeholder:text-slate-300"
-        />
-      </div>
-
-      <div class="flex lg:flex-col gap-2">
-        <button 
-          class="text-left py-2 text-xs font-mono uppercase tracking-widest transition-colors whitespace-nowrap {selectedCategory === null ? 'text-emerald-600 font-bold' : 'text-slate-400 hover:text-slate-900'}"
-          onclick={() => selectedCategory = null}
-        >
-          * All Records
-        </button>
-        
-        {#each categories as category}
-          <button 
-            class="text-left py-2 text-xs font-mono uppercase tracking-widest transition-colors whitespace-nowrap flex items-center gap-2 {selectedCategory === category.id ? 'text-emerald-600 font-bold' : 'text-slate-400 hover:text-slate-900'}"
-            onclick={() => selectedCategory = category.id}
-          >
-            <span class="opacity-50">{category.icon_emoji || '-'}</span>
-            {category.name}
-          </button>
-        {/each}
-      </div>
-    </div>
-
-    <!-- Editorial Items Ledger -->
-    <div class="flex-1 overflow-y-auto hide-scrollbar">
-      {#if isLoading}
-        <div class="h-64 flex items-center justify-center">
-          <RefreshCw size={24} class="animate-spin text-slate-300" />
-        </div>
-      {:else if errorMsg}
-        <div class="py-24 flex flex-col items-center justify-center text-red-500 font-mono text-sm border-t border-b border-slate-200">
-          <p class="font-bold mb-2">ERR_LOAD</p>
-          <p class="opacity-80">{errorMsg}</p>
-        </div>
-      {:else if filteredItems.length === 0}
-        <div class="py-24 flex flex-col items-center justify-center text-slate-300 border-t border-b border-slate-200">
-          <h3 class="font-display text-3xl font-bold italic mb-2">Empty Section</h3>
-          <p class="text-xs font-mono uppercase tracking-widest">0 Records Found</p>
-        </div>
-      {:else}
-        <div class="divide-y divide-slate-100">
-          {#each filteredItems as item (item.id)}
-            <div class="py-6 flex flex-col sm:flex-row gap-6 group {item.is_available ? '' : 'opacity-50'}">
-              
-              <div class="w-16 h-16 bg-slate-100 flex items-center justify-center shrink-0">
-                {#if item.image_url}
-                  <img src={item.image_url} alt="img" class="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all" />
-                {:else}
-                  <ImageIcon size={20} class="text-slate-300" />
-                {/if}
-              </div>
-
-              <div class="flex-1 min-w-0">
-                <div class="flex justify-between items-baseline gap-4 mb-2">
-                  <h4 class="text-xl font-display font-bold text-slate-900 group-hover:text-emerald-700 transition-colors truncate">{item.name}</h4>
-                  <div class="font-mono text-lg font-medium shrink-0">
-                    {formatCurrency(item.price)}
-                  </div>
-                </div>
-                
-                <p class="text-xs font-mono text-slate-500 mb-3 max-w-xl line-clamp-2">{item.description || 'No description provided.'}</p>
-                
-                <div class="flex flex-wrap items-center gap-4 text-[10px] font-mono uppercase tracking-widest">
-                  <div class="flex gap-2 text-slate-400">
-                    {#each item.dietary_tags || [] as tag}
-                      {#if DIETARY_META[tag as DietaryTag]}
-                        <span>[{DIETARY_META[tag as DietaryTag].label}]</span>
-                      {/if}
-                    {/each}
-                  </div>
-                  
-                  {#if item.happy_hour_discount}
-                    <span class="text-emerald-600">-{item.happy_hour_discount}% HH</span>
-                  {/if}
-                </div>
-              </div>
-
-              <div class="flex sm:flex-col items-center sm:items-end justify-between gap-4 shrink-0 sm:w-24">
-                <button 
-                  onclick={() => toggleAvailability(item)}
-                  class="text-[10px] font-mono uppercase tracking-widest transition-colors {item.is_available ? 'text-emerald-600 hover:text-emerald-800' : 'text-slate-400 hover:text-slate-600 line-through'}"
-                >
-                  {item.is_available ? 'Active' : 'Out of Stock'}
-                </button>
-                
-                <div class="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400">
-                  <button class="hover:text-slate-900 transition-colors" title="Edit" onclick={() => openEditModal(item)}>
-                    <Edit2 size={16} />
-                  </button>
-                  <button class="hover:text-red-600 transition-colors" title="Delete" onclick={() => deleteItem(item.id)}>
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          {/each}
-        </div>
-      {/if}
+    <!-- Category filters -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button
+        style="padding:8px 16px;border-radius:99px;border:1px solid {selectedCategory === null ? 'rgba(99,102,241,0.4)' : 'rgba(99,102,241,0.12)'};background:{selectedCategory === null ? 'rgba(99,102,241,0.1)' : 'transparent'};color:{selectedCategory === null ? '#6366f1' : '#8b84c0'};font-size:13px;font-weight:600;cursor:pointer;font-family:'Cabinet Grotesk',system-ui,sans-serif;"
+        onclick={() => selectedCategory = null}
+      >All</button>
+      {#each categories as cat}
+        <button
+          style="padding:8px 16px;border-radius:99px;border:1px solid {selectedCategory === cat.id ? 'rgba(99,102,241,0.4)' : 'rgba(99,102,241,0.12)'};background:{selectedCategory === cat.id ? 'rgba(99,102,241,0.1)' : 'transparent'};color:{selectedCategory === cat.id ? '#6366f1' : '#8b84c0'};font-size:13px;font-weight:600;cursor:pointer;font-family:'Cabinet Grotesk',system-ui,sans-serif;"
+          onclick={() => selectedCategory = cat.id}
+        >{cat.icon_emoji ?? ''} {cat.name}</button>
+      {/each}
     </div>
   </div>
+
+  {#if isLoading}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">
+      {#each Array(6) as _}
+        <div class="sa-tile" style="height:200px;background:rgba(99,102,241,0.04);animation:pulse 1.5s infinite;"></div>
+      {/each}
+    </div>
+  {:else if filteredItems.length === 0}
+    <div class="sa-tile" style="padding:64px;text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">🍽️</div>
+      <div style="font-size:16px;font-weight:700;color:#8b84c0;">No items found</div>
+      <button class="sa-btn-primary" style="margin-top:16px;" onclick={openAdd}>Add First Item</button>
+    </div>
+  {:else}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">
+      {#each filteredItems as item (item.id)}
+        <div class="sa-tile" style="padding:0;overflow:hidden;position:relative;">
+          <!-- Image -->
+          <div style="height:140px;background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.06));position:relative;overflow:hidden;">
+            {#if item.image_url}
+              <img src={item.image_url} alt={item.name} style="width:100%;height:100%;object-fit:cover;" loading="lazy" />
+            {:else}
+              <div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:36px;">🍴</div>
+            {/if}
+            {#if !item.is_available}
+              <div style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;">
+                <span style="color:white;font-size:12px;font-weight:700;background:rgba(239,68,68,0.8);padding:4px 12px;border-radius:99px;">Out of Stock</span>
+              </div>
+            {/if}
+          </div>
+          <!-- Body -->
+          <div style="padding:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+              <div style="font-size:15px;font-weight:800;color:#1e1b4b;letter-spacing:-0.02em;line-height:1.2;max-width:160px;">{item.name}</div>
+              <div style="font-size:15px;font-weight:800;color:#6366f1;">{formatCurrency(item.price)}</div>
+            </div>
+            <div style="font-size:11px;font-family:'Geist Mono',monospace;color:#8b84c0;margin-bottom:12px;">{getCategoryName(item.category_id ?? null)}</div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button
+                style="flex:1;padding:7px;border-radius:9px;background:{item.is_available ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)'};border:1px solid {item.is_available ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'};color:{item.is_available ? '#16a34a' : '#dc2626'};font-size:12px;font-weight:600;cursor:pointer;font-family:'Cabinet Grotesk',system-ui,sans-serif;"
+                onclick={() => toggleAvailability(item)}
+              >{item.is_available ? 'Available' : 'Unavailable'}</button>
+              <button
+                style="width:32px;height:32px;border-radius:9px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.12);color:#6366f1;display:flex;align-items:center;justify-content:center;cursor:pointer;"
+                onclick={() => openEdit(item)}
+              ><Edit2 size={13} /></button>
+              <button
+                style="width:32px;height:32px;border-radius:9px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.12);color:#ef4444;display:flex;align-items:center;justify-content:center;cursor:pointer;"
+                onclick={() => deleteItem(item.id)}
+              ><Trash2 size={13} /></button>
+            </div>
+          </div>
+        </div>
+      {/each}
+    </div>
+  {/if}
 </div>
 
-<!-- Editorial Edit Modal -->
+<!-- Add/Edit Modal -->
 {#if showModal}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="fixed inset-0 bg-[#f8f9fa]/95 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick={(e) => { if(e.target === e.currentTarget) showModal = false; }}>
-    <div class="w-full max-w-2xl bg-white p-12 relative shadow-2xl" onclick={(e) => e.stopPropagation()}>
-      
-      <div class="flex justify-between items-start mb-10 border-b-2 border-slate-900 pb-6">
+  <div
+    style="position:fixed;inset:0;background:rgba(30,27,75,0.3);backdrop-filter:blur(10px);z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;"
+    onclick={(e) => { if (e.target === e.currentTarget) showModal = false; }}
+  >
+    <div class="sa-tile" style="width:100%;max-width:500px;padding:36px;max-height:90vh;overflow-y:auto;position:relative;" onclick={(e) => e.stopPropagation()}>
+      <button style="position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:8px;background:rgba(99,102,241,0.07);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#8b84c0;" onclick={() => showModal = false}><X size={14} /></button>
+      <h2 style="font-size:20px;font-weight:900;color:#1e1b4b;letter-spacing:-0.03em;margin-bottom:24px;">{editingItem ? 'Edit Item' : 'Add Menu Item'}</h2>
+      <form onsubmit={saveItem} style="display:flex;flex-direction:column;gap:16px;">
         <div>
-          <h2 class="text-4xl font-display font-black tracking-tighter italic">{editingItemId ? 'Edit Record.' : 'Initialize.'}</h2>
-          <p class="text-xs font-mono uppercase tracking-widest text-slate-500 mt-2">Menu Dictionary Form</p>
+          <label class="sa-label" for="name">Item Name</label>
+          <input class="sa-input" id="name" name="name" required value={editingItem?.name ?? ''} placeholder="Butter Chicken" />
         </div>
-        <button class="text-slate-400 hover:text-slate-900 transition-colors" onclick={() => showModal = false}><X size={24} strokeWidth={1} /></button>
-      </div>
-      
-      <div class="space-y-8 max-h-[60vh] overflow-y-auto pr-4 font-mono text-sm hide-scrollbar">
-        <div class="grid grid-cols-2 gap-8">
-          
-          <div class="col-span-2 space-y-3">
-            <label class="block text-[10px] uppercase tracking-widest text-slate-500" for="name">Identifier (Name)</label>
-            <input id="name" type="text" class="w-full bg-transparent border-b border-slate-300 py-2 outline-none focus:border-slate-900 transition-colors placeholder:text-slate-300 text-lg" bind:value={itemForm.name} placeholder="Item Name" />
-          </div>
-
-          <div class="space-y-3">
-            <label class="block text-[10px] uppercase tracking-widest text-slate-500" for="price">Value (INR)</label>
-            <input id="price" type="number" step="0.01" class="w-full bg-transparent border-b border-slate-300 py-2 outline-none focus:border-slate-900 transition-colors placeholder:text-slate-300 text-lg" bind:value={itemForm.price} placeholder="0.00" />
-          </div>
-
-          <div class="space-y-3">
-            <label class="block text-[10px] uppercase tracking-widest text-slate-500" for="cat">Classification</label>
-            <select id="cat" class="w-full bg-transparent border-b border-slate-300 py-2 outline-none focus:border-slate-900 transition-colors text-lg uppercase" bind:value={itemForm.category_id}>
-              <option value="" disabled selected>Select...</option>
-              {#each categories as cat}
-                <option value={cat.id}>{cat.name}</option>
-              {/each}
-            </select>
-          </div>
-          
-          <div class="col-span-2 space-y-3">
-            <label class="block text-[10px] uppercase tracking-widest text-slate-500" for="img">Asset URL</label>
-            <input id="img" type="text" class="w-full bg-transparent border-b border-slate-300 py-2 outline-none focus:border-slate-900 transition-colors placeholder:text-slate-300" bind:value={itemForm.image_url} placeholder="https://..." />
-          </div>
-
-          <div class="space-y-3">
-            <label class="block text-[10px] uppercase tracking-widest text-slate-500" for="hh_discount">HH Discount %</label>
-            <input id="hh_discount" type="number" step="1" min="0" max="100" class="w-full bg-transparent border-b border-slate-300 py-2 outline-none focus:border-slate-900 transition-colors placeholder:text-slate-300" bind:value={itemForm.happy_hour_discount} placeholder="0" />
-          </div>
-          
-          <div class="col-span-2 space-y-3 mt-4">
-            <span class="block text-[10px] uppercase tracking-widest text-slate-500 mb-4">Metadata Tags</span>
-            <div class="flex flex-wrap gap-4">
-              {#each Object.entries(DIETARY_META) as [tag, meta]}
-                <button 
-                  class="text-[10px] uppercase tracking-widest transition-colors {itemForm.dietary_tags.includes(tag as DietaryTag) ? 'text-emerald-600 font-bold border-b border-emerald-600 pb-1' : 'text-slate-400 hover:text-slate-900 pb-1'}"
-                  onclick={() => toggleTag(tag as DietaryTag)}
-                >
-                  [{meta.label}]
-                </button>
-              {/each}
-            </div>
-          </div>
-          
-          <div class="col-span-2 space-y-3 mt-4">
-            <label class="block text-[10px] uppercase tracking-widest text-slate-500" for="desc">Description</label>
-            <textarea id="desc" class="w-full bg-transparent border border-slate-300 p-4 outline-none focus:border-slate-900 transition-colors h-32 resize-none placeholder:text-slate-300" bind:value={itemForm.description} placeholder="Enter detailed description..."></textarea>
-          </div>
+        <div>
+          <label class="sa-label" for="description">Description</label>
+          <input class="sa-input" id="description" name="description" value={editingItem?.description ?? ''} placeholder="Creamy tomato-based curry..." />
         </div>
-      </div>
-      
-      <div class="flex gap-6 mt-10 pt-8 border-t-2 border-slate-900">
-        <button class="text-xs font-mono uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors" onclick={() => showModal = false} disabled={isSaving}>[ Abort ]</button>
-        <button class="text-xs font-mono uppercase tracking-widest text-emerald-600 hover:text-emerald-500 transition-colors disabled:opacity-50" onclick={saveItem} disabled={isSaving}>
-          {#if isSaving}
-            [ Executing... ]
-          {:else}
-            [ Commit Record ]
-          {/if}
-        </button>
-      </div>
+        <div>
+          <label class="sa-label" for="price">Price (₹)</label>
+          <input class="sa-input" id="price" name="price" type="number" step="0.01" required value={editingItem?.price ?? ''} placeholder="350" />
+        </div>
+        <div>
+          <label class="sa-label" for="image_url">Image URL</label>
+          <input class="sa-input" id="image_url" name="image_url" type="url" value={editingItem?.image_url ?? ''} placeholder="https://..." />
+        </div>
+        <div>
+          <label class="sa-label" for="is_available">Availability</label>
+          <select class="sa-input" id="is_available" name="is_available">
+            <option value="true" selected={editingItem?.is_available !== false}>Available</option>
+            <option value="false" selected={editingItem?.is_available === false}>Out of Stock</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <button type="button" onclick={() => showModal = false} style="flex:1;padding:10px;border-radius:12px;background:transparent;border:1px solid rgba(99,102,241,0.15);color:#8b84c0;font-size:14px;font-weight:600;cursor:pointer;font-family:'Cabinet Grotesk',system-ui,sans-serif;">Cancel</button>
+          <button type="submit" disabled={isSaving} class="sa-btn-primary" style="flex:2;">{isSaving ? 'Saving...' : editingItem ? 'Update Item' : 'Add Item'}</button>
+        </div>
+      </form>
     </div>
   </div>
 {/if}

@@ -372,49 +372,6 @@
   will-change: transform, opacity;
 }
 
-.sg-featured-hero {
-  position: relative;
-  flex: none;
-  width: min(86vw, 320px);
-  padding: 14px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow:
-    0 20px 50px rgba(99, 102, 241, 0.18),
-    0 4px 12px rgba(99, 102, 241, 0.08);
-  transform: translateZ(0);
-  transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
-  overflow: hidden;
-}
-
-.sg-featured-hero::before {
-  content: '';
-  position: absolute;
-  inset: -40% -20% auto auto;
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.22), transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.sg-featured-hero:active {
-  transform: scale(0.985);
-}
-
-.sg-featured-side {
-  flex: none;
-  width: 240px;
-  padding: 12px;
-  transition: transform 0.25s ease-out;
-}
-
-.sg-featured-side:active {
-  transform: scale(0.98);
-}
-
 .sg-thumb-bar {
   position: fixed;
   left: 0;
@@ -489,8 +446,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .sg-stagger,
-  .sg-featured-hero,
-  .sg-featured-side,
   .sg-skeleton,
   .sg-pulse {
     animation: none !important;

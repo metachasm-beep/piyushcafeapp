@@ -22,6 +22,7 @@
   import { formatCurrency, generateUUID } from '$lib/utils';
 
   import DietaryBadge from '$lib/components/DietaryBadge.svelte';
+  import FeaturedCarousel from '$lib/components/FeaturedCarousel.svelte';
   import type { PageData } from './$types';
   import type { DietaryTag, MenuItem } from '$lib/types';
 
@@ -351,10 +352,9 @@
     <!-- Skeletons -->
     <div style="margin-bottom:28px;">
       <div class="sg-skeleton" style="height:12px;width:80px;margin-bottom:14px;"></div>
-      <div style="display:flex;gap:12px;overflow:hidden;">
-        <div class="sg-skeleton" style="flex:none;width:min(86vw,320px);height:260px;border-radius:24px;"></div>
-        <div class="sg-skeleton" style="flex:none;width:240px;height:220px;"></div>
-      </div>
+      <div class="sg-skeleton" style="width:100%;aspect-ratio:16/10;border-radius:22px;margin-bottom:12px;"></div>
+      <div class="sg-skeleton" style="height:18px;width:55%;margin-bottom:8px;"></div>
+      <div class="sg-skeleton" style="height:12px;width:80%;"></div>
     </div>
     {#each [0, 1, 2] as _}
       <div class="sg-tile sg-tile-static" style="padding:12px;display:flex;gap:14px;margin-bottom:12px;">
@@ -368,80 +368,12 @@
     {/each}
   {:else}
     {#if featuredItems.length > 0 && activeCategory === 'all'}
-      <section style="margin-bottom:32px;">
-        <h2 style="font-size:13px;font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;color:#8b84c0;margin:0 0 14px;">
-          Featured
-        </h2>
-        <div style="display:flex;overflow-x:auto;gap:14px;padding:4px 2px 10px;perspective:800px;" class="sg-hide-scrollbar">
-          {#each featuredItems as item, i}
-            <div
-              class="{i === 0 ? 'sg-featured-hero' : 'sg-tile sg-featured-side'} sg-stagger"
-              style="display:flex;flex-direction:column;gap:10px;--i:{i};position:relative;z-index:1;"
-            >
-              <div
-                style="width:100%;height:{i === 0 ? 160 : 112}px;border-radius:16px;overflow:hidden;position:relative;background:rgba(99,102,241,0.08);"
-              >
-                <img
-                  src={item.image_url}
-                  alt={item.name}
-                  style="width:100%;height:100%;object-fit:cover;"
-                  loading={i === 0 ? 'eager' : 'lazy'}
-                  width="320"
-                  height="160"
-                />
-                <div style="position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap;">
-                  {#each item.dietary_tags as tag}
-                    <DietaryBadge {tag} />
-                  {/each}
-                </div>
-              </div>
-              <div style="flex:1;position:relative;z-index:1;">
-                <h3 style="font-size:{i === 0 ? 18 : 15}px;font-weight:800;color:#1e1b4b;margin:0;letter-spacing:-0.02em;">
-                  {item.name}
-                </h3>
-                <p style="font-size:12px;color:#8b84c0;margin:4px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
-                  {item.description}
-                </p>
-              </div>
-              <div style="display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;">
-                <span style="font-weight:800;color:#6366f1;font-size:{i === 0 ? 17 : 14}px;">{formatCurrency(item.price)}</span>
-                {#if getCartItemQuantity(item.id) > 0}
-                  <div
-                    style="display:flex;align-items:center;gap:4px;background:rgba(99,102,241,0.08);border-radius:99px;padding:2px;border:1px solid rgba(99,102,241,0.15);"
-                  >
-                    <button
-                      type="button"
-                      class="sg-qty-btn sg-qty-btn-minus"
-                      aria-label="Decrease quantity"
-                      onclick={() => cart.setQuantity(item.id, getCartItemQuantity(item.id) - 1)}
-                    >
-                      <Minus size={16} />
-                    </button>
-                    <span style="min-width:20px;text-align:center;font-weight:700;font-size:14px;">{getCartItemQuantity(item.id)}</span>
-                    <button
-                      type="button"
-                      class="sg-qty-btn sg-qty-btn-plus"
-                      aria-label="Increase quantity"
-                      onclick={() => cart.setQuantity(item.id, getCartItemQuantity(item.id) + 1)}
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
-                {:else}
-                  <button
-                    type="button"
-                    class="sg-qty-btn-add"
-                    aria-label="Add {item.name}"
-                    onclick={() => cart.addItem(item, 1)}
-                  >
-                    <Plus size={18} />
-                  </button>
-                {/if}
-              </div>
-            </div>
-          {/each}
-        </div>
-      </section>
+      <FeaturedCarousel
+        items={featuredItems}
+        getQuantity={getCartItemQuantity}
+        onAdd={(item) => cart.addItem(item, 1)}
+        onSetQuantity={(id, qty) => cart.setQuantity(id, qty)}
+      />
     {/if}
 
     {#each categories as category}

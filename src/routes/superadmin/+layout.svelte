@@ -173,7 +173,7 @@
     <div style="padding-top:20px;border-top:1px solid rgba(99,102,241,0.1);">
       <button
         style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 13px;border-radius:13px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:500;color:#9ca3af;transition:all 0.15s;font-family:'Cabinet Grotesk',system-ui,sans-serif;text-align:left;"
-        onclick={() => { adminUser.logout(); goto('/owner/login'); }}
+        onclick={async () => { await adminUser.logout(); goto('/owner/login'); }}
         onmouseenter={(e) => {e.currentTarget.style.color='#ef4444';e.currentTarget.style.background='rgba(239,68,68,0.07)';}}
         onmouseleave={(e) => {e.currentTarget.style.color='#9ca3af';e.currentTarget.style.background='none';}}
       >

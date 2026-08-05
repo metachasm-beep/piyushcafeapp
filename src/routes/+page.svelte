@@ -66,7 +66,7 @@
         <p style="font-size:14px;color:#6b6a9c;margin:0 0 16px;line-height:1.5;">
           Staff portal — floor dashboard, kitchen display, and inventory.
           <br />
-          <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#8b84c0;">Demo: any email + any password</span>
+          <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#8b84c0;">Google sign-in or email · demo without Supabase: any credentials</span>
         </p>
         <a href="/owner" class="sg-btn-primary" style="text-decoration:none;">Open Owner Portal →</a>
       </div>

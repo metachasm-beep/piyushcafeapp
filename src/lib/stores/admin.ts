@@ -1,12 +1,13 @@
 ﻿// ============================================================
-// Admin Store — live KDS orders and waiter requests
-// In mock mode: uses in-memory reactive state
-// In production: Supabase real-time subscription channel
+// Admin Store — live KDS orders, waiter requests, owner auth
+// Auth: Supabase session when configured; localStorage mock otherwise
 // ============================================================
 
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
+import type { User } from '@supabase/supabase-js';
 import type { Order, WaiterRequest, OrderStatus } from '$lib/types';
 import { makeMockOrders, makeMockWaiterRequests } from '$lib/mock-data';
+import { supabase } from '$lib/supabase';
 
 // ─── Orders Store ─────────────────────────────────────────────
 function createOrdersStore() {
@@ -47,13 +48,12 @@ function createOrdersStore() {
 
 export const adminOrders = createOrdersStore();
 
-// Derived: orders grouped by status
 export const ordersByStatus = derived(adminOrders, ($orders) => ({
-  pending:   $orders.filter((o) => o.status === 'pending'),
+  pending: $orders.filter((o) => o.status === 'pending'),
   preparing: $orders.filter((o) => o.status === 'preparing'),
-  ready:     $orders.filter((o) => o.status === 'ready'),
-  served:    $orders.filter((o) => o.status === 'served'),
-  paid:      $orders.filter((o) => o.status === 'paid')
+  ready: $orders.filter((o) => o.status === 'ready'),
+  served: $orders.filter((o) => o.status === 'served'),
+  paid: $orders.filter((o) => o.status === 'paid')
 }));
 
 // ─── Waiter Requests Store ────────────────────────────────────
@@ -87,43 +87,139 @@ function createWaiterStore() {
 
 export const waiterRequests = createWaiterStore();
 
-/** Count of pending (unacknowledged) waiter requests */
 export const pendingWaiterCount = derived(
   waiterRequests,
   ($reqs) => $reqs.filter((r) => r.status === 'pending').length
 );
 
-// ─── Admin Auth State ─────────────────────────────────────────
-// Simple client-side auth flag for mock mode.
-// In production this is backed by Supabase session.
+// ─── Owner Auth State ─────────────────────────────────────────
 
-type AdminUser = { email: string; role: string } | null;
+export type AdminUser = {
+  id?: string;
+  email: string;
+  role: string;
+  name?: string | null;
+  avatarUrl?: string | null;
+  provider?: string | null;
+} | null;
+
+const STORAGE_KEY = 'gf_admin_user';
+
+function userFromSupabase(user: User): NonNullable<AdminUser> {
+  const meta = user.user_metadata ?? {};
+  return {
+    id: user.id,
+    email: user.email ?? meta.email ?? 'owner@restaurant.com',
+    role: 'owner',
+    name: meta.full_name ?? meta.name ?? null,
+    avatarUrl: meta.avatar_url ?? meta.picture ?? null,
+    provider: (user.app_metadata?.provider as string | undefined)
+      ?? user.identities?.[0]?.provider
+      ?? null
+  };
+}
+
+function persist(user: AdminUser) {
+  if (typeof localStorage === 'undefined') return;
+  if (user) localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  else localStorage.removeItem(STORAGE_KEY);
+}
 
 function createAuthStore() {
   const stored =
-    typeof localStorage !== 'undefined'
-      ? localStorage.getItem('gf_admin_user')
-      : null;
+    typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
 
-  const initial: AdminUser = stored ? JSON.parse(stored) : null;
+  let initial: AdminUser = null;
+  try {
+    initial = stored ? JSON.parse(stored) : null;
+  } catch {
+    initial = null;
+  }
+
   const { subscribe, set } = writable<AdminUser>(initial);
+  let listenerAttached = false;
+
+  function applyUser(user: AdminUser) {
+    persist(user);
+    set(user);
+  }
 
   return {
     subscribe,
 
-    login(email: string) {
-      const user: AdminUser = { email, role: 'owner' };
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('gf_admin_user', JSON.stringify(user));
-      }
-      set(user);
+    /** Mock / email demo login when Supabase is unavailable */
+    login(email: string, extras?: Partial<NonNullable<AdminUser>>) {
+      const user: NonNullable<AdminUser> = {
+        email,
+        role: 'owner',
+        ...extras
+      };
+      applyUser(user);
     },
 
-    logout() {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem('gf_admin_user');
+    setFromSupabaseUser(user: User | null) {
+      applyUser(user ? userFromSupabase(user) : null);
+    },
+
+    /**
+     * Hydrate from Supabase session (or keep mock). Call once on owner shell mount.
+     * Returns the resolved user (or null).
+     */
+    async init(): Promise<AdminUser> {
+      if (!supabase) return get({ subscribe });
+
+      if (!listenerAttached) {
+        listenerAttached = true;
+        supabase.auth.onAuthStateChange((_event, session) => {
+          applyUser(session?.user ? userFromSupabase(session.user) : null);
+        });
       }
-      set(null);
+
+      const { data } = await supabase.auth.getSession();
+      const user = data.session?.user ? userFromSupabase(data.session.user) : null;
+      // Prefer live Supabase session over stale mock when configured
+      if (user) applyUser(user);
+      else if (data.session === null) {
+        // Signed out remotely — clear mock only if we had a supabase-backed user
+        const current = get({ subscribe });
+        if (current?.id) applyUser(null);
+      }
+      return get({ subscribe });
+    },
+
+    async loginWithPassword(email: string, password: string) {
+      if (!supabase) {
+        this.login(email);
+        return { error: null as string | null };
+      }
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return { error: error.message };
+      applyUser(data.user ? userFromSupabase(data.user) : null);
+      return { error: null };
+    },
+
+    async loginWithGoogle(redirectTo: string) {
+      if (!supabase) {
+        return { error: 'Google sign-in requires Supabase. Set PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY.' };
+      }
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent'
+          }
+        }
+      });
+      return { error: error?.message ?? null };
+    },
+
+    async logout() {
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
+      applyUser(null);
     }
   };
 }
@@ -146,13 +242,13 @@ function createSettingsStore() {
 
   const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('gf_admin_settings') : null;
   const initial: AdminSettings = stored ? { ...defaultSettings, ...JSON.parse(stored) } : defaultSettings;
-  
-  const { subscribe, set, update } = writable<AdminSettings>(initial);
+
+  const { subscribe, update } = writable<AdminSettings>(initial);
 
   return {
     subscribe,
     updateSettings(settings: Partial<AdminSettings>) {
-      update(current => {
+      update((current) => {
         const next = { ...current, ...settings };
         if (typeof localStorage !== 'undefined') {
           localStorage.setItem('gf_admin_settings', JSON.stringify(next));

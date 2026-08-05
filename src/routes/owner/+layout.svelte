@@ -16,13 +16,15 @@
   let { children } = $props();
   let mobileMenuOpen = $state(false);
 
-  function handleLogout() {
-    adminUser.logout();
+  async function handleLogout() {
+    await adminUser.logout();
     goto('/owner/login');
   }
 
   let currentPath = $derived(page.url.pathname);
-  let isLoginPage = $derived(currentPath === '/owner/login');
+  let isAuthShell = $derived(
+    currentPath === '/owner/login' || currentPath.startsWith('/owner/auth/')
+  );
 
   const links = [
     { href: '/owner', label: 'Dashboard', icon: LayoutDashboard },
@@ -40,7 +42,7 @@
   />
 </svelte:head>
 
-{#if isLoginPage}
+{#if isAuthShell}
   {@render children()}
 {:else}
   <div class="sg-shell" style="display:flex;height:100dvh;overflow:hidden;">
@@ -121,17 +123,26 @@
 
       <div style="padding-top:20px;border-top:1px solid rgba(99,102,241,0.1);">
         <div style="display:flex;align-items:center;gap:10px;padding:0 4px 14px;">
-          <div
-            style="width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.1));border:1px solid rgba(99,102,241,0.2);display:flex;align-items:center;justify-content:center;font-weight:800;color:#6366f1;font-size:14px;"
-          >
-            {$adminUser?.email?.charAt(0).toUpperCase() || 'O'}
-          </div>
+          {#if $adminUser?.avatarUrl}
+            <img
+              src={$adminUser.avatarUrl}
+              alt=""
+              style="width:36px;height:36px;border-radius:11px;object-fit:cover;border:1px solid rgba(99,102,241,0.2);"
+              referrerpolicy="no-referrer"
+            />
+          {:else}
+            <div
+              style="width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.1));border:1px solid rgba(99,102,241,0.2);display:flex;align-items:center;justify-content:center;font-weight:800;color:#6366f1;font-size:14px;"
+            >
+              {($adminUser?.name || $adminUser?.email || 'O').charAt(0).toUpperCase()}
+            </div>
+          {/if}
           <div style="min-width:0;">
             <div style="font-size:13px;font-weight:700;color:#1e1b4b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              {$adminUser?.email?.split('@')[0] || 'Owner'}
+              {$adminUser?.name || $adminUser?.email?.split('@')[0] || 'Owner'}
             </div>
             <div style="font-size:10px;font-family:'Geist Mono',monospace;color:#8b84c0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              {$adminUser?.email || 'owner@demo.com'}
+              {$adminUser?.provider === 'google' ? 'Google · ' : ''}{$adminUser?.email || 'owner@demo.com'}
             </div>
           </div>
         </div>

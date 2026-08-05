@@ -20,9 +20,9 @@
   let startY = 0;
   let axis: 'x' | 'y' | null = null;
   let viewportEl: HTMLDivElement | undefined = $state();
+  let popIds = $state<Set<string>>(new Set());
 
   $effect(() => {
-    // Keep index in range when filters change the list
     if (items.length === 0) {
       index = 0;
       return;
@@ -42,6 +42,18 @@
 
   function next() {
     goTo(index + 1);
+  }
+
+  function handleAdd(item: MenuItem) {
+    onAdd(item);
+    const nextSet = new Set(popIds);
+    nextSet.add(item.id);
+    popIds = nextSet;
+    setTimeout(() => {
+      const cleared = new Set(popIds);
+      cleared.delete(item.id);
+      popIds = cleared;
+    }, 500);
   }
 
   function onTouchStart(e: TouchEvent) {
@@ -70,7 +82,6 @@
       return;
     }
 
-    // Resist at ends
     const atStart = index === 0 && dx > 0;
     const atEnd = index === items.length - 1 && dx < 0;
     dragX = atStart || atEnd ? dx * 0.35 : dx;
@@ -157,7 +168,7 @@
             aria-label="{i + 1} of {items.length}"
           >
             <article class="featured-carousel__card">
-              <div class="featured-carousel__media">
+              <div class="sg-media featured-carousel__media">
                 <img
                   src={item.image_url}
                   alt={item.name}
@@ -174,10 +185,10 @@
               </div>
 
               <div class="featured-carousel__body">
-                <h3>{item.name}</h3>
-                <p>{item.description}</p>
+                <h3 class="sg-title-balance">{item.name}</h3>
+                <p class="sg-text-pretty">{item.description}</p>
                 <div class="featured-carousel__row">
-                  <span class="featured-carousel__price">{formatCurrency(item.price)}</span>
+                  <span class="featured-carousel__price sg-num">{formatCurrency(item.price)}</span>
                   {#if getQuantity(item.id) > 0}
                     <div class="featured-carousel__qty">
                       <button
@@ -188,7 +199,7 @@
                       >
                         <Minus size={16} />
                       </button>
-                      <span>{getQuantity(item.id)}</span>
+                      <span class="sg-num">{getQuantity(item.id)}</span>
                       <button
                         type="button"
                         class="sg-qty-btn sg-qty-btn-plus"
@@ -201,9 +212,9 @@
                   {:else}
                     <button
                       type="button"
-                      class="sg-qty-btn-add"
+                      class="sg-qty-btn-add {popIds.has(item.id) ? 'is-pop' : ''}"
                       aria-label="Add {item.name}"
-                      onclick={() => onAdd(item)}
+                      onclick={() => handleAdd(item)}
                     >
                       <Plus size={18} />
                     </button>
@@ -236,7 +247,7 @@
 
 <style>
   .featured-carousel {
-    margin-bottom: 32px;
+    margin-bottom: 28px;
   }
 
   .featured-carousel__head {
@@ -244,15 +255,15 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
 
   .featured-carousel__title {
-    font-size: 13px;
-    font-family: 'Geist Mono', monospace;
+    font-size: 12px;
+    font-family: var(--sg-font-mono, 'Geist Mono', monospace);
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #8b84c0;
+    color: var(--sg-muted, #6b6560);
     margin: 0;
   }
 
@@ -264,15 +275,21 @@
   .featured-carousel__nav-btn {
     width: 40px;
     height: 40px;
-    border-radius: 12px;
-    border: 1px solid rgba(99, 102, 241, 0.18);
-    background: rgba(255, 255, 255, 0.7);
-    color: #4338ca;
+    border-radius: var(--sg-radius-sm, 12px);
+    border: 1px solid var(--sg-line, rgba(26, 22, 20, 0.08));
+    background: rgba(255, 252, 247, 0.75);
+    color: var(--sg-accent-strong, #6f4520);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  }
+
+  .featured-carousel__nav-btn:focus-visible {
+    outline: 2px solid var(--sg-accent, #8a5a2b);
+    outline-offset: 2px;
   }
 
   .featured-carousel__nav-btn:disabled {
@@ -283,11 +300,9 @@
   .featured-carousel__viewport {
     overflow: hidden;
     width: 100%;
-    border-radius: 24px;
+    border-radius: var(--sg-radius-xl, 24px);
     touch-action: pan-y;
     outline: none;
-    /* Room for soft shadow without clipping siblings */
-    margin: 0;
   }
 
   .featured-carousel__track {
@@ -308,27 +323,13 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 14px;
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.78);
-    border: 1px solid rgba(255, 255, 255, 0.92);
-    box-shadow:
-      0 16px 40px rgba(99, 102, 241, 0.14),
-      0 2px 8px rgba(99, 102, 241, 0.06);
+    padding: 12px;
+    border-radius: var(--sg-radius-xl, 24px);
+    background: rgba(255, 252, 247, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: var(--sg-shadow-md, 0 4px 20px rgba(26, 22, 20, 0.06));
     position: relative;
     overflow: hidden;
-  }
-
-  .featured-carousel__card::before {
-    content: '';
-    position: absolute;
-    top: -60px;
-    right: -40px;
-    width: 160px;
-    height: 160px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.2), transparent 70%);
-    pointer-events: none;
   }
 
   .featured-carousel__media {
@@ -336,18 +337,8 @@
     z-index: 1;
     width: 100%;
     aspect-ratio: 16 / 10;
-    border-radius: 16px;
-    overflow: hidden;
-    background: rgba(99, 102, 241, 0.08);
-  }
-
-  .featured-carousel__media img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    user-select: none;
-    -webkit-user-drag: none;
+    /* concentric: outer 24 − padding 12 = 12 */
+    border-radius: var(--sg-radius-sm, 12px);
   }
 
   .featured-carousel__badges {
@@ -368,16 +359,16 @@
   }
 
   .featured-carousel__body h3 {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 800;
-    color: #1e1b4b;
+    color: var(--sg-ink, #1a1614);
     margin: 0;
     letter-spacing: -0.02em;
   }
 
   .featured-carousel__body p {
     font-size: 13px;
-    color: #8b84c0;
+    color: var(--sg-muted, #6b6560);
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -396,18 +387,18 @@
 
   .featured-carousel__price {
     font-weight: 800;
-    color: #6366f1;
-    font-size: 18px;
+    color: var(--sg-accent, #8a5a2b);
+    font-size: 17px;
   }
 
   .featured-carousel__qty {
     display: flex;
     align-items: center;
     gap: 4px;
-    background: rgba(99, 102, 241, 0.08);
-    border-radius: 99px;
+    background: var(--sg-accent-soft, rgba(138, 90, 43, 0.12));
+    border-radius: var(--sg-radius-pill, 99px);
     padding: 2px;
-    border: 1px solid rgba(99, 102, 241, 0.15);
+    border: 1px solid var(--sg-accent-border, rgba(138, 90, 43, 0.28));
   }
 
   .featured-carousel__qty span {
@@ -415,14 +406,14 @@
     text-align: center;
     font-weight: 700;
     font-size: 14px;
-    color: #1e1b4b;
+    color: var(--sg-ink, #1a1614);
   }
 
   .featured-carousel__dots {
     display: flex;
     justify-content: center;
     gap: 8px;
-    margin-top: 14px;
+    margin-top: 12px;
   }
 
   .featured-carousel__dot {
@@ -431,14 +422,19 @@
     border-radius: 99px;
     border: none;
     padding: 0;
-    background: rgba(99, 102, 241, 0.22);
+    background: rgba(26, 22, 20, 0.16);
     cursor: pointer;
     transition: width 0.25s ease, background 0.25s ease;
   }
 
+  .featured-carousel__dot:focus-visible {
+    outline: 2px solid var(--sg-accent, #8a5a2b);
+    outline-offset: 3px;
+  }
+
   .featured-carousel__dot.is-active {
     width: 22px;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: linear-gradient(135deg, var(--sg-accent, #8a5a2b), var(--sg-accent-strong, #6f4520));
   }
 
   @media (prefers-reduced-motion: reduce) {

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spatial Glass — Design Tokens</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@500;700;900&family=Geist+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --sg-ink: #1a1614;
+        --sg-muted: #6b6560;
+        --sg-faint: #9a948c;
+        --sg-accent: #8a5a2b;
+        --sg-accent-strong: #6f4520;
+        --sg-accent-soft: rgba(138, 90, 43, 0.12);
+        --sg-accent-border: rgba(138, 90, 43, 0.28);
+        --sg-surface: rgba(255, 252, 247, 0.72);
+        --sg-line: rgba(26, 22, 20, 0.08);
+        --sg-bg-0: #f2ebe3;
+        --sg-bg-1: #ebe4d8;
+        --sg-bg-2: #e4ece6;
+        --sg-radius-sm: 12px;
+        --sg-radius-md: 16px;
+        --sg-radius-lg: 20px;
+        --sg-radius-xl: 24px;
+        --sg-shadow-md: 0 4px 20px rgba(26, 22, 20, 0.06);
+        --sg-font: 'Cabinet Grotesk', system-ui, sans-serif;
+        --sg-font-mono: 'Geist Mono', ui-monospace, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        font-family: var(--sg-font);
+        color: var(--sg-ink);
+        background: linear-gradient(145deg, var(--sg-bg-0), var(--sg-bg-1) 40%, var(--sg-bg-2));
+        padding: 40px 24px 64px;
+      }
+
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: -0.04em;
+        margin: 0 0 8px;
+        text-wrap: balance;
+      }
+
+      .lede {
+        color: var(--sg-muted);
+        margin: 0 0 32px;
+        font-size: 14px;
+        text-wrap: pretty;
+      }
+
+      h2 {
+        font-size: 11px;
+        font-family: var(--sg-font-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--sg-muted);
+        margin: 28px 0 12px;
+      }
+
+      .swatches {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 12px;
+      }
+
+      .swatch {
+        border-radius: var(--sg-radius-md);
+        padding: 14px;
+        background: var(--sg-surface);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        box-shadow: var(--sg-shadow-md);
+      }
+
+      .swatch__chip {
+        height: 40px;
+        border-radius: var(--sg-radius-sm);
+        margin-bottom: 10px;
+        border: 1px solid var(--sg-line);
+      }
+
+      .swatch strong {
+        display: block;
+        font-size: 12px;
+      }
+
+      .swatch code {
+        font-family: var(--sg-font-mono);
+        font-size: 10px;
+        color: var(--sg-faint);
+      }
+
+      .radii {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: flex-end;
+      }
+
+      .radius {
+        background: var(--sg-accent-soft);
+        border: 1px solid var(--sg-accent-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--sg-font-mono);
+        font-size: 10px;
+        color: var(--sg-accent-strong);
+      }
+
+      .tile-demo {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        border-radius: var(--sg-radius-lg);
+        background: var(--sg-surface);
+        border: 1px solid rgba(255, 255, 255, 0.85);
+        box-shadow: var(--sg-shadow-md);
+        max-width: 360px;
+      }
+
+      .tile-demo__media {
+        width: 72px;
+        height: 72px;
+        border-radius: calc(var(--sg-radius-lg) - 12px);
+        background: linear-gradient(135deg, #d4c4a8, #b8a07a);
+        box-shadow: inset 0 0 0 1px rgba(26, 22, 20, 0.08);
+        flex-shrink: 0;
+      }
+
+      .tile-demo h3 {
+        margin: 0 0 4px;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .tile-demo p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--sg-muted);
+      }
+
+      .tile-demo .price {
+        margin-top: 8px;
+        font-weight: 800;
+        color: var(--sg-accent);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .btn {
+        display: inline-flex;
+        margin-top: 16px;
+        padding: 12px 18px;
+        border-radius: var(--sg-radius-sm);
+        background: linear-gradient(135deg, var(--sg-accent), var(--sg-accent-strong));
+        color: #fffaf5;
+        font-weight: 700;
+        font-size: 14px;
+        text-decoration: none;
+        box-shadow: 0 4px 14px rgba(138, 90, 43, 0.28);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Spatial Glass tokens</h1>
+      <p class="lede">Hospitality preview — warm stone, bronze accent, food-first density.</p>
+
+      <h2>Color</h2>
+      <div class="swatches">
+        <div class="swatch">
+          <div class="swatch__chip" style="background:#1a1614"></div>
+          <strong>Ink</strong>
+          <code>--sg-ink</code>
+        </div>
+        <div class="swatch">
+          <div class="swatch__chip" style="background:#6b6560"></div>
+          <strong>Muted</strong>
+          <code>--sg-muted</code>
+        </div>
+        <div class="swatch">
+          <div class="swatch__chip" style="background:#8a5a2b"></div>
+          <strong>Accent</strong>
+          <code>--sg-accent</code>
+        </div>
+        <div class="swatch">
+          <div class="swatch__chip" style="background:#f2ebe3;border-color:#ccc"></div>
+          <strong>BG 0</strong>
+          <code>--sg-bg-0</code>
+        </div>
+        <div class="swatch">
+          <div class="swatch__chip" style="background:#e4ece6;border-color:#ccc"></div>
+          <strong>BG 2</strong>
+          <code>--sg-bg-2</code>
+        </div>
+      </div>
+
+      <h2>Radius</h2>
+      <div class="radii">
+        <div class="radius" style="width:48px;height:48px;border-radius:8px">xs</div>
+        <div class="radius" style="width:56px;height:56px;border-radius:12px">sm</div>
+        <div class="radius" style="width:64px;height:64px;border-radius:16px">md</div>
+        <div class="radius" style="width:72px;height:72px;border-radius:20px">lg</div>
+        <div class="radius" style="width:80px;height:80px;border-radius:24px">xl</div>
+      </div>
+
+      <h2>Concentric card</h2>
+      <div class="tile-demo">
+        <div class="tile-demo__media" aria-hidden="true"></div>
+        <div>
+          <h3>Herb roasted chicken</h3>
+          <p>Outer tile radius minus padding equals image radius.</p>
+          <div class="price">₹420.00</div>
+        </div>
+      </div>
+
+      <a class="btn" href="/">Back to hub</a>
+    </main>
+  </body>
+</html>

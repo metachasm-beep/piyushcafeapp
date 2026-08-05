@@ -1,0 +1,45 @@
+{
+  "name": "Spatial Glass Hospitality",
+  "version": "1.0.0",
+  "color": {
+    "ink": "#1a1614",
+    "muted": "#6b6560",
+    "faint": "#9a948c",
+    "accent": "#8a5a2b",
+    "accentStrong": "#6f4520",
+    "success": "#2f7a4a",
+    "danger": "#c0392b",
+    "bg0": "#f2ebe3",
+    "bg1": "#ebe4d8",
+    "bg2": "#e4ece6",
+    "bg3": "#efe8de"
+  },
+  "radius": {
+    "xs": "8px",
+    "sm": "12px",
+    "md": "16px",
+    "lg": "20px",
+    "xl": "24px",
+    "pill": "99px",
+    "sheet": "28px"
+  },
+  "space": {
+    "1": "4px",
+    "2": "8px",
+    "3": "12px",
+    "4": "16px",
+    "5": "20px",
+    "6": "24px",
+    "7": "32px",
+    "8": "40px"
+  },
+  "typography": {
+    "sans": "Cabinet Grotesk",
+    "mono": "Geist Mono"
+  },
+  "motion": {
+    "ease": "cubic-bezier(0.22, 1, 0.36, 1)",
+    "duration": "0.22s",
+    "durationSheet": "0.32s"
+  }
+}

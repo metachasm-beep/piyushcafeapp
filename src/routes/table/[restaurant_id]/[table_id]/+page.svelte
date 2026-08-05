@@ -10,7 +10,8 @@
     CreditCard,
     Banknote,
     Package,
-    CheckCircle2
+    CheckCircle2,
+    Trash2
   } from '@lucide/svelte';
   import { toast } from 'svelte-sonner';
   import { goto } from '$app/navigation';
@@ -39,6 +40,8 @@
   let activeCategory = $state('all');
   let dietaryFilters = $state<DietaryTag[]>([]);
   let menuReady = $state(false);
+  let expandedIds = $state<Set<string>>(new Set());
+  let popIds = $state<Set<string>>(new Set());
 
   let isCartOpen = $state(false);
   let showCheckoutModal = $state(false);
@@ -57,7 +60,6 @@
   let showWaiterBanner = $state(false);
   let cooldownSeconds = $state(0);
 
-  // Sheet swipe dismiss
   let cartSheetY = $state(0);
   let checkoutSheetY = $state(0);
   let swipeStartY = 0;
@@ -71,7 +73,6 @@
   ];
 
   onMount(() => {
-    // Brief skeleton so first paint never feels empty / jumpy
     const t = setTimeout(() => {
       menuReady = true;
     }, 280);
@@ -105,6 +106,25 @@
     } else {
       dietaryFilters = [...dietaryFilters, tag];
     }
+  }
+
+  function toggleExpand(id: string) {
+    const next = new Set(expandedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    expandedIds = next;
+  }
+
+  function addWithFeedback(item: MenuItem) {
+    cart.addItem(item, 1);
+    const next = new Set(popIds);
+    next.add(item.id);
+    popIds = next;
+    setTimeout(() => {
+      const cleared = new Set(popIds);
+      cleared.delete(item.id);
+      popIds = cleared;
+    }, 500);
   }
 
   let itemsByCategory = $derived(() => {
@@ -141,7 +161,7 @@
     }
     const el = document.getElementById(`category-${catId}`);
     if (el) {
-      const headerOffset = 170;
+      const headerOffset = 148;
       const offsetPosition = el.getBoundingClientRect().top + window.pageYOffset - headerOffset;
       window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
     }
@@ -281,41 +301,29 @@
   <title>{restaurant.name} — Menu</title>
 </svelte:head>
 
-<!-- Sticky header -->
-<header
-  class="sg-glass"
-  style="position:fixed;top:0;left:0;right:0;z-index:40;border-bottom:1px solid rgba(99,102,241,0.1);"
->
-  <div style="padding:14px 16px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
-    <div style="min-width:0;">
-      <h1 style="font-size:22px;font-weight:900;letter-spacing:-0.04em;color:#1e1b4b;margin:0;line-height:1.1;">
-        {restaurant.name}
-      </h1>
-      <p style="font-size:10px;font-family:'Geist Mono',monospace;color:#8b84c0;letter-spacing:0.08em;text-transform:uppercase;margin:4px 0 0;">
-        {table.display_name ?? `Table ${table.table_number}`}
-      </p>
+<header class="sg-glass menu-header">
+  <div class="menu-header__top">
+    <div class="menu-header__brand">
+      <h1 class="sg-title-balance">{restaurant.name}</h1>
+      <p>{table.display_name ?? `Table ${table.table_number}`}</p>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-      <span class="sg-badge-info">{table.display_name ?? `Table ${table.table_number}`}</span>
-      {#if hasActiveOrder}
-        <a
-          class="sg-active-order-chip"
-          href="/table/{restaurant.id}/{table.id}/order"
-          aria-label="View active order"
-        >
-          <span style="width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,0.7);" class="sg-pulse"></span>
-          <Package size={13} />
-          Active order
-        </a>
-      {/if}
-    </div>
+    {#if hasActiveOrder}
+      <a
+        class="sg-active-order-chip"
+        href="/table/{restaurant.id}/{table.id}/order"
+        aria-label="View active order"
+      >
+        <span class="menu-header__dot sg-pulse"></span>
+        <Package size={13} />
+        Active order
+      </a>
+    {/if}
   </div>
 
-  <div style="display:flex;overflow-x:auto;padding:0 16px 8px;gap:8px;" class="sg-hide-scrollbar">
+  <div class="menu-header__cats sg-hide-scrollbar">
     <button
       type="button"
       class="sg-cat-pill {activeCategory === 'all' ? 'sg-cat-pill-active' : ''}"
-      style="min-height:40px;"
       onclick={() => scrollToCategory('all')}
     >
       All
@@ -324,7 +332,6 @@
       <button
         type="button"
         class="sg-cat-pill {activeCategory === category.id ? 'sg-cat-pill-active' : ''}"
-        style="min-height:40px;"
         onclick={() => scrollToCategory(category.id)}
       >
         {category.icon_emoji} {category.name}
@@ -332,8 +339,7 @@
     {/each}
   </div>
 
-  <!-- Dietary filters -->
-  <div style="display:flex;overflow-x:auto;padding:0 16px 12px;gap:8px;" class="sg-hide-scrollbar">
+  <div class="menu-header__filters sg-hide-scrollbar">
     {#each DIETARY_FILTERS as f}
       <button
         type="button"
@@ -347,21 +353,19 @@
   </div>
 </header>
 
-<main style="padding:190px 16px calc(110px + env(safe-area-inset-bottom, 0px));max-width:720px;margin:0 auto;">
+<main class="menu-main">
   {#if !menuReady}
-    <!-- Skeletons -->
-    <div style="margin-bottom:28px;">
+    <div class="menu-skel">
       <div class="sg-skeleton" style="height:12px;width:80px;margin-bottom:14px;"></div>
       <div class="sg-skeleton" style="width:100%;aspect-ratio:16/10;border-radius:22px;margin-bottom:12px;"></div>
       <div class="sg-skeleton" style="height:18px;width:55%;margin-bottom:8px;"></div>
       <div class="sg-skeleton" style="height:12px;width:80%;"></div>
     </div>
     {#each [0, 1, 2] as _}
-      <div class="sg-tile sg-tile-static" style="padding:12px;display:flex;gap:14px;margin-bottom:12px;">
-        <div class="sg-skeleton" style="width:96px;height:96px;flex-shrink:0;"></div>
-        <div style="flex:1;display:flex;flex-direction:column;gap:8px;padding:4px 0;">
+      <div class="sg-tile sg-tile-static menu-row menu-row--skel">
+        <div class="sg-skeleton menu-row__thumb"></div>
+        <div class="menu-row__skel-body">
           <div class="sg-skeleton" style="height:14px;width:70%;"></div>
-          <div class="sg-skeleton" style="height:10px;width:90%;"></div>
           <div class="sg-skeleton" style="height:10px;width:40%;margin-top:auto;"></div>
         </div>
       </div>
@@ -371,7 +375,7 @@
       <FeaturedCarousel
         items={featuredItems}
         getQuantity={getCartItemQuantity}
-        onAdd={(item) => cart.addItem(item, 1)}
+        onAdd={addWithFeedback}
         onSetQuantity={(id, qty) => cart.setQuantity(id, qty)}
       />
     {/if}
@@ -379,67 +383,60 @@
     {#each categories as category}
       {@const items = itemsByCategory().get(category.id) || []}
       {#if items.length > 0 && (activeCategory === 'all' || activeCategory === category.id)}
-        <section id="category-{category.id}" style="margin-bottom:32px;scroll-margin-top:180px;">
-          <h2
-            style="font-size:18px;font-weight:800;color:#1e1b4b;letter-spacing:-0.02em;margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid rgba(99,102,241,0.1);display:flex;align-items:center;gap:8px;"
-          >
+        <section id="category-{category.id}" class="menu-section">
+          <h2 class="menu-section__label sg-title-balance">
             <span>{category.icon_emoji}</span> {category.name}
           </h2>
-          <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="menu-section__list">
             {#each items as item, ii}
+              {@const expanded = expandedIds.has(item.id)}
               <div
-                class="sg-tile sg-stagger"
-                style="padding:12px;display:flex;gap:14px;position:relative;overflow:hidden;--i:{ii};{item.is_available
-                  ? ''
-                  : 'opacity:0.65;'}"
+                class="sg-tile sg-stagger menu-row"
+                style="--i:{ii};{item.is_available ? '' : 'opacity:0.65;'}"
               >
                 {#if !item.is_available}
-                  <div
-                    style="position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.45);backdrop-filter:blur(2px);"
-                  >
-                    <span
-                      style="background:#1e1b4b;color:white;padding:6px 12px;border-radius:10px;font-size:11px;font-weight:700;letter-spacing:0.06em;font-family:'Geist Mono',monospace;"
-                    >
-                      OUT OF STOCK
-                    </span>
+                  <div class="menu-row__oos">
+                    <span>OUT OF STOCK</span>
                   </div>
                 {/if}
-                <div
-                  style="width:96px;height:96px;flex-shrink:0;border-radius:14px;overflow:hidden;background:rgba(99,102,241,0.08);"
-                >
+                <div class="sg-media menu-row__thumb">
                   <img
                     src={item.image_url}
                     alt={item.name}
-                    style="width:100%;height:100%;object-fit:cover;"
                     loading="lazy"
-                    width="96"
-                    height="96"
+                    width="72"
+                    height="72"
                   />
                 </div>
-                <div style="flex:1;display:flex;flex-direction:column;min-width:0;padding:2px 0;">
-                  <div style="display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;">
-                    {#each item.dietary_tags as tag}
-                      <DietaryBadge {tag} />
-                    {/each}
-                  </div>
-                  <h3 style="font-size:15px;font-weight:800;color:#1e1b4b;margin:0;letter-spacing:-0.02em;">{item.name}</h3>
-                  <p style="font-size:12px;color:#8b84c0;margin:4px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
-                    {item.description}
-                  </p>
-                  <div style="margin-top:auto;padding-top:8px;display:flex;align-items:center;justify-content:space-between;">
-                    <div>
-                      <span style="font-weight:800;color:#6366f1;">{formatCurrency(item.price)}</span>
-                      {#if item.preparation_time}
-                        <div style="font-size:10px;font-family:'Geist Mono',monospace;color:#8b84c0;margin-top:2px;">
-                          {item.preparation_time} mins
+                <div class="menu-row__body">
+                  <button
+                    type="button"
+                    class="menu-row__main"
+                    onclick={() => toggleExpand(item.id)}
+                    aria-expanded={expanded}
+                  >
+                    <h3 class="sg-title-balance">{item.name}</h3>
+                    {#if expanded}
+                      <p class="sg-text-pretty">{item.description}</p>
+                      {#if item.dietary_tags.length}
+                        <div class="menu-row__tags">
+                          {#each item.dietary_tags as tag}
+                            <DietaryBadge {tag} />
+                          {/each}
                         </div>
+                      {/if}
+                    {/if}
+                  </button>
+                  <div class="menu-row__meta">
+                    <div>
+                      <span class="menu-row__price sg-num">{formatCurrency(item.price)}</span>
+                      {#if item.preparation_time && expanded}
+                        <div class="menu-row__time sg-num">{item.preparation_time} mins</div>
                       {/if}
                     </div>
                     {#if item.is_available}
                       {#if getCartItemQuantity(item.id) > 0}
-                        <div
-                          style="display:flex;align-items:center;gap:4px;background:rgba(99,102,241,0.08);border-radius:99px;padding:2px;border:1px solid rgba(99,102,241,0.15);z-index:20;"
-                        >
+                        <div class="menu-row__qty">
                           <button
                             type="button"
                             class="sg-qty-btn sg-qty-btn-minus"
@@ -448,7 +445,7 @@
                           >
                             <Minus size={16} />
                           </button>
-                          <span style="min-width:20px;text-align:center;font-weight:700;font-size:13px;">{getCartItemQuantity(item.id)}</span>
+                          <span class="sg-num">{getCartItemQuantity(item.id)}</span>
                           <button
                             type="button"
                             class="sg-qty-btn sg-qty-btn-plus"
@@ -461,10 +458,9 @@
                       {:else}
                         <button
                           type="button"
-                          class="sg-qty-btn-add"
-                          style="z-index:20;"
+                          class="sg-qty-btn-add {popIds.has(item.id) ? 'is-pop' : ''}"
                           aria-label="Add {item.name}"
-                          onclick={() => cart.addItem(item, 1)}
+                          onclick={() => addWithFeedback(item)}
                         >
                           <Plus size={18} />
                         </button>
@@ -480,36 +476,30 @@
     {/each}
 
     {#if dietaryFilters.length > 0 && featuredItems.length === 0 && categories.every((c) => (itemsByCategory().get(c.id) || []).length === 0)}
-      <div class="sg-tile sg-tile-static" style="padding:36px 24px;text-align:center;">
-        <p style="font-weight:800;color:#1e1b4b;margin:0 0 6px;">No matches</p>
-        <p style="font-size:13px;color:#8b84c0;margin:0 0 16px;">Try clearing a dietary filter.</p>
+      <div class="sg-tile sg-tile-static menu-empty">
+        <p class="menu-empty__title">No matches</p>
+        <p class="menu-empty__copy sg-text-pretty">Try clearing a dietary filter.</p>
         <button type="button" class="sg-btn-ghost" onclick={() => (dietaryFilters = [])}>Clear filters</button>
       </div>
     {/if}
   {/if}
 </main>
 
-<!-- Waiter confirmation banner -->
 {#if showWaiterBanner}
   <div class="sg-waiter-banner" transition:fly={{ y: 24, duration: 280 }} role="status">
-    <div
-      style="width:40px;height:40px;border-radius:12px;background:rgba(99,102,241,0.12);display:flex;align-items:center;justify-content:center;color:#6366f1;flex-shrink:0;"
-    >
+    <div class="waiter-icon">
       <CheckCircle2 size={20} />
     </div>
-    <div style="flex:1;min-width:0;">
-      <div style="font-size:14px;font-weight:800;color:#1e1b4b;">Waiter notified</div>
-      <div style="font-size:12px;color:#8b84c0;margin-top:2px;">Usually under 2 minutes</div>
+    <div class="waiter-copy">
+      <div class="waiter-copy__title">Waiter notified</div>
+      <div class="waiter-copy__sub">Usually under 2 minutes</div>
       {#if cooldownSeconds > 0}
-        <div style="font-size:11px;font-family:'Geist Mono',monospace;color:#6366f1;margin-top:6px;">
-          Available again in {formatCooldown(cooldownSeconds)}
-        </div>
+        <div class="waiter-copy__eta sg-num">Available again in {formatCooldown(cooldownSeconds)}</div>
       {/if}
     </div>
     <button
       type="button"
-      class="sg-touch"
-      style="width:48px;height:48px;border:none;background:transparent;color:#8b84c0;border-radius:12px;"
+      class="sg-touch waiter-dismiss"
       aria-label="Dismiss"
       onclick={() => (showWaiterBanner = false)}
     >
@@ -518,13 +508,12 @@
   </div>
 {/if}
 
-<!-- Thumb-zone action bar -->
 {#if !isCartOpen && !showCheckoutModal}
   <div class="sg-thumb-bar" transition:fly={{ y: 40, duration: 250 }}>
     <button
       type="button"
-      class="sg-btn-ghost"
-      style="min-width:56px;min-height:52px;padding:12px;flex-shrink:0;color:{waiterCalled ? '#6366f1' : '#4338ca'};"
+      class="sg-btn-ghost thumb-waiter"
+      style="color:{waiterCalled ? 'var(--sg-accent)' : 'var(--sg-accent-strong)'};"
       onclick={handleCallWaiter}
       aria-label="Call waiter"
       title="Call waiter"
@@ -535,79 +524,72 @@
     {#if $cartCount > 0}
       <button
         type="button"
-        class="sg-btn-primary"
-        style="flex:1;min-height:52px;padding:14px 18px;font-size:15px;justify-content:space-between;"
+        class="sg-btn-primary thumb-cart"
         onclick={() => (isCartOpen = true)}
       >
-        <span style="display:inline-flex;align-items:center;gap:8px;">
+        <span class="thumb-cart__left">
           <ShoppingCart size={18} />
           View cart
-          <span
-            style="background:rgba(255,255,255,0.25);padding:2px 8px;border-radius:99px;font-size:12px;font-weight:800;"
-          >
-            {$cartCount}
-          </span>
+          <span class="thumb-cart__count sg-num">{$cartCount}</span>
         </span>
-        <span>{formatCurrency(payableTotal)}</span>
+        <span class="sg-num">{formatCurrency(payableTotal)}</span>
       </button>
     {:else if hasActiveOrder}
       <a
         href="/table/{restaurant.id}/{table.id}/order"
-        class="sg-btn-primary"
-        style="flex:1;min-height:52px;padding:14px 18px;font-size:15px;text-decoration:none;"
+        class="sg-btn-primary thumb-cart"
       >
         <Package size={18} /> Track active order
       </a>
     {:else}
-      <div
-        style="flex:1;min-height:52px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#8b84c0;font-family:'Geist Mono',monospace;"
-      >
-        Add items to begin
-      </div>
+      <div class="thumb-hint">Add items to begin</div>
     {/if}
   </div>
 {/if}
 
-<!-- Cart sheet -->
 {#if isCartOpen}
-  <div style="position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;justify-content:flex-end;" transition:fade={{ duration: 200 }}>
+  <div class="sheet-root" transition:fade={{ duration: 180 }}>
     <button
       type="button"
+      class="sheet-scrim"
       aria-label="Close cart"
-      style="position:absolute;inset:0;background:rgba(30,27,75,0.4);backdrop-filter:blur(6px);border:none;cursor:pointer;"
       onclick={() => (isCartOpen = false)}
     ></button>
 
     <div
-      class="sg-glass"
-      style="width:100%;max-height:85vh;border-radius:24px 24px 0 0;position:relative;display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(255,255,255,0.8);box-shadow:0 -8px 40px rgba(99,102,241,0.15);transform:translateY({cartSheetY}px);transition:{swiping
+      class="sg-glass sg-sheet"
+      style="transform:translateY({cartSheetY}px);transition:{swiping
         ? 'none'
-        : 'transform 0.25s ease-out'};"
+        : 'transform var(--sg-duration-sheet) var(--sg-ease)'};"
       transition:fly={{ y: 100, duration: 300, opacity: 1 }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Your order"
     >
       <div
+        class="sg-sheet-handle"
         role="button"
         tabindex="0"
         aria-label="Swipe down to close cart"
-        style="width:100%;display:flex;justify-content:center;padding:14px;cursor:grab;touch-action:none;"
         ontouchstart={onSheetTouchStart}
         ontouchmove={onCartTouchMove}
         ontouchend={onCartTouchEnd}
         onclick={() => (isCartOpen = false)}
         onkeydown={(e) => e.key === 'Enter' && (isCartOpen = false)}
       >
-        <div style="width:44px;height:5px;background:rgba(99,102,241,0.28);border-radius:99px;"></div>
+        <div class="sg-sheet-handle__bar"></div>
       </div>
 
-      <div style="padding:0 20px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(99,102,241,0.1);">
-        <h2 style="font-size:22px;font-weight:900;color:#1e1b4b;margin:0;letter-spacing:-0.03em;display:flex;align-items:center;gap:10px;">
+      <div class="sg-sheet-header">
+        <h2>
           Your Order
-          <span class="sg-badge-info">{$cartCount}</span>
+          {#if $cartCount > 0}
+            <span class="sg-badge-info sg-num">{$cartCount}</span>
+          {/if}
         </h2>
         <button
           type="button"
-          class="sg-touch"
-          style="width:48px;height:48px;border-radius:50%;border:none;background:rgba(99,102,241,0.08);color:#6b6a9c;"
+          class="sg-touch sheet-close"
           aria-label="Close cart"
           onclick={() => (isCartOpen = false)}
         >
@@ -615,128 +597,139 @@
         </button>
       </div>
 
-      <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:20px;">
-        <div style="display:flex;flex-direction:column;gap:14px;">
-          {#each $cart as item}
-            <div style="display:flex;align-items:center;gap:12px;">
-              <div style="width:56px;height:56px;border-radius:12px;overflow:hidden;background:rgba(99,102,241,0.08);">
-                <img src={item.menu_item.image_url} alt={item.menu_item.name} style="width:100%;height:100%;object-fit:cover;" />
-              </div>
-              <div style="flex:1;min-width:0;">
-                <h4 style="font-size:14px;font-weight:700;color:#1e1b4b;margin:0;">{item.menu_item.name}</h4>
-                <span style="font-size:13px;font-weight:700;color:#6366f1;">{formatCurrency(item.menu_item.price)}</span>
-              </div>
-              <div
-                style="display:flex;align-items:center;gap:4px;background:rgba(99,102,241,0.08);border-radius:99px;padding:2px;border:1px solid rgba(99,102,241,0.15);"
-              >
-                <button
-                  type="button"
-                  class="sg-qty-btn sg-qty-btn-minus"
-                  aria-label="Decrease"
-                  onclick={() => cart.setQuantity(item.menu_item.id, item.quantity - 1)}
-                >
-                  <Minus size={16} />
-                </button>
-                <span style="min-width:20px;text-align:center;font-weight:700;font-size:13px;">{item.quantity}</span>
-                <button
-                  type="button"
-                  class="sg-qty-btn sg-qty-btn-plus"
-                  aria-label="Increase"
-                  onclick={() => cart.setQuantity(item.menu_item.id, item.quantity + 1)}
-                >
-                  <Plus size={16} />
-                </button>
-              </div>
+      <div class="sheet-body">
+        {#if $cartCount === 0}
+          <div class="sg-empty-cart">
+            <div class="sg-empty-cart__icon">
+              <ShoppingCart size={28} />
             </div>
-          {/each}
-        </div>
+            <h3>Your cart is empty</h3>
+            <p>Browse the menu and add dishes when you’re ready.</p>
+            <button type="button" class="sg-btn-primary" onclick={() => (isCartOpen = false)}>
+              Back to menu
+            </button>
+          </div>
+        {:else}
+          <div class="cart-lines">
+            {#each $cart as item}
+              <div class="sg-cart-line">
+                <div class="sg-media cart-thumb">
+                  <img src={item.menu_item.image_url} alt={item.menu_item.name} />
+                </div>
+                <div class="cart-line__info">
+                  <h4 class="sg-title-balance">{item.menu_item.name}</h4>
+                  <span class="sg-num">{formatCurrency(item.menu_item.price)}</span>
+                </div>
+                <div class="menu-row__qty">
+                  <button
+                    type="button"
+                    class="sg-qty-btn sg-qty-btn-minus"
+                    aria-label="Decrease"
+                    onclick={() => cart.setQuantity(item.menu_item.id, item.quantity - 1)}
+                  >
+                    <Minus size={16} />
+                  </button>
+                  <span class="sg-num">{item.quantity}</span>
+                  <button
+                    type="button"
+                    class="sg-qty-btn sg-qty-btn-plus"
+                    aria-label="Increase"
+                    onclick={() => cart.setQuantity(item.menu_item.id, item.quantity + 1)}
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  class="sg-cart-line__remove"
+                  aria-label="Remove {item.menu_item.name}"
+                  onclick={() => cart.removeItem(item.menu_item.id)}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            {/each}
+          </div>
 
-        <div>
-          <label for="instructions" class="sg-label">Special instructions</label>
-          <textarea
-            id="instructions"
-            bind:value={specialInstructions}
-            placeholder="Allergies or special requests?"
-            class="sg-input"
-            style="height:72px;resize:none;"
-          ></textarea>
-        </div>
+          <div>
+            <label for="instructions" class="sg-label">Special instructions</label>
+            <textarea
+              id="instructions"
+              bind:value={specialInstructions}
+              placeholder="Allergies or special requests?"
+              class="sg-input sheet-notes"
+            ></textarea>
+          </div>
+        {/if}
       </div>
 
-      <div
-        style="padding:16px 20px calc(16px + env(safe-area-inset-bottom, 0px));border-top:1px solid rgba(99,102,241,0.1);background:rgba(255,255,255,0.4);display:flex;flex-direction:column;gap:10px;"
-      >
-        <div style="display:flex;justify-content:space-between;font-size:13px;color:#8b84c0;">
-          <span>Subtotal</span>
-          <span>{formatCurrency($cartTotal)}</span>
+      {#if $cartCount > 0}
+        <div class="sheet-footer">
+          <div class="sheet-totals">
+            <div class="sheet-totals__row">
+              <span>Subtotal</span>
+              <span class="sg-num">{formatCurrency($cartTotal)}</span>
+            </div>
+            <div class="sheet-totals__row">
+              <span>Taxes (10%)</span>
+              <span class="sg-num">{formatCurrency($cartTotal * 0.1)}</span>
+            </div>
+            <div class="sheet-totals__total">
+              <span>Total</span>
+              <span class="sg-num">{formatCurrency(payableTotal)}</span>
+            </div>
+          </div>
+          <button type="button" class="sg-btn-primary sheet-cta" onclick={placeOrder}>
+            Place Order
+          </button>
+          <button type="button" class="sg-btn-ghost sheet-assist" onclick={handleCallWaiter}>
+            <Bell size={16} /> Need assistance? Call Waiter
+          </button>
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;color:#8b84c0;">
-          <span>Taxes (10%)</span>
-          <span>{formatCurrency($cartTotal * 0.1)}</span>
-        </div>
-        <div
-          style="display:flex;justify-content:space-between;font-size:17px;font-weight:800;color:#1e1b4b;padding-top:10px;border-top:1px solid rgba(99,102,241,0.1);"
-        >
-          <span>Total</span>
-          <span style="color:#6366f1;">{formatCurrency(payableTotal)}</span>
-        </div>
-        <button
-          type="button"
-          class="sg-btn-primary"
-          style="width:100%;min-height:52px;padding:14px;margin-top:6px;font-size:15px;"
-          onclick={placeOrder}
-        >
-          Place Order
-        </button>
-        <button type="button" class="sg-btn-ghost" style="width:100%;min-height:48px;" onclick={handleCallWaiter}>
-          <Bell size={16} /> Need assistance? Call Waiter
-        </button>
-      </div>
+      {/if}
     </div>
   </div>
 {/if}
 
-<!-- Checkout sheet -->
 {#if showCheckoutModal}
-  <div
-    style="position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;"
-    transition:fade={{ duration: 200 }}
-  >
+  <div class="sheet-root sheet-root--center" transition:fade={{ duration: 180 }}>
     <button
       type="button"
+      class="sheet-scrim"
       aria-label="Close checkout"
-      style="position:absolute;inset:0;background:rgba(30,27,75,0.5);backdrop-filter:blur(8px);border:none;cursor:pointer;"
       onclick={() => !isProcessingPayment && (showCheckoutModal = false)}
     ></button>
 
     <div
-      class="sg-glass"
-      style="width:100%;max-width:440px;border-radius:24px 24px 0 0;padding:0 0 calc(16px + env(safe-area-inset-bottom, 0px));position:relative;z-index:10;transform:translateY({checkoutSheetY}px);transition:{swiping
+      class="sg-glass sg-sheet checkout-sheet"
+      style="transform:translateY({checkoutSheetY}px);transition:{swiping
         ? 'none'
-        : 'transform 0.25s ease-out'};max-height:90vh;overflow-y:auto;"
+        : 'transform var(--sg-duration-sheet) var(--sg-ease)'};"
       transition:fly={{ y: 80, duration: 280 }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Payment"
     >
       <div
+        class="sg-sheet-handle"
         role="button"
         tabindex="0"
         aria-label="Swipe down to close"
-        style="width:100%;display:flex;justify-content:center;padding:14px;cursor:grab;touch-action:none;"
         ontouchstart={onSheetTouchStart}
         ontouchmove={onCheckoutTouchMove}
         ontouchend={onCheckoutTouchEnd}
         onclick={() => !isProcessingPayment && (showCheckoutModal = false)}
         onkeydown={(e) => e.key === 'Enter' && !isProcessingPayment && (showCheckoutModal = false)}
       >
-        <div style="width:44px;height:5px;background:rgba(99,102,241,0.28);border-radius:99px;"></div>
+        <div class="sg-sheet-handle__bar"></div>
       </div>
 
-      <div style="padding:0 24px 24px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-          <h3 style="font-size:20px;font-weight:900;color:#1e1b4b;margin:0;letter-spacing:-0.03em;">Payment</h3>
+      <div class="checkout-body">
+        <div class="sg-sheet-header checkout-header">
+          <h3>Payment</h3>
           <button
             type="button"
-            class="sg-touch"
-            style="width:48px;height:48px;border:none;background:rgba(99,102,241,0.08);border-radius:50%;color:#8b84c0;"
+            class="sg-touch sheet-close"
             onclick={() => (showCheckoutModal = false)}
             disabled={isProcessingPayment}
             aria-label="Close"
@@ -745,25 +738,16 @@
           </button>
         </div>
 
-        <div style="text-align:center;padding:16px 0;border-bottom:1px solid rgba(99,102,241,0.1);margin-bottom:20px;">
-          <p style="font-size:12px;font-family:'Geist Mono',monospace;color:#8b84c0;text-transform:uppercase;letter-spacing:0.06em;margin:0;">
-            Amount to pay
-          </p>
-          <p style="font-size:32px;font-weight:900;color:#6366f1;margin:6px 0 0;letter-spacing:-0.04em;">
-            {formatCurrency(payableTotal)}
-          </p>
+        <div class="checkout-amount">
+          <p>Amount to pay</p>
+          <p class="checkout-amount__value sg-num">{formatCurrency(payableTotal)}</p>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;">
+        <div class="checkout-methods">
           {#each [{ id: 'upi', label: 'UPI', Icon: Smartphone }, { id: 'card', label: 'Card', Icon: CreditCard }, { id: 'cash', label: 'Cash', Icon: Banknote }] as method}
             <button
               type="button"
-              style="display:flex;flex-direction:column;align-items:center;gap:6px;min-height:72px;padding:12px 8px;border-radius:14px;border:1px solid {paymentMethod ===
-              method.id
-                ? 'rgba(99,102,241,0.4)'
-                : 'rgba(99,102,241,0.12)'};background:{paymentMethod === method.id
-                ? 'rgba(99,102,241,0.1)'
-                : 'rgba(255,255,255,0.5)'};color:{paymentMethod === method.id ? '#4338ca' : '#8b84c0'};cursor:pointer;font-family:'Cabinet Grotesk',system-ui,sans-serif;"
+              class="sg-pay-tile {paymentMethod === method.id ? 'is-active' : ''}"
               onclick={() => {
                 paymentMethod = method.id as 'upi' | 'card' | 'cash';
                 paymentError = '';
@@ -771,12 +755,12 @@
               disabled={isProcessingPayment}
             >
               <method.Icon size={18} />
-              <span style="font-size:11px;font-weight:700;">{method.label}</span>
+              <span>{method.label}</span>
             </button>
           {/each}
         </div>
 
-        <div style="min-height:100px;display:flex;flex-direction:column;justify-content:center;margin-bottom:12px;gap:10px;">
+        <div class="checkout-fields">
           {#if paymentMethod === 'upi'}
             <label class="sg-label" for="upi-input">UPI ID</label>
             <input
@@ -799,8 +783,8 @@
               placeholder="Card number"
               disabled={isProcessingPayment}
             />
-            <div style="display:flex;gap:10px;">
-              <div style="flex:1;">
+            <div class="checkout-card-row">
+              <div>
                 <label class="sg-label" for="card-exp">Expiry</label>
                 <input
                   id="card-exp"
@@ -811,7 +795,7 @@
                   disabled={isProcessingPayment}
                 />
               </div>
-              <div style="flex:1;">
+              <div>
                 <label class="sg-label" for="card-cvv">CVV</label>
                 <input
                   id="card-cvv"
@@ -825,45 +809,33 @@
               </div>
             </div>
           {:else}
-            <p style="text-align:center;font-size:13px;color:#8b84c0;margin:0;">
-              A waiter will collect cash at your table.
-            </p>
+            <p class="checkout-cash sg-text-pretty">A waiter will collect cash at your table.</p>
           {/if}
         </div>
 
         {#if paymentError}
-          <div
-            style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#dc2626;padding:12px 14px;border-radius:12px;margin-bottom:12px;font-size:13px;"
-            role="alert"
-          >
-            {paymentError}
-          </div>
+          <div class="checkout-error" role="alert">{paymentError}</div>
         {/if}
 
         {#if isProcessingPayment}
-          <p style="text-align:center;font-size:12px;font-family:'Geist Mono',monospace;color:#8b84c0;margin:0 0 10px;">
-            Confirming payment…
-          </p>
+          <p class="checkout-pending">Confirming payment…</p>
         {/if}
 
         <button
           type="button"
-          class="sg-btn-primary"
-          style="width:100%;min-height:52px;padding:14px;font-size:15px;"
+          class="sg-btn-primary sheet-cta"
           onclick={handlePayment}
           disabled={isProcessingPayment || !paymentValid}
         >
           {#if isProcessingPayment}
-            <div
-              style="width:22px;height:22px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;"
-            ></div>
+            <div class="spin"></div>
           {:else}
             {paymentMethod === 'cash' ? 'Place Order (Cash)' : 'Confirm Payment'}
           {/if}
         </button>
 
         {#if paymentError && !isProcessingPayment}
-          <button type="button" class="sg-btn-ghost" style="width:100%;min-height:48px;margin-top:8px;" onclick={handlePayment}>
+          <button type="button" class="sg-btn-ghost sheet-assist" onclick={handlePayment}>
             Retry payment
           </button>
         {/if}
@@ -873,9 +845,581 @@
 {/if}
 
 <style>
+  .menu-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    border-bottom: 1px solid var(--sg-line);
+  }
+
+  .menu-header__top {
+    padding: 10px 16px 6px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .menu-header__brand {
+    min-width: 0;
+  }
+
+  .menu-header__brand h1 {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: var(--sg-ink);
+    margin: 0;
+    line-height: 1.15;
+  }
+
+  .menu-header__brand p {
+    font-size: 10px;
+    font-family: var(--sg-font-mono);
+    color: var(--sg-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 3px 0 0;
+  }
+
+  .menu-header__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--sg-success);
+    box-shadow: 0 0 8px rgba(47, 122, 74, 0.5);
+  }
+
+  .menu-header__cats {
+    display: flex;
+    overflow-x: auto;
+    padding: 0 16px 6px;
+    gap: 6px;
+  }
+
+  .menu-header__filters {
+    display: flex;
+    overflow-x: auto;
+    padding: 0 16px 8px;
+    gap: 6px;
+  }
+
+  .menu-main {
+    padding: 148px 16px calc(110px + env(safe-area-inset-bottom, 0px));
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .menu-skel {
+    margin-bottom: 28px;
+  }
+
+  .menu-section {
+    margin-bottom: 28px;
+    scroll-margin-top: 148px;
+  }
+
+  .menu-section__label {
+    position: sticky;
+    top: 132px;
+    z-index: 20;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--sg-ink);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 10px;
+    padding: 8px 0;
+    background: linear-gradient(
+      180deg,
+      rgba(242, 235, 227, 0.96) 0%,
+      rgba(242, 235, 227, 0.88) 70%,
+      transparent 100%
+    );
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--sg-font-mono);
+  }
+
+  .menu-section__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .menu-row {
+    padding: 10px;
+    display: flex;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--sg-radius-lg);
+  }
+
+  .menu-row--skel {
+    margin-bottom: 8px;
+  }
+
+  .menu-row__oos {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 252, 247, 0.5);
+    backdrop-filter: blur(2px);
+  }
+
+  .menu-row__oos span {
+    background: var(--sg-ink);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    font-family: var(--sg-font-mono);
+  }
+
+  .menu-row__thumb {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+    border-radius: calc(var(--sg-radius-lg) - 10px);
+  }
+
+  .menu-row__skel-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px 0;
+  }
+
+  .menu-row__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .menu-row__main {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    color: inherit;
+  }
+
+  .menu-row__main:focus-visible {
+    outline: 2px solid var(--sg-accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  .menu-row__main h3 {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--sg-ink);
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .menu-row__main p {
+    font-size: 12px;
+    color: var(--sg-muted);
+    margin: 6px 0 0;
+    line-height: 1.4;
+  }
+
+  .menu-row__tags {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+
+  .menu-row__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    gap: 8px;
+  }
+
+  .menu-row__price {
+    font-weight: 800;
+    color: var(--sg-accent);
+    font-size: 14px;
+  }
+
+  .menu-row__time {
+    font-size: 10px;
+    font-family: var(--sg-font-mono);
+    color: var(--sg-muted);
+    margin-top: 2px;
+  }
+
+  .menu-row__qty {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--sg-accent-soft);
+    border-radius: var(--sg-radius-pill);
+    padding: 2px;
+    border: 1px solid var(--sg-accent-border);
+    z-index: 20;
+  }
+
+  .menu-row__qty span {
+    min-width: 20px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 13px;
+  }
+
+  .menu-empty {
+    padding: 36px 24px;
+    text-align: center;
+  }
+
+  .menu-empty__title {
+    font-weight: 800;
+    color: var(--sg-ink);
+    margin: 0 0 6px;
+  }
+
+  .menu-empty__copy {
+    font-size: 13px;
+    color: var(--sg-muted);
+    margin: 0 0 16px;
+  }
+
+  .waiter-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--sg-accent-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--sg-accent);
+    flex-shrink: 0;
+  }
+
+  .waiter-copy {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .waiter-copy__title {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--sg-ink);
+  }
+
+  .waiter-copy__sub {
+    font-size: 12px;
+    color: var(--sg-muted);
+    margin-top: 2px;
+  }
+
+  .waiter-copy__eta {
+    font-size: 11px;
+    font-family: var(--sg-font-mono);
+    color: var(--sg-accent);
+    margin-top: 6px;
+  }
+
+  .waiter-dismiss {
+    width: 48px;
+    height: 48px;
+    border: none;
+    background: transparent;
+    color: var(--sg-muted);
+    border-radius: 12px;
+  }
+
+  .thumb-waiter {
+    min-width: 56px;
+    min-height: 52px;
+    padding: 12px;
+    flex-shrink: 0;
+  }
+
+  .thumb-cart {
+    flex: 1;
+    min-height: 52px;
+    padding: 14px 18px;
+    font-size: 15px;
+    justify-content: space-between;
+    text-decoration: none;
+  }
+
+  .thumb-cart__left {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .thumb-cart__count {
+    background: rgba(255, 255, 255, 0.22);
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .thumb-hint {
+    flex: 1;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--sg-muted);
+    font-family: var(--sg-font-mono);
+  }
+
+  .sheet-root {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .sheet-root--center {
+    align-items: stretch;
+  }
+
+  .sheet-scrim {
+    position: absolute;
+    inset: 0;
+    background: rgba(26, 22, 20, 0.4);
+    backdrop-filter: blur(6px);
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .sheet-close {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: var(--sg-accent-soft);
+    color: var(--sg-muted);
+  }
+
+  .sheet-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .cart-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .cart-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: calc(var(--sg-radius-lg) - 12px);
+    flex-shrink: 0;
+  }
+
+  .cart-line__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cart-line__info h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--sg-ink);
+    margin: 0;
+  }
+
+  .cart-line__info span {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--sg-accent);
+  }
+
+  .sheet-notes {
+    height: 72px;
+    resize: none;
+  }
+
+  .sheet-footer {
+    padding: 16px 20px calc(16px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--sg-line);
+    background: rgba(255, 252, 247, 0.45);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .sheet-totals__row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--sg-muted);
+  }
+
+  .sheet-totals__total {
+    display: flex;
+    justify-content: space-between;
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--sg-ink);
+    padding-top: 10px;
+    border-top: 1px solid var(--sg-line);
+  }
+
+  .sheet-totals__total .sg-num {
+    color: var(--sg-accent);
+  }
+
+  .sheet-cta {
+    width: 100%;
+    min-height: 52px;
+    padding: 14px;
+    margin-top: 6px;
+    font-size: 15px;
+  }
+
+  .sheet-assist {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  .checkout-sheet {
+    max-width: 440px;
+    margin: 0 auto;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .checkout-body {
+    padding: 0 24px calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .checkout-header {
+    padding: 0 0 16px;
+    border-bottom: none;
+    margin-bottom: 4px;
+  }
+
+  .checkout-amount {
+    text-align: center;
+    padding: 12px 0 18px;
+    border-bottom: 1px solid var(--sg-line);
+    margin-bottom: 18px;
+  }
+
+  .checkout-amount p:first-child {
+    font-size: 11px;
+    font-family: var(--sg-font-mono);
+    color: var(--sg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0;
+  }
+
+  .checkout-amount__value {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--sg-accent);
+    margin: 6px 0 0;
+    letter-spacing: -0.04em;
+  }
+
+  .checkout-methods {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .checkout-fields {
+    min-height: 96px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+
+  .checkout-card-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .checkout-card-row > div {
+    flex: 1;
+  }
+
+  .checkout-cash {
+    text-align: center;
+    font-size: 13px;
+    color: var(--sg-muted);
+    margin: 0;
+  }
+
+  .checkout-error {
+    background: rgba(192, 57, 43, 0.08);
+    border: 1px solid rgba(192, 57, 43, 0.2);
+    color: var(--sg-danger);
+    padding: 12px 14px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+
+  .checkout-pending {
+    text-align: center;
+    font-size: 12px;
+    font-family: var(--sg-font-mono);
+    color: var(--sg-muted);
+    margin: 0 0 10px;
+  }
+
+  .spin {
+    width: 22px;
+    height: 22px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
   @keyframes spin {
     to {
       transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spin {
+      animation: none;
     }
   }
 </style>

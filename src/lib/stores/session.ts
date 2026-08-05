@@ -1,12 +1,12 @@
 ﻿// ============================================================
 // Session Store — anonymous customer session
 // Persists a UUID to localStorage to identify the customer
-// Stores which table the customer is at
+// Stores which table the customer is at + active order
 // ============================================================
 
 import { writable, derived } from 'svelte/store';
 import { getOrCreateSession } from '$lib/utils';
-import type { Table, Restaurant, Order } from '$lib/types';
+import type { Table, Restaurant } from '$lib/types';
 
 type CustomerSession = {
   sessionId: string;
@@ -18,6 +18,27 @@ type CustomerSession = {
   activeOrderId: string | null;
 };
 
+const ORDER_KEY = 'gf_active_order_id';
+
+function loadActiveOrder(): string | null {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    return localStorage.getItem(ORDER_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function persistActiveOrder(orderId: string | null) {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    if (orderId) localStorage.setItem(ORDER_KEY, orderId);
+    else localStorage.removeItem(ORDER_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 function createSessionStore() {
   const initial: CustomerSession = {
     sessionId: typeof localStorage !== 'undefined' ? getOrCreateSession() : 'ssr-placeholder',
@@ -25,10 +46,10 @@ function createSessionStore() {
     tableId: null,
     restaurant: null,
     table: null,
-    activeOrderId: null
+    activeOrderId: loadActiveOrder()
   };
 
-  const { subscribe, update, set } = writable<CustomerSession>(initial);
+  const { subscribe, update } = writable<CustomerSession>(initial);
 
   return {
     subscribe,
@@ -39,15 +60,18 @@ function createSessionStore() {
         restaurantId: restaurant.id,
         tableId: table.id,
         restaurant,
-        table
+        table,
+        activeOrderId: s.activeOrderId ?? loadActiveOrder()
       }));
     },
 
     setActiveOrder(orderId: string) {
+      persistActiveOrder(orderId);
       update((s) => ({ ...s, activeOrderId: orderId }));
     },
 
     clearOrder() {
+      persistActiveOrder(null);
       update((s) => ({ ...s, activeOrderId: null }));
     }
   };

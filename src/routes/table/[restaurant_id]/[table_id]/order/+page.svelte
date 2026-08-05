@@ -1,8 +1,20 @@
 <script lang="ts">
+  import { fly } from 'svelte/transition';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { toast } from 'svelte-sonner';
-  import { Bell, CheckCircle, ArrowLeft, Clock, ChefHat, Utensils, ThumbsUp } from '@lucide/svelte';
+  import {
+    Bell,
+    CheckCircle,
+    ArrowLeft,
+    Clock,
+    ChefHat,
+    Utensils,
+    ThumbsUp,
+    X,
+    CheckCircle2,
+    UtensilsCrossed
+  } from '@lucide/svelte';
 
   import { session } from '$lib/stores/session';
   import { adminOrders, waiterRequests } from '$lib/stores/admin';
@@ -14,6 +26,9 @@
   let order = $derived($adminOrders.find((o) => o.id === orderId));
 
   let waiterCalled = $state(false);
+  let waiterCooldown = $state(false);
+  let showWaiterBanner = $state(false);
+  let cooldownSeconds = $state(0);
   let simulationInterval: ReturnType<typeof setInterval>;
 
   $effect(() => {
@@ -44,8 +59,23 @@
     };
   });
 
+  $effect(() => {
+    if (!waiterCooldown || cooldownSeconds <= 0) return;
+    const id = setInterval(() => {
+      cooldownSeconds = Math.max(0, cooldownSeconds - 1);
+      if (cooldownSeconds === 0) {
+        waiterCooldown = false;
+        showWaiterBanner = false;
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  });
+
   function handleCallWaiter() {
-    if (waiterCalled) return;
+    if (waiterCooldown) {
+      showWaiterBanner = true;
+      return;
+    }
     if (order) {
       waiterRequests.add({
         id: generateUUID(),
@@ -59,8 +89,11 @@
         created_at: new Date().toISOString()
       });
       waiterCalled = true;
-      toast.success('Waiter called!');
-      setTimeout(() => (waiterCalled = false), 60000);
+      waiterCooldown = true;
+      cooldownSeconds = 120;
+      showWaiterBanner = true;
+      toast.success('Waiter notified');
+      setTimeout(() => (waiterCalled = false), 3000);
     }
   }
 
@@ -71,6 +104,17 @@
     goto(`/table/${page.params.restaurant_id}/${page.params.table_id}`);
   }
 
+  function finishAndClear() {
+    session.clearOrder();
+    goto(`/table/${page.params.restaurant_id}/${page.params.table_id}`);
+  }
+
+  function formatCooldown(sec: number) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
   const STAGES = [
     { id: 'pending', label: 'Placed', icon: Clock, msg: 'Order received — sit back and relax.' },
     { id: 'preparing', label: 'Preparing', icon: ChefHat, msg: 'Our chefs are working on your order.' },
@@ -79,6 +123,7 @@
   ];
 
   let currentStageIndex = $derived(!order ? 0 : Math.max(0, STAGES.findIndex((s) => s.id === order.status)));
+  let isComplete = $derived(order ? ['served', 'paid'].includes(order.status) : false);
 </script>
 
 <svelte:head>
@@ -88,12 +133,14 @@
 {#if order}
   <header
     class="sg-glass"
-    style="position:fixed;top:0;inset-inline:0;z-index:40;border-bottom:1px solid rgba(99,102,241,0.1);padding:14px 16px;display:flex;align-items:center;gap:12px;"
+    style="position:fixed;top:0;inset-inline:0;z-index:40;border-bottom:1px solid rgba(99,102,241,0.1);padding:10px 12px;display:flex;align-items:center;gap:8px;"
   >
     <button
       type="button"
-      style="width:40px;height:40px;border-radius:12px;border:1px solid rgba(99,102,241,0.15);background:rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;color:#4338ca;cursor:pointer;"
+      class="sg-touch"
+      style="width:48px;height:48px;border-radius:12px;border:1px solid rgba(99,102,241,0.15);background:rgba(255,255,255,0.6);color:#4338ca;"
       onclick={handleBack}
+      aria-label="Back to menu"
     >
       <ArrowLeft size={18} />
     </button>
@@ -106,8 +153,8 @@
     <span class="sg-badge-info">{order.table_id}</span>
   </header>
 
-  <main style="padding:88px 16px 120px;max-width:480px;margin:0 auto;">
-    <section class="sg-tile sg-tile-static" style="padding:28px 24px;margin-bottom:20px;">
+  <main style="padding:84px 16px calc(120px + env(safe-area-inset-bottom, 0px));max-width:480px;margin:0 auto;">
+    <section class="sg-tile sg-tile-static sg-stagger" style="padding:28px 24px;margin-bottom:20px;--i:0;">
       <div style="text-align:center;margin-bottom:28px;">
         <StatusBadge status={order.status} />
         <h2 style="font-size:18px;font-weight:800;color:#1e1b4b;margin:14px 0 0;letter-spacing:-0.02em;line-height:1.3;">
@@ -130,7 +177,7 @@
             {@const isCurrent = i === currentStageIndex}
             <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
               <div
-                style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all 0.4s;position:relative;{isCompleted
+                style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all 0.4s ease-out;position:relative;{isCompleted
                   ? 'background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;box-shadow:0 4px 14px rgba(99,102,241,0.35);'
                   : 'background:rgba(255,255,255,0.7);color:#a5b4fc;border:1px solid rgba(99,102,241,0.15);'}{isCurrent
                   ? 'transform:scale(1.08);'
@@ -156,7 +203,7 @@
       </div>
     </section>
 
-    <section>
+    <section class="sg-stagger" style="--i:1;">
       <h3
         style="font-size:13px;font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;color:#8b84c0;margin:0 0 12px;"
       >
@@ -201,30 +248,70 @@
     </section>
   </main>
 
-  <div
-    class="sg-glass"
-    style="position:fixed;bottom:0;inset-inline:0;border-top:1px solid rgba(99,102,241,0.1);padding:14px 16px;z-index:40;max-width:480px;margin:0 auto;left:0;right:0;"
-  >
-    <div style="display:flex;gap:10px;">
-      <button
-        type="button"
-        class="sg-btn-ghost"
-        style="width:52px;padding:14px;"
-        onclick={handleCallWaiter}
-        aria-label="Call waiter"
+  {#if showWaiterBanner}
+    <div
+      class="sg-waiter-banner"
+      style="bottom:calc(96px + env(safe-area-inset-bottom, 0px));"
+      transition:fly={{ y: 24, duration: 280 }}
+      role="status"
+    >
+      <div
+        style="width:40px;height:40px;border-radius:12px;background:rgba(99,102,241,0.12);display:flex;align-items:center;justify-content:center;color:#6366f1;flex-shrink:0;"
       >
-        <span style="display:flex;color:{waiterCalled ? '#6366f1' : 'inherit'};">
-          <Bell size={18} />
-        </span>
-      </button>
+        <CheckCircle2 size={20} />
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:800;color:#1e1b4b;">Waiter notified</div>
+        <div style="font-size:12px;color:#8b84c0;margin-top:2px;">Usually under 2 minutes</div>
+        {#if cooldownSeconds > 0}
+          <div style="font-size:11px;font-family:'Geist Mono',monospace;color:#6366f1;margin-top:6px;">
+            Available again in {formatCooldown(cooldownSeconds)}
+          </div>
+        {/if}
+      </div>
       <button
         type="button"
-        style="flex:1;padding:14px;border-radius:12px;border:1px solid rgba(99,102,241,0.15);background:rgba(99,102,241,0.08);color:#4338ca;font-weight:700;font-size:14px;font-family:'Cabinet Grotesk',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;cursor:default;opacity:0.85;"
+        class="sg-touch"
+        style="width:48px;height:48px;border:none;background:transparent;color:#8b84c0;border-radius:12px;"
+        aria-label="Dismiss"
+        onclick={() => (showWaiterBanner = false)}
+      >
+        <X size={18} />
+      </button>
+    </div>
+  {/if}
+
+  <div
+    class="sg-thumb-bar"
+    style="max-width:480px;margin:0 auto;left:0;right:0;"
+  >
+    <button
+      type="button"
+      class="sg-btn-ghost"
+      style="min-width:56px;min-height:52px;padding:12px;color:{waiterCalled ? '#6366f1' : '#4338ca'};"
+      onclick={handleCallWaiter}
+      aria-label="Call waiter"
+    >
+      <Bell size={20} />
+    </button>
+    {#if isComplete}
+      <button
+        type="button"
+        class="sg-btn-primary"
+        style="flex:1;min-height:52px;padding:14px;font-size:14px;"
+        onclick={finishAndClear}
+      >
+        <UtensilsCrossed size={18} /> Back to menu
+      </button>
+    {:else}
+      <button
+        type="button"
+        style="flex:1;min-height:52px;padding:14px;border-radius:12px;border:1px solid rgba(99,102,241,0.15);background:rgba(99,102,241,0.08);color:#4338ca;font-weight:700;font-size:14px;font-family:'Cabinet Grotesk',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;cursor:default;opacity:0.9;"
         disabled
       >
         <CheckCircle size={18} /> Order Confirmed
       </button>
-    </div>
+    {/if}
   </div>
 {:else}
   <div style="min-height:100dvh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;">

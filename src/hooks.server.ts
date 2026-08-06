@@ -47,8 +47,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 		if (!user) {
 			throw redirect(303, '/superadmin/login');
 		}
-		// Strict constraint for metachasm@gmail.com
-		if (user.email !== 'metachasm@gmail.com') {
+		
+		const SUPERADMINS = ['metachasm@gmail.com', 'nit.uniyal@gmail.com'];
+		if (!user.email || !SUPERADMINS.includes(user.email)) {
 			throw redirect(303, '/superadmin/login?error=unauthorized');
 		}
 	}

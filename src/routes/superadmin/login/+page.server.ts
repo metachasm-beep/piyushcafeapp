@@ -4,8 +4,10 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ locals }) => {
 	const { session, user } = await locals.safeGetSession();
 
+	const SUPERADMINS = ['metachasm@gmail.com', 'nit.uniyal@gmail.com'];
+
 	// If already logged in as superadmin, redirect to dashboard
-	if (session && user?.email === 'metachasm@gmail.com') {
+	if (session && user?.email && SUPERADMINS.includes(user.email)) {
 		throw redirect(303, '/superadmin');
 	}
 

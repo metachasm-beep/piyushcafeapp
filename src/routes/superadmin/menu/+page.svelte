@@ -6,6 +6,8 @@
   import { toast } from 'svelte-sonner';
   import { Plus, Search, Edit2, Trash2, X, RefreshCw } from 'lucide-svelte';
   import type { MenuItem, MenuCategory } from '$lib/types';
+  import { fly, fade } from 'svelte/transition';
+  import { backOut } from 'svelte/easing';
 
   let items = $state<MenuItem[]>([]);
   let categories = $state<MenuCategory[]>([]);
@@ -143,8 +145,8 @@
     </div>
   {:else}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {#each filteredItems as item (item.id)}
-        <div class="sa-tile" style="padding:0;overflow:hidden;position:relative;">
+      {#each filteredItems as item, i (item.id)}
+        <div class="sa-tile" style="padding:0;overflow:hidden;position:relative;" in:fly={{ y: 20, duration: 400, delay: i * 30, easing: (t) => 1 - Math.pow(1 - t, 4) }}>
           <!-- Image -->
           <div style="height:140px;background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.06));position:relative;overflow:hidden;">
             {#if item.image_url}
@@ -191,10 +193,11 @@
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
+    transition:fade={{ duration: 200 }}
     style="position:fixed;inset:0;background:rgba(30,27,75,0.3);backdrop-filter:blur(10px);z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;"
     onclick={(e) => { if (e.target === e.currentTarget) showModal = false; }}
   >
-    <div class="sa-tile" style="width:100%;max-width:500px;padding:36px;max-height:90vh;overflow-y:auto;position:relative;" onclick={(e) => e.stopPropagation()}>
+    <div class="sa-tile" transition:fly={{ y: 40, duration: 600, easing: backOut }} style="width:100%;max-width:500px;padding:36px;max-height:90vh;overflow-y:auto;position:relative;" onclick={(e) => e.stopPropagation()}>
       <button style="position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:8px;background:rgba(99,102,241,0.07);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#8b84c0;" onclick={() => showModal = false}><X size={14} /></button>
       <h2 style="font-size:20px;font-weight:900;color:#1e1b4b;letter-spacing:-0.03em;margin-bottom:24px;">{editingItem ? 'Edit Item' : 'Add Menu Item'}</h2>
       <form onsubmit={saveItem} style="display:flex;flex-direction:column;gap:16px;">

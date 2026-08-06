@@ -186,7 +186,7 @@
         </div>
       </div>
       <div class="flex items-center gap-1.5 mt-2">
-        <div class="w-1.5 h-1.5 rounded-full bg-[#22c55e] shadow-[0_0_8px_rgba(34,197,94,0.7)] animate-pulse"></div>
+        <div class="w-1.5 h-1.5 rounded-full bg-[#22c55e] shadow-[0_0_8px_rgba(34,197,94,0.7)] animate-pulse-ring"></div>
         <span class="text-[10px] font-['Geist_Mono',monospace] text-[#6d6a9c] tracking-[0.06em]">NETWORK LIVE</span>
       </div>
     </div>
@@ -197,17 +197,17 @@
         {@const active = page.url.pathname === link.href}
         <a
           href={link.href}
-          class="flex items-center gap-3 px-3 py-3 rounded-[12px] text-[15px] transition-all duration-150"
+          class="group flex items-center gap-3 px-3 py-3 rounded-[12px] text-[15px] transition-all duration-150 hover:text-[#1e1b4b] hover:bg-white/40"
           style="
             font-weight:{active ? 700 : 500};
-            color:{active ? '#4338ca' : '#6b6a9c'};
-            background:{active ? 'linear-gradient(135deg,rgba(99,102,241,0.13),rgba(139,92,246,0.07))' : 'transparent'};
+            color:{active ? '#4338ca' : 'inherit'};
+            background:{active ? 'linear-gradient(135deg,rgba(99,102,241,0.13),rgba(139,92,246,0.07))' : ''};
             border:1px solid {active ? 'rgba(99,102,241,0.2)' : 'transparent'};
             box-shadow:{active ? '0 2px 10px rgba(99,102,241,0.1)' : 'none'};
           "
           onclick={() => mobileMenuOpen = false}
         >
-          <span style="color:{active ? '#6366f1' : '#a5b4fc'};">
+          <span style="color:{active ? '#6366f1' : '#a5b4fc'};" class="transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110 group-hover:-translate-y-[2px]">
             <link.icon size={18} strokeWidth={active ? 2.5 : 1.8} />
           </span>
           {link.label}

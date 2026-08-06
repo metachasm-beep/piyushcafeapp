@@ -1,22 +1,59 @@
 <script lang="ts">
   import { TrendingUp, Users, ShoppingBag, Store, ArrowUpRight, ArrowDownRight, Activity, Zap } from 'lucide-svelte';
   import { formatCurrency } from '$lib/utils';
-  import type { PageData } from './$types';
+  import InteractiveRevenueChart from '$lib/components/InteractiveRevenueChart.svelte';
+  import LiveOrderParticles from '$lib/components/LiveOrderParticles.svelte';
+  import { slide, fade } from 'svelte/transition';
+  import { toast } from 'svelte-sonner';
+
+  let expandedStatIndex = $state<number | null>(null);
 
   let { data }: { data: PageData } = $props();
 
+  // Mock historical data for sparklines
+  const sparklineData = [
+    [40, 50, 45, 60, 55, 70, 80],
+    [10, 15, 12, 20, 18, 25, 30],
+    [2, 2, 2, 3, 3, 3, 4],
+    [80, 95, 85, 110, 105, 130, 145]
+  ];
+
   let stats = $derived([
-    { label: 'Total Revenue', value: data.stats.totalRevenue, isCurrency: true, trend: 0, up: true, color: '#6366f1', bg: 'rgba(99,102,241,0.08)', icon: TrendingUp },
-    { label: 'Platform Fees', value: data.stats.platformFees, isCurrency: true, trend: 0, up: true, color: '#22c55e', bg: 'rgba(34,197,94,0.08)', icon: Activity },
-    { label: 'Active Restaurants', value: data.stats.activeRestaurantsCount, isCurrency: false, trend: 0, up: true, color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', icon: Store },
-    { label: 'Total Orders Today', value: data.stats.totalOrdersToday, isCurrency: false, trend: 0, up: true, color: '#06b6d4', bg: 'rgba(6,182,212,0.08)', icon: ShoppingBag },
+    { label: 'Total Revenue', value: data.stats.totalRevenue, isCurrency: true, trend: 12, up: true, color: '#6366f1', bg: 'rgba(99,102,241,0.08)', icon: TrendingUp, sparkline: sparklineData[0], target: 150000 },
+    { label: 'Platform Fees', value: data.stats.platformFees, isCurrency: true, trend: 8, up: true, color: '#22c55e', bg: 'rgba(34,197,94,0.08)', icon: Activity, sparkline: sparklineData[1], target: 3000 },
+    { label: 'Active Restaurants', value: data.stats.activeRestaurantsCount, isCurrency: false, trend: 0, up: true, color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', icon: Store, sparkline: sparklineData[2], target: 5 },
+    { label: 'Total Orders Today', value: data.stats.totalOrdersToday, isCurrency: false, trend: -3, up: false, color: '#06b6d4', bg: 'rgba(6,182,212,0.08)', icon: ShoppingBag, sparkline: sparklineData[3], target: 200 },
   ]);
+
+  // Helper to generate SVG path for sparkline
+  function getSparklinePath(data: number[], width: number, height: number) {
+    if (!data || data.length === 0) return '';
+    const min = Math.min(...data);
+    const max = Math.max(...data);
+    const range = max - min || 1;
+    const stepX = width / (data.length - 1);
+    
+    return data.map((val, i) => {
+      const x = i * stepX;
+      const y = height - ((val - min) / range) * height;
+      return `${i === 0 ? 'M' : 'L'} ${x},${y}`;
+    }).join(' ');
+  }
 
   let recentActivity = $derived(data.recentActivity);
 
-  const barHeights = [45, 70, 55, 80, 65, 90, 60];
+  const chartData = [
+    { date: new Date(Date.now() - 6 * 86400000), revenue: 12400 },
+    { date: new Date(Date.now() - 5 * 86400000), revenue: 18700 },
+    { date: new Date(Date.now() - 4 * 86400000), revenue: 14200 },
+    { date: new Date(Date.now() - 3 * 86400000), revenue: 22100 },
+    { date: new Date(Date.now() - 2 * 86400000), revenue: 17600 },
+    { date: new Date(Date.now() - 1 * 86400000), revenue: 31400 },
+    { date: new Date(Date.now()), revenue: 19800 },
+  ];
+
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const amounts = [12400, 18700, 14200, 22100, 17600, 31400, 19800];
+  const amounts = chartData.map(d => d.revenue);
 
   function statusColor(s: string) {
     if (s === 'OK') return '#22c55e';
@@ -24,11 +61,62 @@
     if (s === 'ERR') return '#ef4444';
     return '#6366f1';
   }
+
+  // Pull to refresh logic
+  let startY = 0;
+  let currentY = $state(0);
+  let isRefreshing = $state(false);
+
+  function handleTouchStart(e: TouchEvent) {
+    if (window.scrollY === 0) {
+      startY = e.touches[0].clientY;
+    }
+  }
+
+  function handleTouchMove(e: TouchEvent) {
+    if (startY > 0) {
+      const y = e.touches[0].clientY;
+      if (y > startY) {
+        currentY = Math.min((y - startY) * 0.4, 80);
+        if (e.cancelable) e.preventDefault();
+      }
+    }
+  }
+
+  function handleTouchEnd() {
+    if (currentY > 60 && !isRefreshing) {
+      isRefreshing = true;
+      toast.success('Refreshing data...');
+      // Simulate network request
+      setTimeout(() => {
+        isRefreshing = false;
+        currentY = 0;
+        startY = 0;
+      }, 1500);
+    } else {
+      currentY = 0;
+      startY = 0;
+    }
+  }
 </script>
 
 <svelte:head><title>Dashboard · Superadmin</title></svelte:head>
 
-<div style="font-family:'Cabinet Grotesk',system-ui,sans-serif;color:#1e1b4b;">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div 
+  style="font-family:'Cabinet Grotesk',system-ui,sans-serif;color:#1e1b4b;position:relative;z-index:1; transform: translateY({currentY}px); transition: {isRefreshing ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'};"
+  ontouchstart={handleTouchStart}
+  ontouchmove={handleTouchMove}
+  ontouchend={handleTouchEnd}
+>
+  {#if currentY > 0}
+    <div style="position:absolute;top:-50px;left:0;right:0;display:flex;justify-content:center;align-items:center;height:50px;">
+      <div style="width:24px;height:24px;border-radius:50%;border:2px solid #6366f1;border-top-color:transparent;animation:spin 1s linear infinite; opacity: {Math.min(currentY / 60, 1)}; transform: rotate({currentY * 5}deg);"></div>
+    </div>
+  {/if}
+
+  <LiveOrderParticles />
+  
   <!-- Page header -->
   <div class="sa-page-header">
     <div>
@@ -45,26 +133,86 @@
   <!-- Bento grid -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
     {#each stats as stat, i}
-      <div class="sa-tile" style="padding:22px 24px;position:relative;overflow:hidden;">
-        <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:{stat.bg};filter:blur(20px);"></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-          <span style="font-size:11px;font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:0.07em;color:#8b84c0;">{stat.label}</span>
-          <div style="width:32px;height:32px;border-radius:10px;background:{stat.bg};display:flex;align-items:center;justify-content:center;color:{stat.color};">
-            <stat.icon size={15} strokeWidth={2} />
+      {#if expandedStatIndex === null || expandedStatIndex === i}
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div 
+          class="sa-tile" 
+          style="padding:22px 24px;position:relative;overflow:hidden;cursor:pointer; grid-column: {expandedStatIndex === i ? '1 / -1' : 'auto'};"
+          onclick={() => expandedStatIndex = expandedStatIndex === i ? null : i}
+          in:fade={{ duration: 200 }}
+        >
+          <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:{stat.bg};filter:blur(20px);"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <span style="font-size:11px;font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:0.07em;color:#8b84c0;">{stat.label}</span>
+            <div style="width:32px;height:32px;border-radius:10px;background:{stat.bg};display:flex;align-items:center;justify-content:center;color:{stat.color};">
+              <stat.icon size={15} strokeWidth={2} />
+            </div>
           </div>
-        </div>
-        <div style="font-size:30px;font-weight:900;letter-spacing:-0.04em;color:#1e1b4b;line-height:1;margin-bottom:10px;font-variant-numeric:tabular-nums;">
-          {stat.isCurrency ? formatCurrency(stat.value) : stat.value.toLocaleString()}
-        </div>
-        {#if stat.trend !== 0}
-          <div style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:{stat.up ? '#16a34a' : '#dc2626'};">
-            {#if stat.up}<ArrowUpRight size={13} />{:else}<ArrowDownRight size={13} />{/if}
-            {Math.abs(stat.trend)}% vs last month
+          <div style="font-size:30px;font-weight:900;letter-spacing:-0.04em;color:#1e1b4b;line-height:1;margin-bottom:12px;font-variant-numeric:tabular-nums;">
+            {stat.isCurrency ? formatCurrency(stat.value) : stat.value.toLocaleString()}
           </div>
-        {:else}
-          <div style="font-size:12px;color:#9ca3af;">No change</div>
-        {/if}
-      </div>
+          
+          <!-- Pacing Gauge / Progress -->
+          <div style="margin-bottom: 12px;">
+            <div style="display:flex; justify-content:space-between; font-size:10px; color:#8b84c0; margin-bottom:4px; font-family:'Geist Mono',monospace;">
+              <span>Target: {stat.isCurrency ? formatCurrency(stat.target) : stat.target}</span>
+              <span>{Math.round((stat.value / stat.target) * 100)}%</span>
+            </div>
+            <div style="width:100%; height:4px; background:rgba(0,0,0,0.05); border-radius:2px; overflow:hidden;">
+              <div style="height:100%; background:{stat.color}; width:{Math.min(100, (stat.value / stat.target) * 100)}%; border-radius:2px;"></div>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            {#if stat.trend !== 0}
+              <div style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:{stat.up ? '#16a34a' : '#dc2626'};">
+                {#if stat.up}<ArrowUpRight size={13} />{:else}<ArrowDownRight size={13} />{/if}
+                {Math.abs(stat.trend)}% vs last month
+              </div>
+            {:else}
+              <div style="font-size:12px;color:#9ca3af;">No change</div>
+            {/if}
+            
+            <!-- Sparkline -->
+            <svg width="60" height="20" viewBox="0 0 60 20" style="overflow:visible;">
+              <path d={getSparklinePath(stat.sparkline, 60, 20)} fill="none" stroke="{stat.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+
+          {#if expandedStatIndex === i}
+            <div transition:slide={{ duration: 300 }} style="margin-top:24px;padding-top:24px;border-top:1px solid rgba(0,0,0,0.05);">
+              <h3 style="font-size:14px;font-weight:800;color:#1e1b4b;margin-bottom:12px;">Detailed Breakdown</h3>
+              <table style="width:100%;text-align:left;font-size:13px;border-collapse:collapse;">
+                <thead>
+                  <tr style="color:#8b84c0;font-family:'Geist Mono',monospace;font-size:10px;text-transform:uppercase;">
+                    <th style="padding-bottom:8px;font-weight:500;">Restaurant</th>
+                    <th style="padding-bottom:8px;font-weight:500;">Value</th>
+                    <th style="padding-bottom:8px;font-weight:500;">Trend</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="border-top:1px solid rgba(0,0,0,0.05);">
+                    <td style="padding:10px 0;font-weight:600;color:#1e1b4b;">The Golden Fork</td>
+                    <td style="padding:10px 0;">{stat.isCurrency ? formatCurrency(stat.value * 0.4) : Math.round(stat.value * 0.4)}</td>
+                    <td style="padding:10px 0;color:#16a34a;">+12%</td>
+                  </tr>
+                  <tr style="border-top:1px solid rgba(0,0,0,0.05);">
+                    <td style="padding:10px 0;font-weight:600;color:#1e1b4b;">Spice Symphony</td>
+                    <td style="padding:10px 0;">{stat.isCurrency ? formatCurrency(stat.value * 0.35) : Math.round(stat.value * 0.35)}</td>
+                    <td style="padding:10px 0;color:#16a34a;">+5%</td>
+                  </tr>
+                  <tr style="border-top:1px solid rgba(0,0,0,0.05);">
+                    <td style="padding:10px 0;font-weight:600;color:#1e1b4b;">Urban Bites</td>
+                    <td style="padding:10px 0;">{stat.isCurrency ? formatCurrency(stat.value * 0.25) : Math.round(stat.value * 0.25)}</td>
+                    <td style="padding:10px 0;color:#dc2626;">-2%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          {/if}
+        </div>
+      {/if}
     {/each}
   </div>
 
@@ -82,23 +230,9 @@
           {formatCurrency(amounts.reduce((a,b) => a+b, 0))}
         </div>
       </div>
-      <!-- Bar chart -->
-      <div style="display:flex;align-items:flex-end;gap:8px;height:160px;position:relative;">
-        <!-- Grid lines -->
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;">
-          {#each [0,1,2,3] as _}
-            <div style="width:100%;height:1px;background:rgba(99,102,241,0.08);"></div>
-          {/each}
-        </div>
-        {#each barHeights as h, i}
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:1;">
-            <div
-              style="width:100%;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,rgba(99,102,241,0.8),rgba(139,92,246,0.5));height:{h}%;min-height:8px;transition:opacity 0.15s;cursor:pointer;"
-              title="{days[i]}: {formatCurrency(amounts[i])}"
-            ></div>
-            <span style="font-size:10px;font-family:'Geist Mono',monospace;color:#8b84c0;">{days[i]}</span>
-          </div>
-        {/each}
+      <!-- Interactive Chart -->
+      <div style="height:200px;position:relative; margin-top:20px;">
+        <InteractiveRevenueChart data={chartData} />
       </div>
     </div>
 

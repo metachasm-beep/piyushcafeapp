@@ -41,21 +41,22 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	// 2. Global Security Guards
 	const path = event.url.pathname;
+	const routeId = event.route.id || '';
 
 	// Superadmin Guards
-	if (path.startsWith('/superadmin') && !path.startsWith('/superadmin/login')) {
+	if (routeId.startsWith('/superadmin') && !routeId.startsWith('/superadmin/login')) {
 		if (!user) {
 			throw redirect(303, '/superadmin/login');
 		}
 		
 		const SUPERADMINS = ['metachasm@gmail.com', 'nit.uniyal@gmail.com'];
-		if (!user.email || !SUPERADMINS.includes(user.email)) {
+		if (!user.email || !SUPERADMINS.includes(user.email.toLowerCase())) {
 			throw redirect(303, '/superadmin/login?error=unauthorized');
 		}
 	}
 
 	// Owner Guards
-	if (path.startsWith('/owner') && !path.startsWith('/owner/login')) {
+	if (routeId.startsWith('/owner') && !routeId.startsWith('/owner/login')) {
 		if (!user) {
 			// Redirect to owner login (if it exists) or superadmin login for testing
 			throw redirect(303, '/owner/login');

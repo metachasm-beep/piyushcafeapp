@@ -43,7 +43,7 @@
   </div>
 
   <!-- Bento grid -->
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:auto;gap:16px;margin-bottom:20px;">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
     {#each stats as stat, i}
       <div class="sa-tile" style="padding:22px 24px;position:relative;overflow:hidden;">
         <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:{stat.bg};filter:blur(20px);"></div>
@@ -69,7 +69,7 @@
   </div>
 
   <!-- Bottom row: chart + activity log -->
-  <div style="display:grid;grid-template-columns:1fr 340px;gap:16px;">
+  <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
 
     <!-- Revenue chart tile -->
     <div class="sa-tile" style="padding:28px 28px 24px;">

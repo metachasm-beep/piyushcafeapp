@@ -199,11 +199,16 @@
 <!-- Sticky Header -->
 <header class="fixed top-0 left-0 right-0 z-40 bg-bg/90 backdrop-blur-xl border-b border-border/50">
   <div class="px-4 py-4 flex items-center justify-between">
-    <div class="flex flex-col">
-      <h1 class="font-display text-2xl font-bold tracking-tight text-text-primary">
-        {restaurant.name}<span class="text-brand">.</span>
-      </h1>
-      <p class="text-xs text-text-secondary uppercase tracking-widest mt-0.5">Welcome</p>
+    <div class="flex items-center gap-3">
+      {#if restaurant.logo_url}
+        <img src={restaurant.logo_url} alt={restaurant.name} class="w-10 h-10 rounded-lg object-cover border border-border/50" />
+      {/if}
+      <div class="flex flex-col">
+        <h1 class="font-display text-2xl font-bold tracking-tight text-text-primary">
+          {restaurant.name}<span class="text-brand">.</span>
+        </h1>
+        <p class="text-xs text-text-secondary uppercase tracking-widest mt-0.5">Welcome</p>
+      </div>
     </div>
     <div class="badge border-brand/30 bg-brand/10 text-brand font-semibold px-3 py-1 shadow-[0_0_10px_rgba(249,115,22,0.2)]">
       {table.display_name ?? `Table ${table.table_number}`}
@@ -211,7 +216,7 @@
   </div>
   
   <!-- Category Filter Bar -->
-  <div class="flex overflow-x-auto hide-scrollbar px-4 py-2 gap-2 border-t border-white/5">
+  <div class="flex overflow-x-auto hide-scrollbar px-4 py-2 gap-2 border-t border-white/5 scroll-smooth" style="-webkit-overflow-scrolling: touch;">
     <button 
       class="cat-pill whitespace-nowrap px-4 py-2 rounded-full font-medium transition-colors {activeCategory === 'all' ? 'bg-brand text-black' : 'bg-surface text-text-secondary border border-border hover:bg-card'}"
       onclick={() => scrollToCategory('all')}
@@ -340,7 +345,7 @@
 </main>
 
 <!-- Floating Action Buttons -->
-<div class="fixed bottom-6 right-4 flex flex-col gap-3 z-40">
+<div class="fixed right-4 flex flex-col gap-3 z-40" style="bottom: max(24px, env(safe-area-inset-bottom, 24px));">
   <!-- Call Waiter FAB -->
   <button 
     class="w-12 h-12 rounded-full glass-strong shadow-lg flex items-center justify-center text-text-primary transition-transform active:scale-90 {waiterCalled ? 'text-brand animate-pulse-ring' : ''} {waiterCooldown && !waiterCalled ? 'opacity-50' : ''}"

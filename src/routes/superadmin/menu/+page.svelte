@@ -130,7 +130,7 @@
   </div>
 
   {#if isLoading}
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {#each Array(6) as _}
         <div class="sa-tile" style="height:200px;background:rgba(99,102,241,0.04);animation:pulse 1.5s infinite;"></div>
       {/each}
@@ -142,7 +142,7 @@
       <button class="sa-btn-primary" style="margin-top:16px;" onclick={openAdd}>Add First Item</button>
     </div>
   {:else}
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {#each filteredItems as item (item.id)}
         <div class="sa-tile" style="padding:0;overflow:hidden;position:relative;">
           <!-- Image -->

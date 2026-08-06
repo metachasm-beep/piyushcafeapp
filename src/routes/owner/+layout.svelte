@@ -2,16 +2,13 @@
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { adminUser, pendingWaiterCount } from '$lib/stores/admin';
-  import { LayoutDashboard, ChefHat, UtensilsCrossed, QrCode, LogOut, Menu, X, Bell, Settings } from '@lucide/svelte';
+  import { LayoutDashboard, ChefHat, UtensilsCrossed, QrCode, LogOut, Menu, X, Bell, Settings, Table as TableIcon } from 'lucide-svelte';
+  import type { LayoutData } from './$types';
 
-  let { children } = $props();
+  let { children, data }: { children: any, data: LayoutData } = $props();
+  let restaurant = $derived(data?.restaurant);
+  
   let mobileMenuOpen = $state(false);
-
-  // No longer needed since we use a form POST
-  // function handleLogout() {
-  //   adminUser.logout();
-  //   goto('/owner/login');
-  // }
 
   let currentPath = $derived(page.url.pathname);
   
@@ -37,9 +34,15 @@
     <aside 
       class="fixed inset-y-0 left-0 z-50 w-[280px] bg-[var(--color-surface)] border-r border-[var(--color-border)] transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static flex flex-col {mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}"
     >
-      <div class="p-6 flex flex-col items-center border-b border-[var(--color-border)]">
-        <div class="text-4xl mb-2">🍴</div>
-        <h1 class="font-display text-xl font-bold text-[var(--color-brand)]">The Golden Fork</h1>
+      <div class="p-6 flex flex-col items-center border-b border-[var(--color-border)] text-center">
+        {#if restaurant?.logo_url}
+          <div class="w-16 h-16 rounded-2xl overflow-hidden mb-3 border border-[var(--color-border)]">
+            <img src={restaurant.logo_url} alt={restaurant.name} class="w-full h-full object-cover" />
+          </div>
+        {:else}
+          <div class="text-4xl mb-2">🍴</div>
+        {/if}
+        <h1 class="font-display text-xl font-bold text-[var(--color-brand)]">{restaurant?.name || 'Restaurant'}</h1>
         <p class="text-[var(--color-text-secondary)] text-sm uppercase tracking-wider mt-1">Staff Portal</p>
       </div>
 
@@ -69,13 +72,33 @@
           <span class="font-medium">Inventory</span>
         </a>
         <a 
-          href="/owner/kyc" 
-          class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/kyc' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+          href="/owner/tables" 
+          class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/tables' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
           onclick={() => mobileMenuOpen = false}
         >
-          <Settings size={20} />
-          <span class="font-medium">PayU KYC</span>
+          <TableIcon size={20} />
+          <span class="font-medium">Tables & QR</span>
         </a>
+        
+        <div class="pt-4 mt-2 border-t border-[var(--color-border)]">
+          <p class="px-4 text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-2">Management</p>
+          <a 
+            href="/owner/settings" 
+            class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/settings' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+            onclick={() => mobileMenuOpen = false}
+          >
+            <Settings size={20} />
+            <span class="font-medium">Settings</span>
+          </a>
+          <a 
+            href="/owner/kyc" 
+            class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/kyc' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+            onclick={() => mobileMenuOpen = false}
+          >
+            <Banknote size={20} />
+            <span class="font-medium">PayU KYC</span>
+          </a>
+        </div>
       </nav>
 
       <div class="p-4 border-t border-[var(--color-border)]">

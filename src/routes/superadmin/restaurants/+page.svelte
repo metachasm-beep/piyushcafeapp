@@ -38,7 +38,7 @@
       <button class="sa-btn-primary" onclick={() => showAddModal = true}>Provision First Node</button>
     </div>
   {:else}
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {#each data.restaurants as r (r.id)}
         <div class="sa-tile" style="padding:24px;">
           <!-- Header row -->

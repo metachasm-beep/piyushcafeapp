@@ -1,14 +1,17 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, derived } from 'svelte';
   import { supabase } from '$lib/supabase';
   import { MOCK_TABLES, MOCK_RESTAURANT } from '$lib/mock-data';
   import { toast } from 'svelte-sonner';
   import QRCode from 'qrcode';
   import { env } from '$env/dynamic/public';
-  import { Plus, QrCode as QrIcon, Download, X, Users } from 'lucide-svelte';
+  import { Plus, QrCode as QrIcon, Download, X, Users, Store } from 'lucide-svelte';
   import type { Table } from '$lib/types';
 
   let tables = $state<Table[]>([]);
+  let restaurants = $state<any[]>([]);
+  let selectedRestaurantId = $state<string>('');
+  
   let isLoading = $state(true);
   let showAddModal = $state(false);
   let showQrModal = $state(false);
@@ -16,8 +19,30 @@
   let qrDataUrl = $state('');
   let isSaving = $state(false);
 
+  // Filter tables based on the selected restaurant
+  let filteredTables = $derived(
+    selectedRestaurantId 
+      ? tables.filter(t => t.restaurant_id === selectedRestaurantId)
+      : tables
+  );
+
   onMount(async () => {
-    if (!supabase) { tables = MOCK_TABLES; isLoading = false; return; }
+    if (!supabase) { 
+      tables = MOCK_TABLES; 
+      isLoading = false; 
+      return; 
+    }
+    
+    // Fetch restaurants for the selector
+    const { data: restData } = await supabase.from('restaurants').select('id, name').order('name');
+    if (restData) {
+      restaurants = restData;
+      if (restaurants.length > 0) {
+        selectedRestaurantId = restaurants[0].id;
+      }
+    }
+
+    // Fetch all tables
     const { data } = await supabase.from('tables').select('*').order('table_number');
     tables = data ?? MOCK_TABLES;
     isLoading = false;
@@ -25,8 +50,9 @@
 
   async function generateQr(table: Table) {
     selectedTable = table;
-    const appUrl = env.PUBLIC_APP_URL || 'http://localhost:5173';
-    const url = `${appUrl}/table/${MOCK_RESTAURANT.id}/${table.id}`;
+    const appUrl = env.PUBLIC_APP_URL || window.location.origin;
+    // Fix: Using the table's actual restaurant_id instead of a hardcoded mock
+    const url = `${appUrl}/table/${table.restaurant_id}/${table.id}`;
     qrDataUrl = await QRCode.toDataURL(url, { width: 300, margin: 2, color: { dark: '#1e1b4b', light: '#ffffff' } });
     showQrModal = true;
   }
@@ -41,6 +67,11 @@
 
   async function addTable(e: SubmitEvent) {
     e.preventDefault();
+    if (!selectedRestaurantId) {
+      toast.error('Please select a restaurant first');
+      return;
+    }
+
     isSaving = true;
     const fd = new FormData(e.target as HTMLFormElement);
     const newTable: Partial<Table> = {
@@ -48,14 +79,24 @@
       table_number: Number(fd.get('table_number')),
       display_name: fd.get('display_name') as string,
       capacity: Number(fd.get('capacity')),
-      restaurant_id: MOCK_RESTAURANT.id,
+      restaurant_id: selectedRestaurantId,
       is_active: true,
     };
+    
+    // Optimistic UI update
     tables = [...tables, newTable as Table];
     toast.success('Table added!');
     showAddModal = false;
     isSaving = false;
-    if (supabase) await supabase.from('tables').insert(newTable);
+    
+    if (supabase) {
+      const { error } = await supabase.from('tables').insert(newTable);
+      if (error) {
+        toast.error('Failed to save table to database');
+        // Rollback optimistic update
+        tables = tables.filter(t => t.id !== newTable.id);
+      }
+    }
   }
 </script>
 
@@ -65,28 +106,49 @@
   <div class="sa-page-header">
     <div>
       <h1 class="sa-page-title">Tables & QR Codes</h1>
-      <p class="sa-page-subtitle">{tables.length} tables configured — click to generate QR</p>
+      <p class="sa-page-subtitle">{filteredTables.length} tables configured for selected restaurant</p>
     </div>
-    <button class="sa-btn-primary" onclick={() => showAddModal = true}>
-      <span style="display:flex;align-items:center;gap:6px;"><Plus size={15} strokeWidth={2.5} /> Add Table</span>
-    </button>
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <!-- Restaurant Selector -->
+      {#if restaurants.length > 0}
+        <div style="display:flex;align-items:center;background:rgba(255,255,255,0.7);padding:8px 12px;border-radius:12px;border:1px solid rgba(99,102,241,0.2);gap:8px;">
+          <Store size={16} color="#6366f1" />
+          <select 
+            bind:value={selectedRestaurantId}
+            style="background:transparent;border:none;outline:none;font-family:'Cabinet Grotesk',system-ui,sans-serif;font-size:14px;font-weight:600;color:#1e1b4b;cursor:pointer;"
+          >
+            <option value="">All Restaurants</option>
+            {#each restaurants as rest}
+              <option value={rest.id}>{rest.name}</option>
+            {/each}
+          </select>
+        </div>
+      {/if}
+      <button class="sa-btn-primary" onclick={() => showAddModal = true} disabled={!selectedRestaurantId}>
+        <span style="display:flex;align-items:center;gap:6px;"><Plus size={15} strokeWidth={2.5} /> Add Table</span>
+      </button>
+    </div>
   </div>
 
   {#if isLoading}
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {#each Array(6) as _}
         <div class="sa-tile" style="height:180px;animation:pulse 1.5s infinite;background:rgba(99,102,241,0.04);"></div>
       {/each}
     </div>
-  {:else if tables.length === 0}
+  {:else if filteredTables.length === 0}
     <div class="sa-tile" style="padding:64px;text-align:center;">
       <div style="font-size:36px;margin-bottom:12px;">🪑</div>
       <div style="font-size:16px;font-weight:700;color:#8b84c0;">No tables configured</div>
-      <button class="sa-btn-primary" style="margin-top:16px;" onclick={() => showAddModal = true}>Add First Table</button>
+      {#if !selectedRestaurantId}
+        <div style="font-size:13px;color:#ef4444;margin-top:8px;">Please select a restaurant to add tables.</div>
+      {:else}
+        <button class="sa-btn-primary" style="margin-top:16px;" onclick={() => showAddModal = true}>Add First Table</button>
+      {/if}
     </div>
   {:else}
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;">
-      {#each tables as table (table.id)}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {#each filteredTables as table (table.id)}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div class="sa-tile" style="padding:24px;text-align:center;cursor:pointer;" onclick={() => generateQr(table)}>

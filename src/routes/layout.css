@@ -134,6 +134,7 @@ body {
   font-weight: 600;
   border-radius: var(--radius-full);
   padding: 0.75rem 1.5rem;
+  min-height: 44px;
   transition: all 0.2s ease;
   box-shadow: 0 4px 12px var(--color-brand-glow);
 }
@@ -153,6 +154,7 @@ body {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-full);
   padding: 0.625rem 1.25rem;
+  min-height: 44px;
   font-size: 0.875rem;
   font-weight: 500;
   transition: all 0.2s ease;
@@ -170,10 +172,16 @@ body {
   color: var(--color-text-primary);
   border-radius: var(--radius-md);
   padding: 0.625rem 0.875rem;
-  font-size: 0.9375rem;
+  min-height: 44px;
+  font-size: 16px; /* Prevents iOS zoom */
   width: 100%;
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+@media (min-width: 1024px) {
+  .input-dark {
+    font-size: 0.9375rem;
+  }
 }
 .input-dark::placeholder { color: var(--color-text-muted); }
 .input-dark:focus {
@@ -320,6 +328,7 @@ body {
   align-items: center;
   gap: 0.75rem;
   padding: 0.625rem 1rem;
+  min-height: 44px;
   border-radius: var(--radius-md);
   color: var(--color-text-secondary);
   font-size: 0.9375rem;

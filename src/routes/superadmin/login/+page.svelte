@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { ShieldAlert, Fingerprint } from 'lucide-svelte';
+  import { env } from '$env/dynamic/public';
   
   let isLoading = $state(false);
   let errorMessage = $derived(page.url.searchParams.get('error'));
@@ -9,16 +10,10 @@
     isLoading = true;
     
     try {
-      // In SvelteKit 5, if we are passing Supabase client from layout, 
-      // we can use it here. Alternatively, we can use the window.location.origin
-      // Note: We need a client-side supabase instance to trigger OAuth redirect.
-      // Since we don't have it explicitly globally passed, we'll initialize it here briefly
-      // or just redirect to an endpoint that does it.
-      
       const { createBrowserClient } = await import('@supabase/ssr');
       const supabase = createBrowserClient(
-        import.meta.env.VITE_SUPABASE_URL || import.meta.env.PUBLIC_SUPABASE_URL,
-        import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+        env.PUBLIC_SUPABASE_URL || '',
+        env.PUBLIC_SUPABASE_ANON_KEY || ''
       );
 
       const { error } = await supabase.auth.signInWithOAuth({

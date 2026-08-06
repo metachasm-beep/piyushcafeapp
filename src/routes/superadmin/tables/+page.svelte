@@ -45,10 +45,11 @@
     const fd = new FormData(e.target as HTMLFormElement);
     const newTable: Partial<Table> = {
       id: crypto.randomUUID(),
-      table_number: fd.get('table_number') as string,
+      table_number: Number(fd.get('table_number')),
       display_name: fd.get('display_name') as string,
-      is_active: true,
+      capacity: Number(fd.get('capacity')),
       restaurant_id: MOCK_RESTAURANT.id,
+      is_active: true,
     };
     tables = [...tables, newTable as Table];
     toast.success('Table added!');
@@ -86,6 +87,8 @@
   {:else}
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;">
       {#each tables as table (table.id)}
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div class="sa-tile" style="padding:24px;text-align:center;cursor:pointer;" onclick={() => generateQr(table)}>
           <!-- Big number -->
           <div style="font-size:52px;font-weight:900;color:#6366f1;line-height:1;letter-spacing:-0.05em;margin-bottom:8px;font-variant-numeric:tabular-nums;">{table.table_number}</div>

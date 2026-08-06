@@ -1,4 +1,4 @@
-﻿/**
+/**
  * order.service.ts
  * Service layer for all order lifecycle operations.
  * Applies: backend-architect, saga-orchestration, error-handling-patterns
@@ -6,14 +6,15 @@
 import { supabase } from "$lib/supabase";
 import { sanitizeObject, type OrderInput } from "$lib/server/security";
 
-export type OrderStatus = "pending" | "preparing" | "ready" | "served" | "cancelled";
+export type OrderStatus = "pending" | "preparing" | "ready" | "served" | "paid" | "cancelled";
 
-// Valid state machine transitions � prevents illegal status changes
+// Valid state machine transitions  prevents illegal status changes
 const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-	pending:    ["preparing", "cancelled"],
-	preparing:  ["ready", "cancelled"],
-	ready:      ["served"],
-	served:     [],
+	pending:    ["preparing", "paid", "cancelled"],
+	preparing:  ["ready", "paid", "cancelled"],
+	ready:      ["served", "paid"],
+	served:     ["paid"],
+	paid:       [],
 	cancelled:  []
 };
 
@@ -30,47 +31,24 @@ export async function placeOrder(input: OrderInput): Promise<{ id: string }> {
 		return { id: mockId };
 	}
 
-	// Step 1: Calculate total_amount server-side (never trust the client total)
-	const total_amount = sanitized.items.reduce((sum, item) => sum + item.subtotal, 0);
+	// Call the atomic RPC to place the order
+	const { data: orderId, error } = await supabase.rpc("place_order", {
+		p_restaurant_id: sanitized.restaurant_id,
+		p_table_id: sanitized.table_id,
+		p_special_instructions: sanitized.special_instructions ?? "",
+		p_items: sanitized.items.map(item => ({
+			menu_item_id: item.menu_item_id,
+			quantity: item.quantity
+		}))
+	});
 
-	// Step 2: Insert order header
-	const { data: order, error: orderError } = await supabase
-		.from("orders")
-		.insert({
-			restaurant_id: sanitized.restaurant_id,
-			table_id: sanitized.table_id,
-			special_instructions: sanitized.special_instructions ?? "",
-			total_amount,
-			status: "pending",
-			is_paid: false
-		})
-		.select("id")
-		.single();
-
-	if (orderError || !order) {
-		console.error(JSON.stringify({ level: "error", context: "placeOrder:header", msg: orderError?.message }));
+	if (error || !orderId) {
+		console.error(JSON.stringify({ level: "error", context: "placeOrder:rpc", msg: error?.message }));
 		throw new Error("Failed to create order.");
 	}
 
-	// Step 3: Insert order items in bulk
-	const orderItems = sanitized.items.map((item) => ({
-		order_id: order.id,
-		menu_item_id: item.menu_item_id,
-		quantity: item.quantity,
-		subtotal: item.subtotal
-	}));
-
-	const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
-
-	if (itemsError) {
-		// Compensating action: delete the orphaned order header
-		console.error(JSON.stringify({ level: "error", context: "placeOrder:items", msg: itemsError.message, orderId: order.id }));
-		await supabase.from("orders").delete().eq("id", order.id);
-		throw new Error("Failed to add items to order. Order has been rolled back.");
-	}
-
-	console.log(JSON.stringify({ level: "info", msg: "Order placed successfully", orderId: order.id }));
-	return { id: order.id };
+	console.log(JSON.stringify({ level: "info", msg: "Order placed successfully via RPC", orderId }));
+	return { id: orderId };
 }
 
 // =============================================

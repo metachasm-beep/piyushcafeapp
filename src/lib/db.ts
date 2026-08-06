@@ -1,4 +1,4 @@
-﻿import { supabase } from './supabase';
+import { supabase } from './supabase';
 import { MOCK_RESTAURANT, MOCK_TABLES, MOCK_CATEGORIES, MOCK_MENU_ITEMS } from './mock-data';
 import type { Restaurant, Table, MenuCategory, MenuItem } from './types';
 
@@ -67,46 +67,42 @@ export async function createOrder(
   table_id: string, 
   total_amount: number, 
   payment_method: 'upi' | 'card' | 'cash', 
-  items: { menu_item_id: string, quantity: number, subtotal: number }[]
+  items: { menu_item_id: string, quantity: number }[]
 ) {
   if (!supabase) {
     // In mock mode, we just return a fake ID and don't actually hit a DB
     return { id: 'mock_order_' + Math.random().toString(36).substring(7) };
   }
 
-  // 1. Create order
-  const { data: order, error: orderError } = await supabase
-    .from('orders')
-    .insert({
-      restaurant_id,
-      table_id,
-      total_amount,
-      payment_method,
-      status: 'pending',
-      is_paid: payment_method !== 'cash' // Cash is unpaid initially
-    })
-    .select('id')
-    .single();
+  // Call the atomic RPC to place the order
+  const { data: orderId, error } = await supabase.rpc("place_order", {
+    p_restaurant_id: restaurant_id,
+    p_table_id: table_id,
+    p_special_instructions: "",
+    p_items: items.map(item => ({
+      menu_item_id: item.menu_item_id,
+      quantity: item.quantity
+    }))
+  });
 
-  if (orderError || !order) {
-    console.error('Order creation failed:', orderError);
+  if (error || !orderId) {
+    console.error('Order creation failed:', error);
     throw new Error('Failed to create order');
   }
 
-  // 2. Insert items
-  const orderItems = items.map(item => ({
-    order_id: order.id,
-    ...item
-  }));
+  // Handle the payment_method setting separately if required by the frontend 
+  // since the RPC just defaults to 'pending' and 'unpaid'
+  const { error: updateError } = await supabase
+    .from('orders')
+    .update({ 
+      payment_method, 
+      payment_status: payment_method !== 'cash' ? 'paid' : 'unpaid'
+    })
+    .eq('id', orderId);
 
-  const { error: itemsError } = await supabase
-    .from('order_items')
-    .insert(orderItems);
-
-  if (itemsError) {
-    console.error('Order items creation failed:', itemsError);
-    // Ideally we should rollback or have an RPC, but this is fine for now
+  if (updateError) {
+    console.error('Failed to update payment details:', updateError);
   }
 
-  return order;
+  return { id: orderId };
 }

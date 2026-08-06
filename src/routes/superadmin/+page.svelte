@@ -1,22 +1,18 @@
 <script lang="ts">
   import { TrendingUp, Users, ShoppingBag, Store, ArrowUpRight, ArrowDownRight, Activity, Zap } from 'lucide-svelte';
   import { formatCurrency } from '$lib/utils';
+  import type { PageData } from './$types';
 
-  const stats = [
-    { label: 'Total Revenue', value: 24589.50, isCurrency: true, trend: 12.5, up: true, color: '#6366f1', bg: 'rgba(99,102,241,0.08)', icon: TrendingUp },
-    { label: 'Active Restaurants', value: 12, isCurrency: false, trend: 0, up: true, color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', icon: Store },
-    { label: 'Total Orders Today', value: 843, isCurrency: false, trend: 8.2, up: true, color: '#06b6d4', bg: 'rgba(6,182,212,0.08)', icon: ShoppingBag },
-    { label: 'Active Sessions', value: 1245, isCurrency: false, trend: -2.4, up: false, color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', icon: Users },
-  ];
+  let { data }: { data: PageData } = $props();
 
-  const recentActivity = [
-    { restaurant: 'Downtown Bistro', action: 'New menu item added', time: '10:42', status: 'OK' },
-    { restaurant: 'Westside Grill', action: 'High volume alert', time: '10:25', status: 'WARN' },
-    { restaurant: 'North Branch', action: 'Printer disconnected', time: '09:12', status: 'ERR' },
-    { restaurant: 'Eastside Cafe', action: 'Daily report generated', time: '08:00', status: 'INFO' },
-    { restaurant: 'Midtown Diner', action: 'Order #8842 canceled', time: '07:45', status: 'WARN' },
-    { restaurant: 'South Station', action: 'System boot OK', time: '06:30', status: 'OK' },
-  ];
+  let stats = $derived([
+    { label: 'Total Revenue', value: data.stats.totalRevenue, isCurrency: true, trend: 0, up: true, color: '#6366f1', bg: 'rgba(99,102,241,0.08)', icon: TrendingUp },
+    { label: 'Platform Fees', value: data.stats.platformFees, isCurrency: true, trend: 0, up: true, color: '#22c55e', bg: 'rgba(34,197,94,0.08)', icon: Activity },
+    { label: 'Active Restaurants', value: data.stats.activeRestaurantsCount, isCurrency: false, trend: 0, up: true, color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', icon: Store },
+    { label: 'Total Orders Today', value: data.stats.totalOrdersToday, isCurrency: false, trend: 0, up: true, color: '#06b6d4', bg: 'rgba(6,182,212,0.08)', icon: ShoppingBag },
+  ]);
+
+  let recentActivity = $derived(data.recentActivity);
 
   const barHeights = [45, 70, 55, 80, 65, 90, 60];
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];

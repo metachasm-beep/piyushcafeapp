@@ -1,4 +1,4 @@
-﻿import { error } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 import { z } from "zod";
 import type { RequestEvent } from "@sveltejs/kit";
 
@@ -7,7 +7,7 @@ import type { RequestEvent } from "@sveltejs/kit";
 // =============================================
 
 export function requireAuth(event: RequestEvent): string {
-	const userId = event.locals?.session?.user?.id;
+	const userId = (event.locals as any)?.session?.user?.id;
 	if (!userId) {
 		throw error(401, "Unauthorized: You must be signed in.");
 	}

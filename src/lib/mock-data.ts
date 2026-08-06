@@ -1,4 +1,4 @@
-﻿// =============================================================
+// =============================================================
 // Comprehensive mock data for "The Golden Fork" restaurant
 // Used when PUBLIC_USE_MOCK=true (no Supabase connection needed)
 // =============================================================
@@ -233,6 +233,8 @@ export function makeMockOrders(): Order[] {
       payment_method: null,
       payment_status: 'unpaid',
       payment_reference: null,
+      platform_fee: 897 * 0.02,
+      restaurant_amount: 897 * 0.98,
       customer_session: 'sess-demo-1',
       special_notes: 'Extra spicy please',
       created_at: new Date(Date.now() - 3 * 60000).toISOString(),
@@ -254,6 +256,8 @@ export function makeMockOrders(): Order[] {
       payment_method: null,
       payment_status: 'unpaid',
       payment_reference: null,
+      platform_fee: 1247 * 0.02,
+      restaurant_amount: 1247 * 0.98,
       customer_session: 'sess-demo-2',
       special_notes: null,
       created_at: new Date(Date.now() - 12 * 60000).toISOString(),
@@ -273,6 +277,8 @@ export function makeMockOrders(): Order[] {
       payment_method: null,
       payment_status: 'unpaid',
       payment_reference: null,
+      platform_fee: 698 * 0.02,
+      restaurant_amount: 698 * 0.98,
       customer_session: 'sess-demo-3',
       special_notes: 'No onion please',
       created_at: new Date(Date.now() - 20 * 60000).toISOString(),
@@ -293,6 +299,8 @@ export function makeMockOrders(): Order[] {
       payment_method: null,
       payment_status: 'unpaid',
       payment_reference: null,
+      platform_fee: 826 * 0.02,
+      restaurant_amount: 826 * 0.98,
       customer_session: 'sess-demo-4',
       special_notes: null,
       created_at: new Date(Date.now() - 35 * 60000).toISOString(),

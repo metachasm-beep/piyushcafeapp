@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // Shared TypeScript type definitions for the Restaurant PWA
 // ============================================================
 
@@ -73,6 +73,8 @@ export type Order = {
   payment_method: string | null;
   payment_status: 'unpaid' | 'paid' | 'refunded';
   payment_reference: string | null;
+  platform_fee: number;
+  restaurant_amount: number;
   customer_session: string | null;
   special_notes: string | null;
   created_at: string;

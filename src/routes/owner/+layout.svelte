@@ -7,10 +7,11 @@
   let { children } = $props();
   let mobileMenuOpen = $state(false);
 
-  function handleLogout() {
-    adminUser.logout();
-    goto('/owner/login');
-  }
+  // No longer needed since we use a form POST
+  // function handleLogout() {
+  //   adminUser.logout();
+  //   goto('/owner/login');
+  // }
 
   let currentPath = $derived(page.url.pathname);
   
@@ -67,6 +68,14 @@
           <UtensilsCrossed size={20} />
           <span class="font-medium">Inventory</span>
         </a>
+        <a 
+          href="/owner/kyc" 
+          class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/kyc' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+          onclick={() => mobileMenuOpen = false}
+        >
+          <Settings size={20} />
+          <span class="font-medium">PayU KYC</span>
+        </a>
       </nav>
 
       <div class="p-4 border-t border-[var(--color-border)]">
@@ -79,13 +88,15 @@
             <p class="text-xs text-[var(--color-text-secondary)] truncate">{$adminUser?.email || 'admin@example.com'}</p>
           </div>
         </div>
-        <button 
-          class="btn-ghost w-full flex items-center justify-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-950/30"
-          onclick={handleLogout}
-        >
-          <LogOut size={18} />
-          <span>Logout</span>
-        </button>
+        <form action="/auth/logout?next=/owner/login" method="POST">
+          <button 
+            type="submit"
+            class="btn-ghost w-full flex items-center justify-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-950/30"
+          >
+            <LogOut size={18} />
+            <span>Logout</span>
+          </button>
+        </form>
       </div>
     </aside>
 

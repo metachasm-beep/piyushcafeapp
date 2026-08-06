@@ -53,6 +53,7 @@ CREATE TABLE restaurants (
   currency          TEXT NOT NULL DEFAULT 'INR',
   address           TEXT,
   phone             TEXT,
+  payu_sub_merchant_id TEXT,
   is_active         BOOLEAN NOT NULL DEFAULT TRUE,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -124,6 +125,8 @@ CREATE TABLE orders (
   payment_method    TEXT,
   payment_status    TEXT NOT NULL DEFAULT 'unpaid',
   payment_reference TEXT,
+  platform_fee      NUMERIC(10, 2) NOT NULL DEFAULT 0,
+  restaurant_amount NUMERIC(10, 2) NOT NULL DEFAULT 0,
   customer_session  TEXT,
   special_notes     TEXT,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -193,14 +196,39 @@ CREATE TRIGGER trg_orders_updated_at
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION recalculate_order_total()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
+DECLARE
+  new_total NUMERIC(10, 2);
+  v_total_amount NUMERIC(10, 2);
+  v_platform_fee NUMERIC(10, 2);
+  v_master_amount NUMERIC(10, 2);
+  v_restaurant_amount NUMERIC(10, 2);
 BEGIN
+  -- Food Cost (sum of items)
+  SELECT COALESCE(SUM(quantity * unit_price), 0)
+  INTO new_total
+  FROM order_items
+  WHERE order_id = COALESCE(NEW.order_id, OLD.order_id);
+
+  -- Calculations according to PayU Marketplace Split Logic
+  -- Total Amount = Food Cost + 5% Food GST
+  v_total_amount := ROUND(new_total * 1.05, 2);
+  
+  -- Platform Fee = 2% of Food Cost
+  v_platform_fee := ROUND(new_total * 0.02, 2);
+  
+  -- Master Account = Platform Fee + 18% GST on Platform Fee
+  v_master_amount := ROUND(v_platform_fee * 1.18, 2);
+  
+  -- Sub-Merchant / Restaurant Account = Remaining balance
+  v_restaurant_amount := v_total_amount - v_master_amount;
+
   UPDATE orders
-  SET total_amount = (
-    SELECT COALESCE(SUM(quantity * unit_price), 0)
-    FROM order_items
-    WHERE order_id = COALESCE(NEW.order_id, OLD.order_id)
-  )
+  SET 
+    total_amount = v_total_amount,
+    platform_fee = v_platform_fee,
+    restaurant_amount = v_restaurant_amount
   WHERE id = COALESCE(NEW.order_id, OLD.order_id);
+
   RETURN NEW;
 END;
 $$;
@@ -345,6 +373,57 @@ INSERT INTO tables (restaurant_id, table_number, display_name, capacity) VALUES
 INSERT INTO menu_categories (restaurant_id, name, icon_emoji, sort_order) VALUES
   ('a1b2c3d4-0000-0000-0000-000000000001', 'Starters',   '🥗', 1),
   ('a1b2c3d4-0000-0000-0000-000000000001', 'Mains',       '🍛', 2),
-  ('a1b2c3d4-0000-0000-0000-000000000001', 'Breads',      '🫓', 3),
   ('a1b2c3d4-0000-0000-0000-000000000001', 'Desserts',    '🍮', 4),
   ('a1b2c3d4-0000-0000-0000-000000000001', 'Beverages',   '🥤', 5);
+
+-- ---------------------------------------------------------------------------
+-- 9. RPC Functions (Stored Procedures)
+-- ---------------------------------------------------------------------------
+
+-- Atomic place_order RPC
+CREATE OR REPLACE FUNCTION place_order(
+  p_restaurant_id UUID,
+  p_table_id UUID,
+  p_special_instructions TEXT,
+  p_items JSONB -- Array of { "menu_item_id": "uuid", "quantity": number }
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER -- Runs with elevated privileges to ensure atomic insert
+AS $$
+DECLARE
+  v_order_id UUID;
+  v_item JSONB;
+  v_menu_item_price NUMERIC(10, 2);
+  v_total_amount NUMERIC(10, 2) := 0;
+BEGIN
+  -- 1. Create order header
+  INSERT INTO orders (restaurant_id, table_id, special_notes, status)
+  VALUES (p_restaurant_id, p_table_id, p_special_instructions, 'pending')
+  RETURNING id INTO v_order_id;
+
+  -- 2. Insert items
+  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
+  LOOP
+    -- Get current price from menu_items securely
+    SELECT price INTO v_menu_item_price
+    FROM menu_items
+    WHERE id = (v_item->>'menu_item_id')::UUID;
+    
+    IF v_menu_item_price IS NULL THEN
+      RAISE EXCEPTION 'Invalid menu item ID: %', (v_item->>'menu_item_id');
+    END IF;
+
+    INSERT INTO order_items (order_id, menu_item_id, quantity, unit_price)
+    VALUES (
+      v_order_id, 
+      (v_item->>'menu_item_id')::UUID, 
+      (v_item->>'quantity')::INTEGER, 
+      v_menu_item_price
+    );
+  END LOOP;
+
+  -- Return the created order ID (trigger will automatically calculate totals and fees)
+  RETURN v_order_id;
+END;
+$$;

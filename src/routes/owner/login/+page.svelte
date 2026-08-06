@@ -12,7 +12,7 @@
 		e.preventDefault();
 		loading = true;
 		errorMsg = '';
-
+		if (!supabase) return;
 		const { data, error } = await supabase.auth.signInWithPassword({
 			email,
 			password

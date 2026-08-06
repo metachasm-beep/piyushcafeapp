@@ -1,4 +1,4 @@
-﻿/**
+/**
  * table.service.ts
  * Service layer for table/QR endpoint management.
  * Applies: database-architect, postgres-best-practices
@@ -31,14 +31,13 @@ export async function provisionTable(input: TableInput): Promise<Table> {
 		return {
 			id: crypto.randomUUID(),
 			...sanitized,
-			is_active: true,
-			status: "free"
+			is_active: true
 		} as unknown as Table;
 	}
 
 	const { data, error } = await supabase
 		.from("tables")
-		.insert({ ...sanitized, is_active: true, status: "free" })
+		.insert({ ...sanitized, is_active: true })
 		.select()
 		.single();
 

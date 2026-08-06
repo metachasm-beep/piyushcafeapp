@@ -14,6 +14,7 @@
   async function loadInventory() {
     isLoading = true;
     try {
+      if (!supabase) throw new Error('Supabase not initialized');
       // In a real app, filter by $adminUser's restaurant_id
       const { data: catData } = await supabase.from('menu_categories').select('*').order('sort_order');
       const { data: itemData } = await supabase.from('menu_items').select('*').order('sort_order');
@@ -38,7 +39,7 @@
     if (idx !== -1) {
       items[idx] = { ...item, is_available: newValue };
     }
-    
+    if (!supabase) return;
     const { error } = await supabase
       .from('menu_items')
       .update({ is_available: newValue })

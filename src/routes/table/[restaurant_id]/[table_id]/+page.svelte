@@ -96,17 +96,14 @@
   async function handlePayment() {
     isProcessingPayment = true;
     
-    // Simulate payment processing for UPI/Card
-    if (paymentMethod !== 'cash') {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-    }
-    
     try {
       const items = $cart.map(c => ({
         menu_item_id: c.menu_item.id,
         quantity: c.quantity,
         subtotal: c.menu_item.price * c.quantity
       }));
+      
+      const currentCartTotal = $cartTotal; // Save before clearing
       
       // Route through the secure server API endpoint (Zod-validated, saga-rollback enabled)
       const res = await fetch('/api/orders', {
@@ -129,12 +126,63 @@
       session.setActiveOrder(orderId);
       cart.clear();
       showCheckoutModal = false;
-      toast.success('Payment Successful! 🎉 Order placed.');
-      goto(`/table/${restaurant.id}/${table.id}/order`);
+
+      if (paymentMethod === 'cash') {
+        toast.success('Order placed successfully! 🎉 Waiter will collect cash.');
+        goto(`/table/${restaurant.id}/${table.id}/order`);
+      } else {
+        toast.info('Redirecting to payment gateway...');
+        
+        const payuRes = await fetch('/api/payu/hash', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            txnid: orderId,
+            productinfo: `Order ${orderId}`,
+            firstname: 'Customer', 
+            email: 'customer@example.com',
+            udf1: restaurant.id,
+            udf2: table.id
+          })
+        });
+
+        if (!payuRes.ok) throw new Error('Failed to initialize payment gateway.');
+        const payuData = await payuRes.json();
+        
+        // Dynamically create a form and submit to PayU Test URL
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'https://test.payu.in/_payment';
+        
+        const params = {
+          key: payuData.key,
+          txnid: orderId,
+          amount: payuData.amount,
+          productinfo: `Order ${orderId}`,
+          firstname: 'Customer',
+          email: 'customer@example.com',
+          phone: '9999999999',
+          surl: `${window.location.origin}/api/payu/response`,
+          furl: `${window.location.origin}/api/payu/response`,
+          hash: payuData.hash,
+          udf1: restaurant.id,
+          udf2: table.id,
+          child_details: payuData.childDetails // PayU parameter for split transactions
+        };
+
+        for (const [key, value] of Object.entries(params)) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = value;
+          form.appendChild(input);
+        }
+        document.body.appendChild(form);
+        form.submit();
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to place order. Please try again.';
       toast.error(msg);
-    } finally {
       isProcessingPayment = false;
     }
   }

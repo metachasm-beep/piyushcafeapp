@@ -8,6 +8,7 @@
   import type { MenuItem, MenuCategory } from '$lib/types';
   import { fly, fade } from 'svelte/transition';
   import { backOut } from 'svelte/easing';
+  import { tooltip } from '$lib/actions/tooltip';
 
   let items = $state<MenuItem[]>([]);
   let categories = $state<MenuCategory[]>([]);
@@ -99,9 +100,18 @@
       <h1 class="sa-page-title">Menu Manager</h1>
       <p class="sa-page-subtitle">{items.length} items across {categories.length} categories</p>
     </div>
-    <button class="sa-btn-primary" onclick={openAdd}>
-      <span style="display:flex;align-items:center;gap:6px;"><Plus size={15} strokeWidth={2.5} /> Add Item</span>
-    </button>
+    <div style="display:flex;gap:8px;">
+      <button class="sa-btn-primary" onclick={() => openModal()} use:tooltip={"Create a new menu item"}>
+        <Plus size={15} /> Add Item
+      </button>
+      <button class="sa-btn-secondary" onclick={syncMenu} disabled={syncing} use:tooltip={"Synchronize menu across all active nodes"}>
+        {#if syncing}
+          <RefreshCw size={15} class="animate-spin" /> Syncing...
+        {:else}
+          <RefreshCw size={15} /> Sync Global Menu
+        {/if}
+      </button>
+    </div>
   </div>
 
   <!-- Filters -->
@@ -141,7 +151,7 @@
     <div class="sa-tile" style="padding:64px;text-align:center;">
       <div style="font-size:36px;margin-bottom:12px;">🍽️</div>
       <div style="font-size:16px;font-weight:700;color:#8b84c0;">No items found</div>
-      <button class="sa-btn-primary" style="margin-top:16px;" onclick={openAdd}>Add First Item</button>
+      <button class="sa-btn-primary" style="margin-top:16px;" onclick={() => openModal()}>Add First Item</button>
     </div>
   {:else}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -171,14 +181,19 @@
               <button
                 style="flex:1;padding:7px;border-radius:9px;background:{item.is_available ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)'};border:1px solid {item.is_available ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'};color:{item.is_available ? '#16a34a' : '#dc2626'};font-size:12px;font-weight:600;cursor:pointer;font-family:'Cabinet Grotesk',system-ui,sans-serif;"
                 onclick={() => toggleAvailability(item)}
+                use:tooltip={item.is_available ? "Click to mark out of stock" : "Click to mark as available"}
               >{item.is_available ? 'Available' : 'Unavailable'}</button>
               <button
+                class="sa-btn-icon"
                 style="width:32px;height:32px;border-radius:9px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.12);color:#6366f1;display:flex;align-items:center;justify-content:center;cursor:pointer;"
-                onclick={() => openEdit(item)}
+                onclick={() => openModal(item)}
+                use:tooltip={"Edit item details"}
               ><Edit2 size={13} /></button>
               <button
+                class="sa-btn-icon sa-btn-icon-danger"
                 style="width:32px;height:32px;border-radius:9px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.12);color:#ef4444;display:flex;align-items:center;justify-content:center;cursor:pointer;"
                 onclick={() => deleteItem(item.id)}
+                use:tooltip={"Delete this item globally"}
               ><Trash2 size={13} /></button>
             </div>
           </div>
@@ -198,7 +213,7 @@
     onclick={(e) => { if (e.target === e.currentTarget) showModal = false; }}
   >
     <div class="sa-tile" transition:fly={{ y: 40, duration: 600, easing: backOut }} style="width:100%;max-width:500px;padding:36px;max-height:90vh;overflow-y:auto;position:relative;" onclick={(e) => e.stopPropagation()}>
-      <button style="position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:8px;background:rgba(99,102,241,0.07);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#8b84c0;" onclick={() => showModal = false}><X size={14} /></button>
+      <button style="position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:8px;background:rgba(99,102,241,0.07);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#8b84c0;" onclick={() => showModal = false} use:tooltip={"Close"}><X size={14} /></button>
       <h2 style="font-size:20px;font-weight:900;color:#1e1b4b;letter-spacing:-0.03em;margin-bottom:24px;">{editingItem ? 'Edit Item' : 'Add Menu Item'}</h2>
       <form onsubmit={saveItem} style="display:flex;flex-direction:column;gap:16px;">
         <div>

@@ -1,0 +1,38 @@
+.sa-tooltip {
+  position: fixed;
+  z-index: 9999;
+  background: #1e1b4b;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: 'Geist Mono', monospace;
+  font-weight: 500;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px) scale(0.95);
+  transition: opacity 0.15s ease, transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 12px rgba(30, 27, 75, 0.15);
+  white-space: nowrap;
+}
+
+.sa-tooltip.sa-tooltip-bottom {
+  transform: translateY(-4px) scale(0.95);
+}
+
+.sa-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: #1e1b4b transparent transparent transparent;
+}
+
+.sa-tooltip.sa-tooltip-bottom::after {
+  top: auto;
+  bottom: 100%;
+  border-color: transparent transparent #1e1b4b transparent;
+}

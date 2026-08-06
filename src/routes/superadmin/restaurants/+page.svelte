@@ -5,6 +5,7 @@
   import { Plus, ExternalLink, X } from 'lucide-svelte';
   import { fly, fade, slide } from 'svelte/transition';
   import { backOut } from 'svelte/easing';
+  import { tooltip } from '$lib/actions/tooltip';
 
   let expandedRestaurantId = $state<string | null>(null);
 
@@ -27,7 +28,7 @@
       <h1 class="sa-page-title">Restaurant Nodes</h1>
       <p class="sa-page-subtitle">Active locations and deployment records</p>
     </div>
-    <button class="sa-btn-primary" onclick={() => showAddModal = true}>
+    <button class="sa-btn-primary" onclick={() => showAddModal = true} use:tooltip={"Deploy a new restaurant instance"}>
       <span style="display:flex;align-items:center;gap:6px;">
         <Plus size={15} strokeWidth={2.5} /> Provision Node
       </span>
@@ -63,7 +64,7 @@
                 <div style="font-size:18px;font-weight:800;color:#1e1b4b;letter-spacing:-0.03em;margin-bottom:4px;">{r.name}</div>
                 <div style="font-size:10px;font-family:'Geist Mono',monospace;color:#9ca3af;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{r.id}</div>
               </div>
-              <span class="sa-badge-active">
+              <span class="sa-badge-active" use:tooltip={"Restaurant is currently online"}>
                 <span style="width:5px;height:5px;border-radius:50%;background:#22c55e;display:inline-block;box-shadow:0 0 5px rgba(34,197,94,0.7);"></span>
                 Active
               </span>
@@ -96,10 +97,12 @@
               <button
                 style="flex:1;padding:8px;border-radius:10px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.12);color:#6366f1;font-size:12px;font-weight:600;cursor:pointer;font-family:'Cabinet Grotesk',system-ui,sans-serif;transition:all 0.15s;"
                 onclick={() => toast.info('Opening node settings...')}
+                use:tooltip={"Configure this restaurant"}
               >Manage</button>
               <button
                 style="width:36px;height:36px;border-radius:10px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.12);color:#6366f1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;"
                 onclick={() => toast.info('Viewing node externally...')}
+                use:tooltip={"Open in new tab"}
               >
                 <ExternalLink size={13} />
               </button>
@@ -124,6 +127,7 @@
       <button
         style="position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:8px;background:rgba(99,102,241,0.07);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#8b84c0;"
         onclick={() => showAddModal = false}
+        use:tooltip={"Close"}
       >
         <X size={14} />
       </button>

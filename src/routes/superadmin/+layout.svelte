@@ -3,6 +3,7 @@
   import { LayoutDashboard, Store, UtensilsCrossed, QrCode, LogOut, Menu, X } from 'lucide-svelte';
   import { goto } from '$app/navigation';
   import { adminUser } from '$lib/stores/admin';
+  import { tooltip } from '$lib/actions/tooltip';
 
   let { children } = $props();
   let mobileMenuOpen = $state(false);
@@ -186,7 +187,7 @@
         </div>
       </div>
       <div class="flex items-center gap-1.5 mt-2">
-        <div class="w-1.5 h-1.5 rounded-full bg-[#22c55e] shadow-[0_0_8px_rgba(34,197,94,0.7)] animate-pulse-ring"></div>
+        <div class="w-1.5 h-1.5 rounded-full bg-[#22c55e] shadow-[0_0_8px_rgba(34,197,94,0.7)] animate-pulse-ring" use:tooltip={"System Status: Online"}></div>
         <span class="text-[10px] font-['Geist_Mono',monospace] text-[#6d6a9c] tracking-[0.06em]">NETWORK LIVE</span>
       </div>
     </div>
@@ -206,6 +207,7 @@
             box-shadow:{active ? '0 2px 10px rgba(99,102,241,0.1)' : 'none'};
           "
           onclick={() => mobileMenuOpen = false}
+          use:tooltip={link.label}
         >
           <span style="color:{active ? '#6366f1' : '#a5b4fc'};" class="transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110 group-hover:-translate-y-[2px]">
             <link.icon size={18} strokeWidth={active ? 2.5 : 1.8} />
@@ -221,6 +223,7 @@
         <button
           type="submit"
           class="w-full flex items-center gap-3 px-3 py-3 rounded-[12px] text-[14px] font-[500] text-[#9ca3af] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors"
+          use:tooltip={"Sign Out"}
         >
           <LogOut size={16} strokeWidth={1.8} />
           Sign Out

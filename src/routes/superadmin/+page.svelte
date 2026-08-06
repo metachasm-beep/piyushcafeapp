@@ -4,6 +4,7 @@
   import InteractiveRevenueChart from '$lib/components/InteractiveRevenueChart.svelte';
   import LiveOrderParticles from '$lib/components/LiveOrderParticles.svelte';
   import { slide, fade } from 'svelte/transition';
+  import { tooltip } from '$lib/actions/tooltip';
   import { toast } from 'svelte-sonner';
 
   let expandedStatIndex = $state<number | null>(null);
@@ -124,7 +125,7 @@
       <p class="sa-page-subtitle">Real-time telemetry across all restaurant nodes</p>
     </div>
     <div style="display:flex;gap:10px;">
-      <button class="sa-btn-primary" onclick={() => import('svelte-sonner').then(m => m.toast.success('Report exported'))}>
+      <button class="sa-btn-primary" onclick={() => import('svelte-sonner').then(m => m.toast.success('Report exported'))} use:tooltip={"Export CSV Report"}>
         Export Report
       </button>
     </div>
@@ -141,6 +142,7 @@
           style="padding:22px 24px;position:relative;overflow:hidden;cursor:pointer; grid-column: {expandedStatIndex === i ? '1 / -1' : 'auto'};"
           onclick={() => expandedStatIndex = expandedStatIndex === i ? null : i}
           in:fade={{ duration: 200 }}
+          use:tooltip={`View breakdown for ${stat.label}`}
         >
           <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:{stat.bg};filter:blur(20px);"></div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">

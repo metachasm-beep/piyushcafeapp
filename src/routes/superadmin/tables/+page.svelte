@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, derived } from 'svelte';
+  import { onMount } from 'svelte';
   import { supabase } from '$lib/supabase';
   import { MOCK_TABLES, MOCK_RESTAURANT } from '$lib/mock-data';
   import { toast } from 'svelte-sonner';
@@ -20,11 +20,11 @@
   let isSaving = $state(false);
 
   // Filter tables based on the selected restaurant
-  let filteredTables = $derived(
-    selectedRestaurantId 
+  let filteredTables = $derived.by(() => {
+    return selectedRestaurantId 
       ? tables.filter(t => t.restaurant_id === selectedRestaurantId)
-      : tables
-  );
+      : tables;
+  });
 
   onMount(async () => {
     if (!supabase) { 

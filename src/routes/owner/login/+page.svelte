@@ -6,12 +6,17 @@
 	let email = $state('');
 	let password = $state('');
 	let loading = $state(false);
-	let errorMsg = $state('');
+	
+	// Read error from URL if present
+	import { page } from '$app/state';
+	let urlError = $derived(page.url.searchParams.get('error') === 'unauthorized' ? 'Access Denied: Your account is not authorized.' : '');
+	let formError = $state('');
+	let errorMsg = $derived(formError || urlError);
 
 	async function handleLogin(e: Event) {
 		e.preventDefault();
 		loading = true;
-		errorMsg = '';
+		formError = '';
 		if (!supabase) return;
 		const { data, error } = await supabase.auth.signInWithPassword({
 			email,
@@ -21,7 +26,7 @@
 		loading = false;
 
 		if (error) {
-			errorMsg = error.message;
+			formError = error.message;
 			toast.error('Login failed: ' + error.message);
 		} else {
 			toast.success('Logged in successfully!');

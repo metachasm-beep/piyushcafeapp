@@ -43,14 +43,15 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
 	const routeId = event.route.id || '';
 
+	const ALLOWED_EMAILS = ['metachasm@gmail.com', 'nit.uniyal@gmail.com'];
+
 	// Superadmin Guards
 	if (routeId.startsWith('/superadmin') && !routeId.startsWith('/superadmin/login')) {
 		if (!user) {
 			throw redirect(303, '/superadmin/login');
 		}
 		
-		const SUPERADMINS = ['metachasm@gmail.com', 'nit.uniyal@gmail.com'];
-		if (!user.email || !SUPERADMINS.includes(user.email.toLowerCase())) {
+		if (!user.email || !ALLOWED_EMAILS.includes(user.email.toLowerCase())) {
 			throw redirect(303, '/superadmin/login?error=unauthorized');
 		}
 	}
@@ -58,14 +59,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// Owner Guards
 	if (routeId.startsWith('/owner') && !routeId.startsWith('/owner/login')) {
 		if (!user) {
-			// Redirect to owner login (if it exists) or superadmin login for testing
 			throw redirect(303, '/owner/login');
 		}
-		// Here we verify they are part of a restaurant (via restaurant_staff).
-		// For high-level security, they must have a record in `restaurant_staff`.
-		// To avoid a DB query on every request, we can check a custom claim or rely on the endpoints 
-		// calling `security.ts`'s `requireAuth()`, but we can do a quick check here if needed.
-		// For now, ensuring they are authenticated is the minimum.
+		
+		if (!user.email || !ALLOWED_EMAILS.includes(user.email.toLowerCase())) {
+			throw redirect(303, '/owner/login?error=unauthorized');
+		}
 	}
 
 	// Table Guards

@@ -153,7 +153,19 @@
         method="POST"
         use:enhance={() => {
           loading = true;
-          return async ({ update }) => { await update({ reset: true }); loading = false; showAddModal = false; };
+          return async ({ result, update }) => { 
+            await update({ reset: false }); 
+            loading = false; 
+            if (result.type === 'success') {
+              toast.success('Restaurant node provisioned successfully!');
+              showAddModal = false;
+              window.location.reload(); // Refresh to see the new data if invalidate isn't working
+            } else if (result.type === 'failure') {
+              toast.error(result.data?.error || 'Failed to provision node');
+            } else if (result.type === 'error') {
+              toast.error(result.error?.message || 'Server error occurred');
+            }
+          };
         }}
         class="p-6 space-y-4"
       >

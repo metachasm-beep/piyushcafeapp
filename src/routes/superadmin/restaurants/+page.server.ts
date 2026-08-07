@@ -50,26 +50,49 @@ export const actions: Actions = {
 		});
 
 		if (authError) {
+			console.error('Auth Error creating user:', authError);
 			return fail(500, { error: authError.message });
 		}
 
 		const userId = authData.user?.id;
 		if (!userId) {
+			console.error('Failed to retrieve created user ID');
 			return fail(500, { error: 'Failed to retrieve created user ID' });
 		}
 
+		console.log('Created auth user with ID:', userId);
+
 		// 2. Insert into restaurants table linked to owner_id
-		const { error: dbError } = await getSupabaseAdmin()
+		const { data: restData, error: dbError } = await getSupabaseAdmin()
 			.from('restaurants')
 			.insert({
 				owner_id: userId,
 				name: restaurant_name
-			});
+			})
+			.select('id')
+			.single();
 
 		if (dbError) {
+			console.error('DB Error inserting restaurant:', dbError);
 			return fail(500, { error: dbError.message });
 		}
 
+		if (restData) {
+			const { error: staffError } = await getSupabaseAdmin()
+				.from('restaurant_staff')
+				.insert({
+					restaurant_id: restData.id,
+					user_id: userId,
+					role: 'owner'
+				});
+				
+			if (staffError) {
+				console.error('Error adding to restaurant_staff:', staffError);
+				// We don't fail the whole request since the restaurant was created, but log it.
+			}
+		}
+
+		console.log('Successfully provisioned restaurant:', restaurant_name);
 		return { success: true };
 	}
 };

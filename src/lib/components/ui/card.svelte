@@ -4,13 +4,15 @@
   import { cva, type VariantProps } from "class-variance-authority";
 
   const cardVariants = cva(
-    "rounded-xl border bg-white shadow-sm transition-all duration-300 ease-out",
+    "bg-white overflow-hidden",
     {
       variants: {
         variant: {
-          default: "border-zinc-200 hover:border-zinc-300 hover:shadow-md",
-          interactive: "border-zinc-200 cursor-pointer hover:border-indigo-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-indigo-500/10",
-          destructive: "border-red-100 hover:border-red-200 bg-red-50/50",
+          default: "rounded-[18px]",
+          interactive: "rounded-[18px] cursor-pointer active:scale-[0.98] transition-transform duration-200",
+          groupedTop: "rounded-t-[18px] border-b border-gray-100",
+          groupedMiddle: "border-b border-gray-100",
+          groupedBottom: "rounded-b-[18px]",
         },
       },
       defaultVariants: {

@@ -79,7 +79,17 @@ export const actions: Actions = {
 						userId = found.id;
 						console.log('Found existing auth user via listUsers:', userId);
 						// We'll also ensure they exist in owner_profiles
-						await getSupabaseAdmin().from('owner_profiles').upsert({ id: userId, email: email, is_approved: true });
+						const { error: upsertError } = await getSupabaseAdmin().from('owner_profiles').upsert({ 
+							id: userId, 
+							email: email, 
+							full_name: 'Superadmin Provisioned',
+							restaurant_name: restaurant_name,
+							is_approved: true 
+						});
+						if (upsertError) {
+							console.error('Error upserting into owner_profiles:', upsertError);
+							return fail(500, { error: `Database error setting up owner profile: ${upsertError.message}` });
+						}
 					} else {
 						return fail(400, { error: 'User exists in auth but could not be located in list.' });
 					}
@@ -91,7 +101,18 @@ export const actions: Actions = {
 				userId = authData.user?.id;
 				console.log('Created auth user with ID:', userId);
 				// We MUST ensure they exist in owner_profiles before creating the restaurant to satisfy foreign key constraints
-				await getSupabaseAdmin().from('owner_profiles').upsert({ id: userId, email: email, is_approved: true });
+				// Provide dummy full_name if required by schema since we only have email
+				const { error: upsertError } = await getSupabaseAdmin().from('owner_profiles').upsert({ 
+					id: userId, 
+					email: email, 
+					full_name: 'Superadmin Provisioned',
+					restaurant_name: restaurant_name,
+					is_approved: true 
+				});
+				if (upsertError) {
+					console.error('Error upserting into owner_profiles:', upsertError);
+					return fail(500, { error: `Database error setting up owner profile: ${upsertError.message}` });
+				}
 			}
 		}
 

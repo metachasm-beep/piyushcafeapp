@@ -14,45 +14,58 @@ const getSupabaseAdmin = () => {
 };
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const session = await locals.getSession();
-	if (!session) {
+	const user = locals.user;
+	if (!user) {
 		throw error(401, 'Unauthorized');
 	}
 
-	// Make sure only the owner can access this
-	if (locals.userRole !== 'owner') {
+	// Allow owners (role may be set via restaurant_staff or owner_profiles fallback)
+	const role = locals.userRole ?? 'owner';
+	if (!['owner'].includes(role)) {
 		throw error(403, 'Forbidden');
+	}
+
+	// Get restaurantId — may be set in locals, or look it up
+	let restaurantId = locals.restaurantId;
+	if (!restaurantId) {
+		const { data: staffSelf } = await locals.supabase
+			.from('restaurant_staff')
+			.select('restaurant_id')
+			.eq('user_id', user.id)
+			.single();
+		restaurantId = staffSelf?.restaurant_id;
+	}
+
+	if (!restaurantId) {
+		return { staff: [] };
 	}
 
 	const { data: staff, error: dbError } = await locals.supabase
 		.from('restaurant_staff')
 		.select('*')
-		.eq('restaurant_id', locals.restaurantId)
+		.eq('restaurant_id', restaurantId)
 		.order('created_at', { ascending: false });
 
 	if (dbError) {
+		console.error('Error loading staff:', dbError);
 		throw error(500, 'Error loading staff');
 	}
 
-	// Join with auth users to get emails?
-	// Wait, we can't easily join auth.users in standard supabase select without special privileges.
-	// We will query auth.users using supabaseAdmin.
+	// Enrich with emails from auth.users via admin client
 	const supabaseAdmin = getSupabaseAdmin();
 	const { data: authUsers, error: authUsersError } = await supabaseAdmin.auth.admin.listUsers();
 	
-	let enrichedStaff = staff;
-	if (!authUsersError && authUsers.users) {
-		enrichedStaff = staff.map(s => {
+	let enrichedStaff = staff ?? [];
+	if (!authUsersError && authUsers?.users) {
+		enrichedStaff = enrichedStaff.map(s => {
 			const u = authUsers.users.find(user => user.id === s.user_id);
-			return {
-				...s,
-				email: u ? u.email : 'Unknown'
-			};
+			return { ...s, email: u?.email ?? 'Unknown' };
 		});
 	}
 
 	return {
-		staff: enrichedStaff || []
+		staff: enrichedStaff,
+		restaurantId
 	};
 };
 

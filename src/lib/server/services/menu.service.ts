@@ -56,14 +56,7 @@ export async function createMenuItem(input: MenuItemInput): Promise<MenuItem> {
 	const sanitized = sanitizeObject(input);
 
 	if (!supabase) {
-		// Mock mode: return a fake item with generated ID
-		return {
-			id: crypto.randomUUID(),
-			...sanitized,
-			is_available: true,
-			sort_order: 0,
-			happy_hour_discount: sanitized.happy_hour_discount ?? 0
-		} as unknown as MenuItem;
+		throw new Error("Supabase not initialized");
 	}
 
 	const { data, error } = await supabase
@@ -83,7 +76,7 @@ export async function updateMenuItem(id: string, input: Partial<MenuItemInput>):
 	const sanitized = sanitizeObject(input as Record<string, unknown>) as Partial<MenuItemInput>;
 
 	if (!supabase) {
-		return { id, ...sanitized } as unknown as MenuItem;
+		throw new Error("Supabase not initialized");
 	}
 
 	const { data, error } = await supabase

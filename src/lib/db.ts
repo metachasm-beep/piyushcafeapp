@@ -57,6 +57,32 @@ export async function getMenuItems(restaurant_id: string): Promise<MenuItem[]> {
   return data as MenuItem[];
 }
 
+export async function getMenuItemVariations(menu_item_ids: string[]) {
+  if (!supabase || menu_item_ids.length === 0) return [];
+  
+  const { data, error } = await supabase
+    .from('menu_item_variations')
+    .select('*')
+    .in('menu_item_id', menu_item_ids)
+    .order('sort_order');
+    
+  if (error || !data) return [];
+  return data;
+}
+
+export async function getMenuItemAddons(menu_item_ids: string[]) {
+  if (!supabase || menu_item_ids.length === 0) return [];
+  
+  const { data, error } = await supabase
+    .from('menu_item_addons')
+    .select('*')
+    .in('menu_item_id', menu_item_ids)
+    .order('sort_order');
+    
+  if (error || !data) return [];
+  return data;
+}
+
 // ==========================================
 // 2. Orders & Mutations
 // ==========================================
@@ -69,8 +95,7 @@ export async function createOrder(
   items: { menu_item_id: string, quantity: number }[]
 ) {
   if (!supabase) {
-    // In mock mode, we just return a fake ID and don't actually hit a DB
-    return { id: 'mock_order_' + Math.random().toString(36).substring(7) };
+    throw new Error('Supabase not initialized');
   }
 
   // Call the atomic RPC to place the order

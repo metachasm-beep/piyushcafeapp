@@ -1,16 +1,20 @@
-﻿import { fail } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { createClient } from '@supabase/supabase-js';
 import { env } from '$env/dynamic/private';
 import { env as publicEnv } from '$env/dynamic/public';
 import type { Actions, PageServerLoad } from './$types';
 
-const supabaseUrl = publicEnv.PUBLIC_SUPABASE_URL || 'https://mock.supabase.co';
-const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY || 'mock-key';
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+const getSupabaseAdmin = () => {
+	const supabaseUrl = publicEnv.PUBLIC_SUPABASE_URL;
+	const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY;
+	if (!supabaseUrl || !supabaseKey) {
+		throw new Error('Supabase admin credentials missing');
+	}
+	return createClient(supabaseUrl, supabaseKey);
+};
 
 export const load: PageServerLoad = async () => {
-	const { data: restaurants, error } = await supabaseAdmin
+	const { data: restaurants, error } = await getSupabaseAdmin()
 		.from('restaurants')
 		.select('*')
 		.order('created_at', { ascending: false });
@@ -39,7 +43,7 @@ export const actions: Actions = {
 		}
 
 		// 1. Create the user in Auth
-		const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+		const { data: authData, error: authError } = await getSupabaseAdmin().auth.admin.createUser({
 			email,
 			password,
 			email_confirm: true
@@ -55,7 +59,7 @@ export const actions: Actions = {
 		}
 
 		// 2. Insert into restaurants table linked to owner_id
-		const { error: dbError } = await supabaseAdmin
+		const { error: dbError } = await getSupabaseAdmin()
 			.from('restaurants')
 			.insert({
 				owner_id: userId,

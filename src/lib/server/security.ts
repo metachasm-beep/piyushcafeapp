@@ -67,12 +67,23 @@ export const OrderSchema = z.object({
 			z.object({
 				menu_item_id: z.string().uuid(),
 				quantity: z.coerce.number().int().min(1).max(99),
-				subtotal: z.coerce.number().positive()
+				variation_id: z.string().uuid().optional().nullable(),
+				addon_ids: z.array(z.string().uuid()).optional(),
+				special_instructions: z.string().max(500).optional()
 			})
 		)
 		.min(1, "Order must have at least one item")
 });
 
+export const CustomerFeedbackSchema = z.object({
+	restaurant_id: z.string().uuid(),
+	table_id: z.string().uuid(),
+	order_id: z.string().uuid(),
+	rating: z.coerce.number().int().min(1).max(5),
+	comment: z.string().max(1000).optional().nullable()
+});
+
 export type MenuItemInput = z.infer<typeof MenuItemSchema>;
 export type TableInput = z.infer<typeof TableSchema>;
 export type OrderInput = z.infer<typeof OrderSchema>;
+export type CustomerFeedbackInput = z.infer<typeof CustomerFeedbackSchema>;

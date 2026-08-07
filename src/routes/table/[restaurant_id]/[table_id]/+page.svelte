@@ -18,6 +18,8 @@
   let table = $derived(data.table);
   let categories = $derived(data.categories);
   let menuItems = $derived(data.menuItems);
+  let allVariations = $derived(data.variations);
+  let allAddons = $derived(data.addons);
 
   // Initialize session
   $effect(() => {
@@ -33,6 +35,12 @@
   
   let waiterCalled = $state(false);
   let waiterCooldown = $state(false);
+
+  // Item Modal State
+  let activeItem = $state<typeof menuItems[0] | null>(null);
+  let selectedVariation = $state<typeof allVariations[0] | null>(null);
+  let selectedAddons = $state<typeof allAddons[0][]>([]);
+  let itemModalQty = $state(1);
   
   // Derived state
   let featuredItems = $derived(menuItems.filter(item => item.is_featured && item.is_available));
@@ -91,7 +99,9 @@
       const items = $cart.map(c => ({
         menu_item_id: c.menu_item.id,
         quantity: c.quantity,
-        subtotal: c.menu_item.price * c.quantity
+        variation_id: c.variation?.id,
+        addon_ids: c.addons.map(a => a.id),
+        special_instructions: c.specialInstructions
       }));
       
       const currentCartTotal = $cartTotal; // Save before clearing
@@ -173,8 +183,39 @@
     }
   }
   
-  function getCartItemQuantity(itemId: string) {
-    return $cart.find(i => i.menu_item.id === itemId)?.quantity || 0;
+  function getTotalQuantity(itemId: string) {
+    return $cart.filter(i => i.menu_item.id === itemId).reduce((sum, i) => sum + i.quantity, 0);
+  }
+
+  function handleMenuAdd(item: typeof menuItems[0]) {
+    const itemVars = allVariations.filter(v => v.menu_item_id === item.id);
+    const itemAddons = allAddons.filter(a => a.menu_item_id === item.id);
+    
+    if (itemVars.length === 0 && itemAddons.length === 0) {
+      cart.addItem(item, 1);
+    } else {
+      activeItem = item;
+      selectedVariation = itemVars.length > 0 ? itemVars[0] : null;
+      selectedAddons = [];
+      itemModalQty = 1;
+    }
+  }
+
+  function confirmItemModal() {
+    if (activeItem) {
+      cart.addItem(activeItem, itemModalQty, '', selectedVariation, selectedAddons);
+      activeItem = null;
+      toast.success('Added to cart');
+    }
+  }
+  
+  function toggleAddon(addon: typeof allAddons[0]) {
+    const idx = selectedAddons.findIndex(a => a.id === addon.id);
+    if (idx >= 0) {
+      selectedAddons = selectedAddons.filter(a => a.id !== addon.id);
+    } else {
+      selectedAddons = [...selectedAddons, addon];
+    }
   }
 </script>
 
@@ -246,18 +287,25 @@
             </div>
             <div class="flex items-center justify-between mt-auto pt-2">
               <span class="text-brand font-bold">{formatCurrency(item.price)}</span>
-              {#if getCartItemQuantity(item.id) > 0}
+              {#if getTotalQuantity(item.id) > 0}
                 <div class="flex items-center gap-2 bg-surface rounded-full p-1 border border-border">
-                  <button class="w-7 h-7 rounded-full bg-surface-light flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => cart.setQuantity(item.id, getCartItemQuantity(item.id) - 1)}>
-                    <Minus size={14} />
-                  </button>
-                  <span class="w-4 text-center font-medium text-sm">{getCartItemQuantity(item.id)}</span>
-                  <button class="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => cart.setQuantity(item.id, getCartItemQuantity(item.id) + 1)}>
-                    <Plus size={14} />
-                  </button>
+                  {#if allVariations.filter(v => v.menu_item_id === item.id).length === 0 && allAddons.filter(a => a.menu_item_id === item.id).length === 0}
+                    <button class="w-7 h-7 rounded-full bg-surface-light flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => cart.setQuantity(cart.generateCartKey(item.id), getTotalQuantity(item.id) - 1)}>
+                      <Minus size={14} />
+                    </button>
+                    <span class="w-4 text-center font-medium text-sm">{getTotalQuantity(item.id)}</span>
+                    <button class="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => handleMenuAdd(item)}>
+                      <Plus size={14} />
+                    </button>
+                  {:else}
+                    <span class="w-4 text-center font-medium text-sm pl-1">{getTotalQuantity(item.id)}</span>
+                    <button class="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => handleMenuAdd(item)}>
+                      <Plus size={14} />
+                    </button>
+                  {/if}
                 </div>
               {:else}
-                <button class="w-8 h-8 rounded-full bg-brand/20 text-brand flex items-center justify-center hover:bg-brand hover:text-text-primary transition-colors active:scale-95" onclick={() => cart.addItem(item, 1)}>
+                <button class="w-8 h-8 rounded-full bg-brand/20 text-brand flex items-center justify-center hover:bg-brand hover:text-text-primary transition-colors active:scale-95" onclick={() => handleMenuAdd(item)}>
                   <Plus size={18} />
                 </button>
               {/if}
@@ -305,18 +353,25 @@
                     {/if}
                   </div>
                   {#if item.is_available}
-                    {#if getCartItemQuantity(item.id) > 0}
+                    {#if getTotalQuantity(item.id) > 0}
                       <div class="flex items-center gap-2 bg-surface rounded-full p-1 border border-border z-20">
-                        <button class="w-6 h-6 rounded-full bg-surface-light flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => cart.setQuantity(item.id, getCartItemQuantity(item.id) - 1)}>
-                          <Minus size={12} />
-                        </button>
-                        <span class="w-3 text-center font-medium text-xs">{getCartItemQuantity(item.id)}</span>
-                        <button class="w-6 h-6 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => cart.setQuantity(item.id, getCartItemQuantity(item.id) + 1)}>
-                          <Plus size={12} />
-                        </button>
+                        {#if allVariations.filter(v => v.menu_item_id === item.id).length === 0 && allAddons.filter(a => a.menu_item_id === item.id).length === 0}
+                          <button class="w-6 h-6 rounded-full bg-surface-light flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => cart.setQuantity(cart.generateCartKey(item.id), getTotalQuantity(item.id) - 1)}>
+                            <Minus size={12} />
+                          </button>
+                          <span class="w-3 text-center font-medium text-xs">{getTotalQuantity(item.id)}</span>
+                          <button class="w-6 h-6 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => handleMenuAdd(item)}>
+                            <Plus size={12} />
+                          </button>
+                        {:else}
+                          <span class="w-3 text-center font-medium text-xs pl-1">{getTotalQuantity(item.id)}</span>
+                          <button class="w-6 h-6 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => handleMenuAdd(item)}>
+                            <Plus size={12} />
+                          </button>
+                        {/if}
                       </div>
                     {:else}
-                      <button class="w-8 h-8 rounded-full bg-surface border border-border text-text-primary flex items-center justify-center z-20 active:scale-95 transition-transform" onclick={() => cart.addItem(item, 1)}>
+                      <button class="w-8 h-8 rounded-full bg-surface border border-border text-text-primary flex items-center justify-center z-20 active:scale-95 transition-transform" onclick={() => handleMenuAdd(item)}>
                         <Plus size={16} />
                       </button>
                     {/if}
@@ -393,14 +448,22 @@
               </div>
               <div class="flex-1 flex flex-col">
                 <h4 class="font-medium text-text-primary">{item.menu_item.name}</h4>
-                <span class="text-brand font-semibold text-sm">{formatCurrency(item.menu_item.price)}</span>
+                {#if item.variation}
+                  <span class="text-xs text-text-secondary">{item.variation.name} (+{formatCurrency(item.variation.extra_price)})</span>
+                {/if}
+                {#if item.addons.length > 0}
+                  <span class="text-xs text-text-secondary">{item.addons.map(a => a.name).join(', ')} (+{formatCurrency(item.addons.reduce((sum, a) => sum + a.extra_price, 0))})</span>
+                {/if}
+                <span class="text-brand font-semibold text-sm">
+                  {formatCurrency(item.menu_item.price + (item.variation?.extra_price || 0) + item.addons.reduce((sum, a) => sum + a.extra_price, 0))}
+                </span>
               </div>
               <div class="flex items-center gap-3 bg-surface rounded-full p-1 border border-border">
-                <button class="w-7 h-7 rounded-full bg-surface-light flex items-center justify-center text-text-primary active:scale-95" onclick={() => cart.setQuantity(item.menu_item.id, item.quantity - 1)}>
+                <button class="w-7 h-7 rounded-full bg-surface-light flex items-center justify-center text-text-primary active:scale-95" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity - 1)}>
                   <Minus size={14} />
                 </button>
                 <span class="w-4 text-center font-medium text-sm">{item.quantity}</span>
-                <button class="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95" onclick={() => cart.setQuantity(item.menu_item.id, item.quantity + 1)}>
+                <button class="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity + 1)}>
                   <Plus size={14} />
                 </button>
               </div>
@@ -447,6 +510,100 @@
           onclick={handleCallWaiter}
         >
           <Bell size={16} /> Need assistance? Call Waiter
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Item Configuration Modal -->
+{#if activeItem}
+  <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center px-4 pb-4 sm:p-0" transition:fade={{ duration: 200 }}>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick={() => activeItem = null}></div>
+    
+    <div class="bg-card w-full max-w-md rounded-3xl relative z-10 flex flex-col overflow-hidden border border-border max-h-[85vh]">
+      <div class="relative h-48 bg-surface">
+        <img src={activeItem.image_url} alt={activeItem.name} class="w-full h-full object-cover" />
+        <button class="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center backdrop-blur-md hover:bg-black/70" onclick={() => activeItem = null}>
+          <X size={18} />
+        </button>
+      </div>
+      
+      <div class="p-5 overflow-y-auto flex-1 space-y-6">
+        <div>
+          <h3 class="font-display text-2xl font-bold text-text-primary mb-1">{activeItem.name}</h3>
+          <p class="text-sm text-text-secondary">{activeItem.description}</p>
+        </div>
+
+        {#if allVariations.filter(v => activeItem && v.menu_item_id === activeItem.id).length > 0}
+          <div class="space-y-3">
+            <h4 class="font-bold text-lg text-text-primary">Options <span class="text-brand text-xs font-normal uppercase ml-2 px-2 py-0.5 bg-brand/10 rounded-full border border-brand/20">Required</span></h4>
+            <div class="space-y-2">
+              {#each allVariations.filter(v => activeItem && v.menu_item_id === activeItem.id) as v}
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <div 
+                  class="flex items-center justify-between p-4 rounded-xl border transition-colors cursor-pointer {selectedVariation?.id === v.id ? 'bg-brand/10 border-brand text-brand' : 'bg-surface border-border text-text-primary hover:bg-surface-light'}"
+                  onclick={() => selectedVariation = v}
+                >
+                  <span class="font-medium">{v.name}</span>
+                  <span class="text-sm">{v.extra_price > 0 ? `+${formatCurrency(v.extra_price)}` : 'Free'}</span>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+
+        {#if allAddons.filter(a => activeItem && a.menu_item_id === activeItem.id).length > 0}
+          <div class="space-y-3">
+            <h4 class="font-bold text-lg text-text-primary">Add-ons <span class="text-text-secondary text-xs font-normal uppercase ml-2 px-2 py-0.5 bg-surface-light rounded-full border border-border">Optional</span></h4>
+            <div class="space-y-2">
+              {#each allAddons.filter(a => activeItem && a.menu_item_id === activeItem.id) as a}
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <div 
+                  class="flex items-center justify-between p-4 rounded-xl border transition-colors cursor-pointer {selectedAddons.find(sa => sa.id === a.id) ? 'bg-brand/10 border-brand text-brand' : 'bg-surface border-border text-text-primary hover:bg-surface-light'}"
+                  onclick={() => toggleAddon(a)}
+                >
+                  <div class="flex items-center gap-3">
+                    <div class="w-5 h-5 rounded border {selectedAddons.find(sa => sa.id === a.id) ? 'border-brand bg-brand flex items-center justify-center text-black' : 'border-text-secondary'}">
+                      {#if selectedAddons.find(sa => sa.id === a.id)}
+                        <svg viewBox="0 0 14 14" fill="none" class="w-3.5 h-3.5"><path d="M3 7.5L5.5 10L11 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      {/if}
+                    </div>
+                    <span class="font-medium">{a.name}</span>
+                  </div>
+                  <span class="text-sm">+{formatCurrency(a.extra_price)}</span>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+        
+        <div class="flex items-center justify-between pt-4">
+          <span class="font-bold text-text-primary">Quantity</span>
+          <div class="flex items-center gap-3 bg-surface rounded-full p-1 border border-border">
+            <button class="w-10 h-10 rounded-full bg-surface-light flex items-center justify-center text-text-primary active:scale-95" onclick={() => itemModalQty = Math.max(1, itemModalQty - 1)}>
+              <Minus size={16} />
+            </button>
+            <span class="w-6 text-center font-bold text-lg">{itemModalQty}</span>
+            <button class="w-10 h-10 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95" onclick={() => itemModalQty++}>
+              <Plus size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="p-5 border-t border-border bg-surface/50 backdrop-blur-md">
+        <button 
+          class="btn-brand w-full py-4 text-lg font-bold flex items-center justify-between px-6"
+          onclick={confirmItemModal}
+          disabled={allVariations.filter(v => activeItem && v.menu_item_id === activeItem.id).length > 0 && !selectedVariation}
+        >
+          <span>Add to Cart</span>
+          <span>{formatCurrency((activeItem.price + (selectedVariation?.extra_price || 0) + selectedAddons.reduce((sum, a) => sum + a.extra_price, 0)) * itemModalQty)}</span>
         </button>
       </div>
     </div>

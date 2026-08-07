@@ -5,12 +5,13 @@
   import { toast } from 'svelte-sonner';
   import { 
     Bell, CreditCard, Smartphone, Banknote, CheckCircle, 
-    ArrowLeft, Clock, ChefHat, Utensils, ThumbsUp, X
+    ArrowLeft, Clock, ChefHat, Utensils, ThumbsUp, X, Star
   } from '@lucide/svelte';
 
   import { session } from '$lib/stores/session';
   import { adminOrders, waiterRequests } from '$lib/stores/admin';
   import { formatCurrency, timeAgo, generateUUID } from '$lib/utils';
+  import { supabase } from '$lib/supabase';
   
   import StatusBadge from '$lib/components/StatusBadge.svelte';
 
@@ -19,6 +20,13 @@
   let order = $derived($adminOrders.find(o => o.id === orderId));
   
   let waiterCalled = $state(false);
+  
+  // Feedback state
+  let showFeedbackModal = $state(false);
+  let feedbackRating = $state(0);
+  let feedbackComment = $state('');
+  let feedbackSubmitting = $state(false);
+  let feedbackSubmitted = $state(false);
   
   // Fetch real order status from the secure backend API
   let pollingInterval: ReturnType<typeof setInterval>;
@@ -49,21 +57,38 @@
         // We update the global store with the real database data
         adminOrders.upsertOrder(data);
         
+        if (['served', 'paid'].includes(data.status) && !feedbackSubmitted) {
+          if (!sessionStorage.getItem(`feedback_${orderId}`)) {
+            showFeedbackModal = true;
+          }
+        }
+        
         if (['served', 'paid', 'cancelled'].includes(data.status)) {
-          clearInterval(pollingInterval);
+          supabase.removeChannel(channel);
         }
       } catch (err) {
-        console.error('Failed to poll order status', err);
+        console.error('Failed to fetch order status', err);
       }
     };
 
     // Initial fetch
     fetchOrderData();
 
-    // Poll every 10 seconds
-    pollingInterval = setInterval(fetchOrderData, 10000);
+    // Subscribe to realtime changes on this specific order
+    const channel = supabase.channel(`order-${orderId}`)
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'orders',
+        filter: `id=eq.${orderId}`
+      }, () => {
+         fetchOrderData();
+      })
+      .subscribe();
 
-    return () => { if (pollingInterval) clearInterval(pollingInterval); };
+    return () => { 
+      supabase.removeChannel(channel); 
+    };
   });
 
   function handleCallWaiter() {
@@ -93,6 +118,39 @@
       if (!confirm('Your order is still active. Return to menu?')) return;
     }
     goto(`/table/${page.params.restaurant_id}/${page.params.table_id}`);
+  }
+
+  async function submitFeedback() {
+    if (feedbackRating === 0) {
+      toast.error('Please select a rating');
+      return;
+    }
+    
+    feedbackSubmitting = true;
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          restaurant_id: order?.restaurant_id,
+          table_id: order?.table_id,
+          order_id: order?.id,
+          rating: feedbackRating,
+          comment: feedbackComment
+        })
+      });
+      
+      if (!res.ok) throw new Error('Failed to submit feedback');
+      
+      toast.success('Thank you for your feedback! 💖');
+      showFeedbackModal = false;
+      feedbackSubmitted = true;
+      sessionStorage.setItem(`feedback_${order?.id}`, 'true');
+    } catch (e) {
+      toast.error('Failed to submit feedback. Please try again.');
+    } finally {
+      feedbackSubmitting = false;
+    }
   }
 
   const STAGES = [
@@ -171,10 +229,16 @@
             </div>
             <div class="flex-1">
               <h4 class="font-medium text-white text-sm">{item.menu_item.name}</h4>
-              <p class="text-xs text-text-secondary">Qty: {item.quantity}</p>
+              {#if item.variation_name}
+                <div class="text-[10px] text-text-secondary mt-0.5">{item.variation_name}</div>
+              {/if}
+              {#if item.addons && Array.isArray(item.addons) && item.addons.length > 0}
+                <div class="text-[10px] text-text-secondary mt-0.5">+ {item.addons.map(a => a.name).join(', ')}</div>
+              {/if}
+              <p class="text-xs text-text-secondary mt-1">Qty: {item.quantity}</p>
             </div>
             <div class="text-brand font-semibold text-sm">
-              {formatCurrency(item.menu_item.price * item.quantity)}
+              {formatCurrency(item.unit_price * item.quantity)}
             </div>
           </div>
         {/each}
@@ -219,5 +283,58 @@
   <div class="h-screen flex items-center justify-center flex-col gap-4">
     <div class="w-8 h-8 border-2 border-brand/20 border-t-brand rounded-full animate-spin"></div>
     <p class="text-text-secondary">Loading your order...</p>
+  </div>
+{/if}
+
+<!-- Feedback Modal -->
+{#if showFeedbackModal}
+  <div class="fixed inset-0 z-[60] flex items-center justify-center px-4" transition:fade={{ duration: 200 }}>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick={() => !feedbackSubmitting && (showFeedbackModal = false)}></div>
+    
+    <div class="glass w-full max-w-sm rounded-3xl p-6 relative z-10 flex flex-col items-center text-center space-y-6">
+      <button class="absolute top-4 right-4 text-text-secondary hover:text-white" onclick={() => showFeedbackModal = false} disabled={feedbackSubmitting}>
+        <X size={20} />
+      </button>
+      
+      <div class="w-16 h-16 bg-brand/20 rounded-full flex items-center justify-center text-brand mb-2">
+        <ThumbsUp size={32} />
+      </div>
+      
+      <div>
+        <h3 class="font-display text-2xl font-bold text-white mb-2">How was your meal?</h3>
+        <p class="text-sm text-text-secondary">We'd love to hear your feedback to improve our service.</p>
+      </div>
+
+      <div class="flex gap-2 justify-center w-full">
+        {#each [1, 2, 3, 4, 5] as star}
+          <button 
+            class="text-4xl transition-transform active:scale-90 {feedbackRating >= star ? 'text-yellow-400' : 'text-surface-light'}"
+            onclick={() => feedbackRating = star}
+          >
+            <Star fill={feedbackRating >= star ? 'currentColor' : 'none'} strokeWidth={1.5} size={40} />
+          </button>
+        {/each}
+      </div>
+
+      <textarea 
+        class="input-dark w-full resize-none h-24"
+        placeholder="Any comments or suggestions? (Optional)"
+        bind:value={feedbackComment}
+      ></textarea>
+
+      <button 
+        class="btn-brand w-full py-4 text-lg font-bold"
+        onclick={submitFeedback}
+        disabled={feedbackSubmitting}
+      >
+        {feedbackSubmitting ? 'Submitting...' : 'Submit Feedback'}
+      </button>
+      
+      <button class="text-sm text-text-secondary hover:text-white" onclick={() => showFeedbackModal = false}>
+        Maybe later
+      </button>
+    </div>
   </div>
 {/if}

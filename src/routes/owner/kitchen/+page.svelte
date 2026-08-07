@@ -99,6 +99,16 @@
                       <span class="font-bold text-[var(--color-brand)] bg-[var(--color-brand)]/10 px-1.5 py-0.5 rounded text-sm">{item.quantity}x</span>
                       <div>
                         <span class="font-medium">{item.menu_item?.name ?? item.menu_item_id}</span>
+                        {#if item.variation_name}
+                          <div class="text-xs text-[var(--color-text-secondary)] mt-0.5 flex items-center gap-1">
+                            <span class="w-1 h-1 rounded-full bg-[var(--color-brand)]"></span> {item.variation_name}
+                          </div>
+                        {/if}
+                        {#if item.addons && Array.isArray(item.addons) && item.addons.length > 0}
+                          <div class="text-xs text-[var(--color-text-secondary)] mt-0.5 flex flex-wrap items-center gap-1">
+                            <span class="w-1 h-1 rounded-full bg-[var(--color-border)]"></span> + {item.addons.map(a => a.name).join(', ')}
+                          </div>
+                        {/if}
                         {#if item.special_instructions}
                           <p class="text-xs text-yellow-400 bg-yellow-400/10 p-1 rounded mt-1 border border-yellow-400/20 italic">Note: {item.special_instructions}</p>
                         {/if}

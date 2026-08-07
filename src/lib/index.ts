@@ -1,4 +1,4 @@
-﻿// Library barrel exports
+// Library barrel exports
 export * from './types';
 export * from './utils';
-export * from './mock-data';
+// Removed mock data export

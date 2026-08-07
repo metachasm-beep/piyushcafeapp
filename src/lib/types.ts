@@ -62,6 +62,24 @@ export type MenuItem = {
   updated_at: string;
 };
 
+export type MenuItemVariation = {
+  id: string;
+  menu_item_id: string;
+  name: string;
+  extra_price: number;
+  sort_order: number;
+  created_at: string;
+};
+
+export type MenuItemAddon = {
+  id: string;
+  menu_item_id: string;
+  name: string;
+  extra_price: number;
+  sort_order: number;
+  created_at: string;
+};
+
 export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'served' | 'paid' | 'cancelled';
 
 export type Order = {
@@ -90,6 +108,9 @@ export type OrderItem = {
   menu_item_id: string;
   quantity: number;
   unit_price: number;
+  variation_name: string | null;
+  variation_price: number;
+  addons: { name: string; price: number }[];
   special_instructions: string | null;
   created_at: string;
 };
@@ -112,9 +133,21 @@ export type WaiterRequest = {
   table?: Table;
 };
 
+export type CustomerFeedback = {
+  id: string;
+  restaurant_id: string;
+  table_id: string;
+  order_id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+};
+
 export type CartItem = {
   menu_item: MenuItem;
   quantity: number;
+  variation?: MenuItemVariation | null;
+  addons: MenuItemAddon[];
   special_instructions: string;
 };
 

@@ -26,9 +26,7 @@ export async function placeOrder(input: OrderInput): Promise<{ id: string }> {
 	const sanitized = sanitizeObject(input as unknown as Record<string, unknown>) as unknown as OrderInput;
 
 	if (!supabase) {
-		const mockId = `mock_${crypto.randomUUID()}`;
-		console.log(JSON.stringify({ level: "warn", msg: "Mock mode: order not persisted", mockId }));
-		return { id: mockId };
+		throw new Error("Supabase not initialized");
 	}
 
 	// Call the atomic RPC to place the order
@@ -38,7 +36,10 @@ export async function placeOrder(input: OrderInput): Promise<{ id: string }> {
 		p_special_instructions: sanitized.special_instructions ?? "",
 		p_items: sanitized.items.map(item => ({
 			menu_item_id: item.menu_item_id,
-			quantity: item.quantity
+			quantity: item.quantity,
+			variation_id: item.variation_id ?? null,
+			addon_ids: item.addon_ids ?? [],
+			special_instructions: item.special_instructions ?? ""
 		}))
 	});
 

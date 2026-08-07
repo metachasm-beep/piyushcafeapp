@@ -115,6 +115,26 @@ CREATE TABLE menu_items (
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 2.5a Menu Item Variations ---------------------------------------------------
+CREATE TABLE menu_item_variations (
+  id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  menu_item_id     UUID NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
+  name             TEXT NOT NULL,
+  extra_price      NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (extra_price >= 0),
+  sort_order       INTEGER NOT NULL DEFAULT 0,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 2.5b Menu Item Addons -------------------------------------------------------
+CREATE TABLE menu_item_addons (
+  id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  menu_item_id     UUID NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
+  name             TEXT NOT NULL,
+  extra_price      NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (extra_price >= 0),
+  sort_order       INTEGER NOT NULL DEFAULT 0,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- 2.6 Orders -------------------------------------------------------------------
 CREATE TABLE orders (
   id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -140,6 +160,9 @@ CREATE TABLE order_items (
   menu_item_id         UUID NOT NULL REFERENCES menu_items(id) ON DELETE RESTRICT,
   quantity             INTEGER NOT NULL CHECK (quantity > 0),
   unit_price           NUMERIC(10, 2) NOT NULL,
+  variation_name       TEXT,
+  variation_price      NUMERIC(10, 2) DEFAULT 0,
+  addons               JSONB DEFAULT '[]',
   special_instructions TEXT,
   created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -157,6 +180,17 @@ CREATE TABLE waiter_requests (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 2.9 Customer Feedback --------------------------------------------------------
+CREATE TABLE customer_feedback (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  restaurant_id   UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+  table_id        UUID NOT NULL REFERENCES tables(id) ON DELETE CASCADE,
+  order_id        UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  rating          INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  comment         TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- ---------------------------------------------------------------------------
 -- 3. Indexes
 -- ---------------------------------------------------------------------------
@@ -164,10 +198,13 @@ CREATE INDEX idx_tables_restaurant        ON tables(restaurant_id);
 CREATE INDEX idx_menu_categories_rest     ON menu_categories(restaurant_id, sort_order);
 CREATE INDEX idx_menu_items_category      ON menu_items(category_id);
 CREATE INDEX idx_menu_items_restaurant    ON menu_items(restaurant_id, is_available);
+CREATE INDEX idx_menu_variations_item     ON menu_item_variations(menu_item_id);
+CREATE INDEX idx_menu_addons_item         ON menu_item_addons(menu_item_id);
 CREATE INDEX idx_orders_restaurant_status ON orders(restaurant_id, status, created_at DESC);
 CREATE INDEX idx_orders_table             ON orders(table_id, created_at DESC);
 CREATE INDEX idx_order_items_order        ON order_items(order_id);
 CREATE INDEX idx_waiter_requests_rest     ON waiter_requests(restaurant_id, status);
+CREATE INDEX idx_feedback_restaurant      ON customer_feedback(restaurant_id, rating);
 
 -- ---------------------------------------------------------------------------
 -- 4. Triggers — auto-update updated_at
@@ -245,9 +282,12 @@ ALTER TABLE restaurant_staff  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tables            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE menu_categories   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE menu_items        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE menu_item_variations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE menu_item_addons  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE waiter_requests   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customer_feedback ENABLE ROW LEVEL SECURITY;
 
 -- Helper: get calling user's restaurant_id
 CREATE OR REPLACE FUNCTION my_restaurant_id()
@@ -303,6 +343,19 @@ CREATE POLICY "owner_manage_own_items"
   USING (restaurant_id = my_restaurant_id())
   WITH CHECK (restaurant_id = my_restaurant_id());
 
+-- ---- menu_item_variations & addons ----
+CREATE POLICY "public_read_variations"
+  ON menu_item_variations FOR SELECT TO anon USING (TRUE);
+CREATE POLICY "owner_all_variations"
+  ON menu_item_variations FOR ALL TO authenticated
+  USING (menu_item_id IN (SELECT id FROM menu_items WHERE restaurant_id = my_restaurant_id()));
+
+CREATE POLICY "public_read_addons"
+  ON menu_item_addons FOR SELECT TO anon USING (TRUE);
+CREATE POLICY "owner_all_addons"
+  ON menu_item_addons FOR ALL TO authenticated
+  USING (menu_item_id IN (SELECT id FROM menu_items WHERE restaurant_id = my_restaurant_id()));
+
 -- ---- orders ----
 -- REMOVED: anon_insert_orders (use /api/orders endpoint instead)
 -- REMOVED: anon_read_own_orders (use /api/orders/[id] endpoint instead)
@@ -331,6 +384,15 @@ CREATE POLICY "owner_manage_waiter_requests"
   ON waiter_requests FOR ALL TO authenticated
   USING (restaurant_id = my_restaurant_id())
   WITH CHECK (restaurant_id = my_restaurant_id());
+
+-- ---- customer_feedback ----
+CREATE POLICY "anon_insert_feedback"
+  ON customer_feedback FOR INSERT TO anon
+  WITH CHECK (TRUE);
+
+CREATE POLICY "owner_read_feedback"
+  ON customer_feedback FOR SELECT TO authenticated
+  USING (restaurant_id = my_restaurant_id());
 
 -- ---------------------------------------------------------------------------
 -- 7. Enable Real-Time Subscriptions
@@ -377,7 +439,7 @@ CREATE OR REPLACE FUNCTION place_order(
   p_restaurant_id UUID,
   p_table_id UUID,
   p_special_instructions TEXT,
-  p_items JSONB -- Array of { "menu_item_id": "uuid", "quantity": number }
+  p_items JSONB -- Array of { "menu_item_id": "uuid", "quantity": number, "variation_id": "uuid", "addon_ids": ["uuid"], "special_instructions": "text" }
 )
 RETURNS UUID
 LANGUAGE plpgsql
@@ -387,7 +449,14 @@ DECLARE
   v_order_id UUID;
   v_item JSONB;
   v_menu_item_price NUMERIC(10, 2);
-  v_total_amount NUMERIC(10, 2) := 0;
+  v_variation_price NUMERIC(10, 2);
+  v_variation_name TEXT;
+  v_addon_id UUID;
+  v_addon_price NUMERIC(10, 2);
+  v_addon_name TEXT;
+  v_addons_json JSONB;
+  v_addon JSONB;
+  v_total_unit_price NUMERIC(10, 2);
 BEGIN
   -- 0. Security Validation: Ensure table belongs to restaurant
   IF NOT EXISTS (
@@ -414,12 +483,47 @@ BEGIN
       RAISE EXCEPTION 'Invalid menu item ID: %', (v_item->>'menu_item_id');
     END IF;
 
-    INSERT INTO order_items (order_id, menu_item_id, quantity, unit_price)
+    -- Handle variation
+    v_variation_price := 0;
+    v_variation_name := NULL;
+    IF v_item->>'variation_id' IS NOT NULL THEN
+      SELECT extra_price, name INTO v_variation_price, v_variation_name
+      FROM menu_item_variations
+      WHERE id = (v_item->>'variation_id')::UUID AND menu_item_id = (v_item->>'menu_item_id')::UUID;
+      
+      IF v_variation_name IS NULL THEN
+        RAISE EXCEPTION 'Invalid variation ID';
+      END IF;
+    END IF;
+
+    -- Handle addons
+    v_addons_json := '[]'::JSONB;
+    v_total_unit_price := v_menu_item_price + v_variation_price;
+    
+    IF v_item->'addon_ids' IS NOT NULL AND jsonb_array_length(v_item->'addon_ids') > 0 THEN
+      FOR v_addon IN SELECT * FROM jsonb_array_elements(v_item->'addon_ids')
+      LOOP
+        SELECT extra_price, name INTO v_addon_price, v_addon_name
+        FROM menu_item_addons
+        WHERE id = (v_addon#>>'{}')::UUID AND menu_item_id = (v_item->>'menu_item_id')::UUID;
+        
+        IF v_addon_name IS NOT NULL THEN
+          v_addons_json := v_addons_json || jsonb_build_object('name', v_addon_name, 'price', v_addon_price);
+          v_total_unit_price := v_total_unit_price + v_addon_price;
+        END IF;
+      END LOOP;
+    END IF;
+
+    INSERT INTO order_items (order_id, menu_item_id, quantity, unit_price, variation_name, variation_price, addons, special_instructions)
     VALUES (
       v_order_id, 
       (v_item->>'menu_item_id')::UUID, 
       (v_item->>'quantity')::INTEGER, 
-      v_menu_item_price
+      v_total_unit_price,
+      v_variation_name,
+      v_variation_price,
+      v_addons_json,
+      v_item->>'special_instructions'
     );
   END LOOP;
 

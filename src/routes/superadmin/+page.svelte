@@ -43,18 +43,10 @@
 
   let recentActivity = $derived(data.recentActivity);
 
-  const chartData = [
-    { date: new Date(Date.now() - 6 * 86400000), revenue: 0 },
-    { date: new Date(Date.now() - 5 * 86400000), revenue: 0 },
-    { date: new Date(Date.now() - 4 * 86400000), revenue: 0 },
-    { date: new Date(Date.now() - 3 * 86400000), revenue: 0 },
-    { date: new Date(Date.now() - 2 * 86400000), revenue: 0 },
-    { date: new Date(Date.now() - 1 * 86400000), revenue: 0 },
-    { date: new Date(Date.now()), revenue: 0 },
-  ];
+  // Use the chart data generated from the server
+  let chartData = $derived(data.chartData.map(d => ({ date: new Date(d.date), revenue: d.revenue })));
 
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const amounts = chartData.map(d => d.revenue);
+  let amounts = $derived(chartData.map(d => d.revenue));
 
   function statusColor(s: string) {
     if (s === 'OK') return '#22c55e';

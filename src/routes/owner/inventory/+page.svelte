@@ -16,6 +16,14 @@
   let isSaving = $state(false);
   let imageFile = $state<File | null>(null);
   let imagePreview = $state<string | null>(null);
+  
+  let newVariations = $state<{name: string, extra_price: number}[]>([]);
+  let newAddons = $state<{name: string, extra_price: number}[]>([]);
+
+  function addVariation() { newVariations.push({ name: '', extra_price: 0 }); }
+  function removeVariation(i: number) { newVariations.splice(i, 1); }
+  function addAddon() { newAddons.push({ name: '', extra_price: 0 }); }
+  function removeAddon(i: number) { newAddons.splice(i, 1); }
 
   async function loadInventory() {
     isLoading = true;
@@ -131,17 +139,40 @@
         dietary_tags: [] // Can be extended later
       };
       
-      const { error: dbError } = await supabase.from('menu_items').insert(newItem);
+      const { data: itemResp, error: dbError } = await supabase.from('menu_items').insert(newItem).select().single();
       if (dbError) throw dbError;
       
+      // 3. Insert Variations & Addons
+      if (newVariations.length > 0) {
+        const validVars = newVariations.filter(v => v.name.trim() !== '').map((v, idx) => ({
+          menu_item_id: itemResp.id,
+          name: v.name.trim(),
+          extra_price: Number(v.extra_price),
+          sort_order: idx
+        }));
+        if (validVars.length > 0) await supabase.from('menu_item_variations').insert(validVars);
+      }
+      
+      if (newAddons.length > 0) {
+        const validAddons = newAddons.filter(a => a.name.trim() !== '').map((a, idx) => ({
+          menu_item_id: itemResp.id,
+          name: a.name.trim(),
+          extra_price: Number(a.extra_price),
+          sort_order: idx
+        }));
+        if (validAddons.length > 0) await supabase.from('menu_item_addons').insert(validAddons);
+      }
+
       // Update UI
-      items = [...items, newItem as unknown as MenuItem];
+      items = [...items, itemResp as unknown as MenuItem];
       toast.success('Item added successfully!');
       
       // Reset Modal
       showAddModal = false;
       imageFile = null;
       imagePreview = null;
+      newVariations = [];
+      newAddons = [];
       
     } catch (err: any) {
       console.error(err);
@@ -306,7 +337,45 @@
           <textarea id="description" name="description" rows="2" placeholder="Briefly describe the item..." class="input-dark w-full resize-none"></textarea>
         </div>
 
-        <label class="flex items-center gap-3 p-4 border border-[var(--color-border)] rounded-xl bg-[var(--color-card)] cursor-pointer hover:bg-[var(--color-card-hover)] transition-colors">
+        <div class="pt-4 border-t border-[var(--color-border)]">
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-sm font-bold text-[var(--color-text-secondary)]">Variations (e.g. Size, Crust)</label>
+            <button type="button" class="text-xs text-[var(--color-brand)] font-bold hover:underline" onclick={addVariation}>+ Add Variation</button>
+          </div>
+          <div class="space-y-2">
+            {#each newVariations as v, i}
+              <div class="flex gap-2 items-center">
+                <input type="text" bind:value={v.name} placeholder="Name (e.g. Large)" class="input-dark flex-1 text-sm py-2" />
+                <input type="number" bind:value={v.extra_price} placeholder="Extra ₹" class="input-dark w-24 text-sm py-2" />
+                <button type="button" class="text-red-400 hover:text-red-300 p-2" onclick={() => removeVariation(i)}><X size={14}/></button>
+              </div>
+            {/each}
+            {#if newVariations.length === 0}
+              <p class="text-xs text-[var(--color-text-secondary)] italic">No variations added.</p>
+            {/if}
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-[var(--color-border)]">
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-sm font-bold text-[var(--color-text-secondary)]">Add-ons (e.g. Extra Cheese)</label>
+            <button type="button" class="text-xs text-[var(--color-brand)] font-bold hover:underline" onclick={addAddon}>+ Add Add-on</button>
+          </div>
+          <div class="space-y-2">
+            {#each newAddons as a, i}
+              <div class="flex gap-2 items-center">
+                <input type="text" bind:value={a.name} placeholder="Name (e.g. Extra Cheese)" class="input-dark flex-1 text-sm py-2" />
+                <input type="number" bind:value={a.extra_price} placeholder="Extra ₹" class="input-dark w-24 text-sm py-2" />
+                <button type="button" class="text-red-400 hover:text-red-300 p-2" onclick={() => removeAddon(i)}><X size={14}/></button>
+              </div>
+            {/each}
+            {#if newAddons.length === 0}
+              <p class="text-xs text-[var(--color-text-secondary)] italic">No add-ons added.</p>
+            {/if}
+          </div>
+        </div>
+
+        <label class="flex items-center gap-3 p-4 border border-[var(--color-border)] rounded-xl bg-[var(--color-card)] cursor-pointer hover:bg-[var(--color-card-hover)] transition-colors mt-4">
           <input type="checkbox" name="is_featured" class="w-5 h-5 rounded accent-[var(--color-brand)]" />
           <div>
             <div class="font-bold">Feature this item</div>

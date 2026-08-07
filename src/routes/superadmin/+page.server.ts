@@ -7,6 +7,15 @@ export const load: PageServerLoad = async () => {
   let activeRestaurantsCount = 0;
   let totalOrdersToday = 0;
   let recentActivity = [];
+  let chartData = [
+    { date: new Date(Date.now() - 6 * 86400000).toISOString(), revenue: 0 },
+    { date: new Date(Date.now() - 5 * 86400000).toISOString(), revenue: 0 },
+    { date: new Date(Date.now() - 4 * 86400000).toISOString(), revenue: 0 },
+    { date: new Date(Date.now() - 3 * 86400000).toISOString(), revenue: 0 },
+    { date: new Date(Date.now() - 2 * 86400000).toISOString(), revenue: 0 },
+    { date: new Date(Date.now() - 1 * 86400000).toISOString(), revenue: 0 },
+    { date: new Date(Date.now()).toISOString(), revenue: 0 },
+  ];
 
   if (supabase) {
     // Fetch total revenue and platform fees from paid orders
@@ -23,6 +32,18 @@ export const load: PageServerLoad = async () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       totalOrdersToday = paidOrders.filter(o => new Date(o.created_at) >= today).length;
+
+      // Populate chart data (past 7 days)
+      const now = new Date();
+      for (const order of paidOrders) {
+        const d = new Date(order.created_at);
+        const daysAgo = Math.floor((now.getTime() - d.getTime()) / 86400000);
+        if (daysAgo >= 0 && daysAgo < 7) {
+          // The index is 6 - daysAgo
+          const idx = 6 - daysAgo;
+          chartData[idx].revenue += Number(order.total_amount);
+        }
+      }
     }
 
     const { count: restCount } = await supabase
@@ -71,6 +92,7 @@ export const load: PageServerLoad = async () => {
       activeRestaurantsCount,
       totalOrdersToday
     },
+    chartData,
     recentActivity
   };
 };

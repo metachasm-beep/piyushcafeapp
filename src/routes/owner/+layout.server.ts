@@ -28,21 +28,42 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 
 	let restaurantId = staffDataList && staffDataList.length > 0 ? staffDataList[0].restaurant_id : null;
 
-	if (!restaurantId) {
-		// Fallback for owners who might not be in the staff table
-		const { data: ownedRestaurantList } = await supabaseAdmin
-			.from('restaurants')
+	if (!restaurantId && user.email) {
+		// Fallback: Check if ANY user with this email has a restaurant. 
+		// This solves issues where a Google OAuth login creates a new Auth user 
+		// that differs from the one the Superadmin provisioned against.
+		const { data: profiles } = await supabaseAdmin
+			.from('owner_profiles')
 			.select('id')
-			.eq('owner_id', user.id);
+			.eq('email', user.email);
 			
-		if (ownedRestaurantList && ownedRestaurantList.length > 0) {
-			restaurantId = ownedRestaurantList[0].id;
-		} else {
-			// Second fallback: Maybe the user is the ONLY owner and there's only 1 restaurant?
-			// We can try fetching the first restaurant if they are testing. 
-			// But for now, just return null.
-			return { restaurant: null };
+		if (profiles && profiles.length > 0) {
+			const profileIds = profiles.map(p => p.id);
+			const { data: emailStaffList } = await supabaseAdmin
+				.from('restaurant_staff')
+				.select('restaurant_id')
+				.in('user_id', profileIds);
+				
+			if (emailStaffList && emailStaffList.length > 0) {
+				restaurantId = emailStaffList[0].restaurant_id;
+				
+				// Self-healing: Link this current user ID to the restaurant as well
+				await supabaseAdmin.from('restaurant_staff').insert({
+					restaurant_id: restaurantId,
+					user_id: user.id,
+					role: 'owner'
+				});
+				await supabaseAdmin.from('owner_profiles').upsert({
+					id: user.id,
+					email: user.email,
+					is_approved: true
+				});
+			}
 		}
+	}
+
+	if (!restaurantId) {
+		return { restaurant: null };
 	}
 
 	const { data: restaurantList } = await supabaseAdmin

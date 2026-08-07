@@ -71,22 +71,41 @@ export const actions: Actions = {
 		// Generate a strong random password for initial auth creation
 		const password = crypto.randomUUID() + crypto.randomUUID();
 
-		let userId = null;
+		let userIds: string[] = [];
 
-		// 1. Try to find the user in owner_profiles
-		const { data: existingProfile } = await getSupabaseAdmin()
+		// 1. Try to find all users in owner_profiles with this email
+		const { data: existingProfiles } = await getSupabaseAdmin()
 			.from('owner_profiles')
 			.select('id')
-			.eq('email', email)
-			.single();
+			.eq('email', email);
 
-		if (existingProfile && existingProfile.id) {
-			userId = existingProfile.id;
-			console.log('Found existing user in owner_profiles:', userId);
+		if (existingProfiles && existingProfiles.length > 0) {
+			userIds = existingProfiles.map(p => p.id);
+			console.log('Found existing users in owner_profiles:', userIds);
 			
-			// Auto-approve them since we are provisioning a node for them
-			await getSupabaseAdmin().from('owner_profiles').update({ is_approved: true }).eq('id', userId);
-		} else {
+			// Auto-approve them all
+			for (const id of userIds) {
+				await getSupabaseAdmin().from('owner_profiles').update({ is_approved: true }).eq('id', id);
+			}
+		}
+
+		// Also check Auth directly to catch any Google users not in owner_profiles yet
+		const { data: listData } = await getSupabaseAdmin().auth.admin.listUsers();
+		const authUsers = listData?.users?.filter(u => u.email === email) || [];
+		
+		for (const authUser of authUsers) {
+			if (!userIds.includes(authUser.id)) {
+				userIds.push(authUser.id);
+				// Ensure they exist in owner_profiles and are approved
+				await getSupabaseAdmin().from('owner_profiles').upsert({ 
+					id: authUser.id, 
+					email: email, 
+					is_approved: true 
+				});
+			}
+		}
+
+		if (userIds.length === 0) {
 			// Try to create the user in Auth
 			const { data: authData, error: authError } = await getSupabaseAdmin().auth.admin.createUser({
 				email,
@@ -95,52 +114,20 @@ export const actions: Actions = {
 			});
 
 			if (authError) {
-				const errorMsg = authError.message.toLowerCase();
-				if (errorMsg.includes('registered') || errorMsg.includes('exists') || errorMsg.includes('already')) {
-					// Fallback: fetch users to find ID
-					const { data: listData, error: listError } = await getSupabaseAdmin().auth.admin.listUsers();
-					if (listError) {
-						console.error('Error fetching list of users:', listError);
-						return fail(500, { error: 'Could not fetch user list to resolve existing user.' });
-					}
-					const found = listData?.users?.find(u => u.email === email);
-					if (found) {
-						userId = found.id;
-						console.log('Found existing auth user via listUsers:', userId);
-						// We'll also ensure they exist in owner_profiles
-						const { error: upsertError } = await getSupabaseAdmin().from('owner_profiles').upsert({ 
-							id: userId, 
-							email: email, 
-							is_approved: true 
-						});
-						if (upsertError) {
-							console.error('Error upserting into owner_profiles:', upsertError);
-							return fail(500, { error: `Database error setting up owner profile: ${upsertError.message}` });
-						}
-					} else {
-						return fail(400, { error: 'User exists in auth but could not be located in list.' });
-					}
-				} else {
-					console.error('Auth Error creating user:', authError);
-					return fail(500, { error: authError.message });
-				}
-			} else {
-				userId = authData.user?.id;
-				console.log('Created auth user with ID:', userId);
-				// We MUST ensure they exist in owner_profiles before creating the restaurant to satisfy foreign key constraints
-				const { error: upsertError } = await getSupabaseAdmin().from('owner_profiles').upsert({ 
-					id: userId, 
+				console.error('Auth Error creating user:', authError);
+				return fail(500, { error: authError.message });
+			} else if (authData.user) {
+				userIds.push(authData.user.id);
+				console.log('Created auth user with ID:', authData.user.id);
+				await getSupabaseAdmin().from('owner_profiles').upsert({ 
+					id: authData.user.id, 
 					email: email, 
 					is_approved: true 
 				});
-				if (upsertError) {
-					console.error('Error upserting into owner_profiles:', upsertError);
-					return fail(500, { error: `Database error setting up owner profile: ${upsertError.message}` });
-				}
 			}
 		}
 
-		if (!userId) {
+		if (userIds.length === 0) {
 			console.error('Failed to retrieve or create user ID');
 			return fail(500, { error: 'Failed to retrieve or create user ID' });
 		}
@@ -167,17 +154,18 @@ export const actions: Actions = {
 		}
 
 		if (restData) {
-			const { error: staffError } = await getSupabaseAdmin()
-				.from('restaurant_staff')
-				.insert({
-					restaurant_id: restData.id,
-					user_id: userId,
-					role: 'owner'
-				});
-				
-			if (staffError) {
-				console.error('Error adding to restaurant_staff:', staffError);
-				// We don't fail the whole request since the restaurant was created, but log it.
+			for (const id of userIds) {
+				const { error: staffError } = await getSupabaseAdmin()
+					.from('restaurant_staff')
+					.insert({
+						restaurant_id: restData.id,
+						user_id: id,
+						role: 'owner'
+					});
+					
+				if (staffError) {
+					console.error(`Error adding ${id} to restaurant_staff:`, staffError);
+				}
 			}
 		}
 

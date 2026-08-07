@@ -117,11 +117,16 @@
                   <form method="POST" action="?/deleteRestaurant" use:enhance={() => {
                     if (!confirm('Are you sure you want to completely destroy this node and its owner? This cannot be undone.')) return ({ update }) => update({ reset: false });
                     return async ({ result, update }) => {
+                      console.log('Delete result:', result);
                       if (result.type === 'success') {
                         toast.success('Node destroyed');
                         window.location.reload();
+                      } else if (result.type === 'failure') {
+                        toast.error(result.data?.error || 'Failed to destroy node (failure)');
+                      } else if (result.type === 'error') {
+                        toast.error(result.error?.message || 'Server error occurred during deletion');
                       } else {
-                        toast.error(result.data?.error || 'Failed to destroy node');
+                        toast.error(`Unexpected result type: ${result.type}`);
                       }
                       update();
                     };
@@ -171,6 +176,7 @@
 
       <form
         method="POST"
+        action="?/createRestaurant"
         use:enhance={() => {
           loading = true;
           return async ({ result, update }) => { 

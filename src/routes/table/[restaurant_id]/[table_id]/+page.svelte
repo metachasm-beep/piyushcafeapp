@@ -1,17 +1,15 @@
 <script lang="ts">
-  import { fade, fly, slide } from 'svelte/transition';
-  import { ShoppingCart, Bell, Plus, Minus, X, Smartphone, CreditCard, Banknote } from '@lucide/svelte';
+  import { fade, fly } from 'svelte/transition';
+  import { ShoppingCart, Bell, Plus, Minus, X, Smartphone, CreditCard, Banknote } from 'lucide-svelte';
   import { toast } from 'svelte-sonner';
   import { goto } from '$app/navigation';
   
   import { session } from '$lib/stores/session';
-  // Order placement is now handled through the secure /api/orders endpoint
   import { cart, cartCount, cartTotal } from '$lib/stores/cart';
-  import { formatCurrency, generateUUID } from '$lib/utils';
+  import { formatCurrency } from '$lib/utils';
   
   import DietaryBadge from '$lib/components/DietaryBadge.svelte';
   import type { PageData } from './$types';
-  import type { Order, OrderItemWithMenuItem } from '$lib/types';
 
   let { data }: { data: PageData } = $props();
   let restaurant = $derived(data.restaurant);
@@ -21,10 +19,7 @@
   let allVariations = $derived(data.variations);
   let allAddons = $derived(data.addons);
 
-  // Initialize session
-  $effect(() => {
-    session.init(restaurant, table);
-  });
+  $effect(() => { session.init(restaurant, table); });
 
   let activeCategory = $state('all');
   let isCartOpen = $state(false);
@@ -32,17 +27,13 @@
   let paymentMethod = $state<'upi'|'card'|'cash'>('upi');
   let isProcessingPayment = $state(false);
   let specialInstructions = $state('');
-  
   let waiterCalled = $state(false);
   let waiterCooldown = $state(false);
-
-  // Item Modal State
   let activeItem = $state<typeof menuItems[0] | null>(null);
   let selectedVariation = $state<typeof allVariations[0] | null>(null);
   let selectedAddons = $state<typeof allAddons[0][]>([]);
   let itemModalQty = $state(1);
   
-  // Derived state
   let featuredItems = $derived(menuItems.filter(item => item.is_featured && item.is_available));
   let itemsByCategory = $derived(() => {
     const grouped = new Map();
@@ -54,31 +45,18 @@
 
   function scrollToCategory(catId: string) {
     activeCategory = catId;
-    if (catId === 'all') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
+    if (catId === 'all') { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
     const el = document.getElementById(`category-${catId}`);
     if (el) {
       const headerOffset = 120;
       const elementPosition = el.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
+      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
     }
   }
 
   function handleCallWaiter() {
-    if (waiterCooldown) {
-      toast('Waiter is already on the way!');
-      return;
-    }
-    
-    // In production, this would make an API call to Supabase to insert a waiter request
-    // fetch('/api/waiter', { method: 'POST', ... })
-    
+    if (waiterCooldown) { toast('Waiter is already on the way!'); return; }
     toast.success('Waiter called! 🛎️ Someone will be with you shortly.');
     waiterCalled = true;
     waiterCooldown = true;
@@ -94,7 +72,6 @@
 
   async function handlePayment() {
     isProcessingPayment = true;
-    
     try {
       const items = $cart.map(c => ({
         menu_item_id: c.menu_item.id,
@@ -103,77 +80,33 @@
         addon_ids: c.addons.map(a => a.id),
         special_instructions: c.specialInstructions
       }));
-      
-      const currentCartTotal = $cartTotal; // Save before clearing
-      
-      // Route through the secure server API endpoint (Zod-validated, saga-rollback enabled)
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          restaurant_id: restaurant.id,
-          table_id: table.id,
-          special_instructions: specialInstructions,
-          items
-        })
+        body: JSON.stringify({ restaurant_id: restaurant.id, table_id: table.id, special_instructions: specialInstructions, items })
       });
-
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody?.error ?? `Server error ${res.status}`);
-      }
-
+      if (!res.ok) { const errBody = await res.json().catch(() => ({})); throw new Error(errBody?.error ?? `Server error ${res.status}`); }
       const { orderId } = await res.json();
       session.setActiveOrder(orderId);
       cart.clear();
       showCheckoutModal = false;
-
       if (paymentMethod === 'cash') {
-        toast.success('Order placed successfully! 🎉 Waiter will collect cash.');
+        toast.success('Order placed! 🎉 Waiter will collect cash.');
         goto(`/table/${restaurant.id}/${table.id}/order`);
       } else {
         toast.info('Initializing payment...');
-        
-        const rzpRes = await fetch('/api/razorpay/order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            order_id: orderId,
-            receipt: `rcpt_${orderId}`,
-            notes: { internal_order_id: orderId }
-          })
-        });
-
+        const rzpRes = await fetch('/api/razorpay/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: orderId, receipt: `rcpt_${orderId}`, notes: { internal_order_id: orderId } }) });
         if (!rzpRes.ok) throw new Error('Failed to initialize payment gateway.');
         const rzpData = await rzpRes.json();
-        
         const options = {
-          key: rzpData.key || 'dummy_key',
-          amount: rzpData.amount,
-          currency: rzpData.currency,
-          name: restaurant.name,
-          description: `Order ${orderId}`,
-          order_id: rzpData.id,
-          handler: function (response: any) {
-             toast.success('Payment successful! 🎉');
-             isProcessingPayment = false;
-             goto(`/table/${restaurant.id}/${table.id}/order`);
-          },
-          prefill: {
-             name: 'Customer',
-             email: 'customer@example.com',
-             contact: '9999999999'
-          },
-          theme: {
-             color: '#f97316' // brand orange
-          }
+          key: rzpData.key || 'dummy_key', amount: rzpData.amount, currency: rzpData.currency,
+          name: restaurant.name, description: `Order ${orderId}`, order_id: rzpData.id,
+          handler: function (response: any) { toast.success('Payment successful! 🎉'); isProcessingPayment = false; goto(`/table/${restaurant.id}/${table.id}/order`); },
+          prefill: { name: 'Customer', email: 'customer@example.com', contact: '9999999999' },
+          theme: { color: '#09090b' }
         };
-
         const rzp = new (window as any).Razorpay(options);
-        rzp.on('payment.failed', function (response: any) {
-             toast.error(response.error.description || 'Payment failed');
-             isProcessingPayment = false;
-        });
+        rzp.on('payment.failed', function (response: any) { toast.error(response.error.description || 'Payment failed'); isProcessingPayment = false; });
         rzp.open();
       }
     } catch (e) {
@@ -190,7 +123,6 @@
   function handleMenuAdd(item: typeof menuItems[0]) {
     const itemVars = allVariations.filter(v => v.menu_item_id === item.id);
     const itemAddons = allAddons.filter(a => a.menu_item_id === item.id);
-    
     if (itemVars.length === 0 && itemAddons.length === 0) {
       cart.addItem(item, 1);
     } else {
@@ -211,11 +143,8 @@
   
   function toggleAddon(addon: typeof allAddons[0]) {
     const idx = selectedAddons.findIndex(a => a.id === addon.id);
-    if (idx >= 0) {
-      selectedAddons = selectedAddons.filter(a => a.id !== addon.id);
-    } else {
-      selectedAddons = [...selectedAddons, addon];
-    }
+    if (idx >= 0) { selectedAddons = selectedAddons.filter(a => a.id !== addon.id); }
+    else { selectedAddons = [...selectedAddons, addon]; }
   }
 </script>
 
@@ -224,36 +153,45 @@
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </svelte:head>
 
+<style>
+  :global(body) {
+    background-color: #f9fafb;
+    color: #09090b;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+
 <!-- Sticky Header -->
-<header class="fixed top-0 left-0 right-0 z-40 bg-bg/90 backdrop-blur-xl border-b border-border/50">
-  <div class="px-4 py-4 flex items-center justify-between">
+<header class="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-b border-zinc-200 shadow-sm">
+  <div class="px-4 py-3 flex items-center justify-between">
     <div class="flex items-center gap-3">
       {#if restaurant.logo_url}
-        <img src={restaurant.logo_url} alt={restaurant.name} class="w-10 h-10 rounded-lg object-cover border border-border/50" />
+        <img src={restaurant.logo_url} alt={restaurant.name} class="w-9 h-9 rounded-lg object-cover border border-zinc-200" />
       {/if}
-      <div class="flex flex-col">
-        <h1 class="font-display text-2xl font-bold tracking-tight text-text-primary">
-          {restaurant.name}<span class="text-brand">.</span>
-        </h1>
-        <p class="text-xs text-text-secondary uppercase tracking-widest mt-0.5">Welcome</p>
+      <div>
+        <h1 class="font-bold text-lg tracking-tight text-zinc-950 leading-tight">{restaurant.name}</h1>
+        <p class="text-[10px] text-zinc-400 uppercase tracking-widest">Menu</p>
       </div>
     </div>
-    <div class="badge border-brand/30 bg-brand/10 text-brand font-semibold px-3 py-1 shadow-[0_0_10px_rgba(249,115,22,0.2)]">
+    <span class="inline-flex items-center rounded-full border border-zinc-200 bg-zinc-900 px-3 py-1 text-xs font-semibold text-zinc-50 shadow-sm">
       {table.display_name ?? `Table ${table.table_number}`}
-    </div>
+    </span>
   </div>
   
   <!-- Category Filter Bar -->
-  <div class="flex overflow-x-auto hide-scrollbar px-4 py-2 gap-2 border-t border-white/5 scroll-smooth" style="-webkit-overflow-scrolling: touch;">
+  <div class="flex overflow-x-auto hide-scrollbar px-4 py-2 gap-2 border-t border-zinc-100" style="-webkit-overflow-scrolling: touch;">
     <button 
-      class="cat-pill whitespace-nowrap px-4 py-2 rounded-full font-medium transition-colors {activeCategory === 'all' ? 'bg-brand text-black' : 'bg-surface text-text-secondary border border-border hover:bg-card'}"
+      class="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors {activeCategory === 'all' ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-50'}"
       onclick={() => scrollToCategory('all')}
     >
       🍽️ All
     </button>
     {#each categories as category}
       <button 
-        class="cat-pill whitespace-nowrap px-4 py-2 rounded-full font-medium transition-colors {activeCategory === category.id ? 'bg-brand text-black' : 'bg-surface text-text-secondary border border-border hover:bg-card'}"
+        class="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors {activeCategory === category.id ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-50'}"
         onclick={() => scrollToCategory(category.id)}
       >
         {category.icon_emoji} {category.name}
@@ -262,53 +200,43 @@
   </div>
 </header>
 
-<main class="pt-32 pb-32 px-4 space-y-8 animate-fade-in">
+<main class="pt-32 pb-32 px-4 space-y-8 max-w-2xl mx-auto">
   
   <!-- Featured Section -->
   {#if featuredItems.length > 0 && activeCategory === 'all'}
     <section class="space-y-3">
-      <h2 class="font-display text-lg font-bold flex items-center gap-2 text-text-primary">
-        ✨ Featured
-      </h2>
-      <div class="flex overflow-x-auto hide-scrollbar gap-4 pb-2">
+      <h2 class="text-base font-semibold text-zinc-950 flex items-center gap-2">✨ Featured</h2>
+      <div class="flex overflow-x-auto hide-scrollbar gap-3 pb-2">
         {#each featuredItems as item}
-          <div class="glass flex-none w-[280px] p-3 rounded-2xl flex flex-col gap-3 relative overflow-hidden group">
-            <div class="w-full h-32 rounded-xl bg-surface overflow-hidden relative">
+          <div class="flex-none w-[240px] rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-sm group">
+            <div class="w-full h-28 bg-zinc-100 overflow-hidden relative">
               <img src={item.image_url} alt={item.name} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
               <div class="absolute top-2 left-2 flex gap-1">
-                {#each item.dietary_tags as tag}
-                  <DietaryBadge {tag} />
-                {/each}
+                {#each item.dietary_tags as tag}<DietaryBadge {tag} />{/each}
               </div>
             </div>
-            <div class="flex flex-col gap-1 flex-1">
-              <h3 class="font-display font-semibold text-lg text-text-primary leading-tight">{item.name}</h3>
-              <p class="text-xs text-text-secondary line-clamp-2">{item.description}</p>
-            </div>
-            <div class="flex items-center justify-between mt-auto pt-2">
-              <span class="text-brand font-bold">{formatCurrency(item.price)}</span>
-              {#if getTotalQuantity(item.id) > 0}
-                <div class="flex items-center gap-2 bg-surface rounded-full p-1 border border-border">
-                  {#if allVariations.filter(v => v.menu_item_id === item.id).length === 0 && allAddons.filter(a => a.menu_item_id === item.id).length === 0}
-                    <button class="w-7 h-7 rounded-full bg-surface-light flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => cart.setQuantity(cart.generateCartKey(item.id), getTotalQuantity(item.id) - 1)}>
-                      <Minus size={14} />
-                    </button>
-                    <span class="w-4 text-center font-medium text-sm">{getTotalQuantity(item.id)}</span>
-                    <button class="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => handleMenuAdd(item)}>
-                      <Plus size={14} />
-                    </button>
-                  {:else}
-                    <span class="w-4 text-center font-medium text-sm pl-1">{getTotalQuantity(item.id)}</span>
-                    <button class="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => handleMenuAdd(item)}>
-                      <Plus size={14} />
-                    </button>
-                  {/if}
-                </div>
-              {:else}
-                <button class="w-8 h-8 rounded-full bg-brand/20 text-brand flex items-center justify-center hover:bg-brand hover:text-text-primary transition-colors active:scale-95" onclick={() => handleMenuAdd(item)}>
-                  <Plus size={18} />
-                </button>
-              {/if}
+            <div class="p-3">
+              <h3 class="font-semibold text-sm text-zinc-950 leading-tight mb-0.5">{item.name}</h3>
+              <p class="text-xs text-zinc-400 line-clamp-1 mb-2">{item.description}</p>
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-sm text-zinc-900">{formatCurrency(item.price)}</span>
+                {#if getTotalQuantity(item.id) > 0}
+                  <div class="flex items-center gap-1.5 bg-zinc-100 rounded-full p-0.5 border border-zinc-200">
+                    {#if allVariations.filter(v => v.menu_item_id === item.id).length === 0 && allAddons.filter(a => a.menu_item_id === item.id).length === 0}
+                      <button class="w-6 h-6 rounded-full bg-white border border-zinc-200 flex items-center justify-center active:scale-95 transition-transform" onclick={() => cart.setQuantity(cart.generateCartKey(item.id), getTotalQuantity(item.id) - 1)}><Minus size={12} /></button>
+                      <span class="w-4 text-center font-semibold text-xs">{getTotalQuantity(item.id)}</span>
+                      <button class="w-6 h-6 rounded-full bg-zinc-900 text-white flex items-center justify-center active:scale-95 transition-transform" onclick={() => handleMenuAdd(item)}><Plus size={12} /></button>
+                    {:else}
+                      <span class="w-4 text-center font-semibold text-xs pl-1">{getTotalQuantity(item.id)}</span>
+                      <button class="w-6 h-6 rounded-full bg-zinc-900 text-white flex items-center justify-center active:scale-95 transition-transform" onclick={() => handleMenuAdd(item)}><Plus size={12} /></button>
+                    {/if}
+                  </div>
+                {:else}
+                  <button class="w-7 h-7 rounded-full bg-zinc-900 text-white flex items-center justify-center hover:bg-zinc-700 transition-colors active:scale-95" onclick={() => handleMenuAdd(item)}>
+                    <Plus size={16} />
+                  </button>
+                {/if}
+              </div>
             </div>
           </div>
         {/each}
@@ -320,59 +248,49 @@
   {#each categories as category}
     {@const items = itemsByCategory().get(category.id) || []}
     {#if items.length > 0 && (activeCategory === 'all' || activeCategory === category.id)}
-      <section id="category-{category.id}" class="space-y-4 scroll-mt-32">
-        <h2 class="font-display text-xl font-bold flex items-center gap-2 border-b border-border pb-2 text-text-primary">
+      <section id="category-{category.id}" class="space-y-3 scroll-mt-32">
+        <h2 class="text-base font-semibold text-zinc-950 flex items-center gap-2 border-b border-zinc-100 pb-2">
           {category.icon_emoji} {category.name}
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="space-y-3">
           {#each items as item}
-            <div class="glass p-3 rounded-2xl flex gap-4 relative overflow-hidden group {item.is_available ? '' : 'opacity-60 grayscale'}">
+            <div class="rounded-xl border border-zinc-200 bg-white p-3 flex gap-3 relative overflow-hidden {item.is_available ? '' : 'opacity-60'}">
               {#if !item.is_available}
-                <div class="absolute inset-0 z-10 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-                  <span class="bg-black/80 text-text-primary px-3 py-1.5 rounded-lg text-sm font-semibold tracking-wider">OUT OF STOCK</span>
+                <div class="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-[1px]">
+                  <span class="bg-zinc-900 text-white px-3 py-1 rounded-lg text-xs font-semibold tracking-wider">OUT OF STOCK</span>
                 </div>
               {/if}
-              <div class="w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-xl bg-surface overflow-hidden relative">
+              <div class="w-20 h-20 shrink-0 rounded-lg bg-zinc-100 overflow-hidden">
                 <img src={item.image_url} alt={item.name} class="w-full h-full object-cover" loading="lazy" />
               </div>
-              <div class="flex flex-col flex-1 py-1">
-                <div class="flex gap-1 mb-1.5 flex-wrap">
-                  {#each item.dietary_tags as tag}
-                    <DietaryBadge {tag} />
-                  {/each}
+              <div class="flex flex-col flex-1 min-w-0">
+                <div class="flex gap-1 mb-1 flex-wrap">
+                  {#each item.dietary_tags as tag}<DietaryBadge {tag} />{/each}
                 </div>
-                <h3 class="font-display font-semibold text-text-primary leading-tight mb-1">{item.name}</h3>
-                <p class="text-xs text-text-secondary line-clamp-2 mb-2">{item.description}</p>
-                <div class="mt-auto flex items-center justify-between">
-                  <div class="flex flex-col">
-                    <span class="text-brand font-bold">{formatCurrency(item.price)}</span>
+                <h3 class="font-semibold text-sm text-zinc-950 leading-tight mb-0.5">{item.name}</h3>
+                <p class="text-xs text-zinc-400 line-clamp-2 mb-auto">{item.description}</p>
+                <div class="mt-2 flex items-center justify-between">
+                  <div>
+                    <span class="font-bold text-sm text-zinc-900">{formatCurrency(item.price)}</span>
                     {#if item.preparation_time}
-                      <span class="text-[10px] text-text-secondary flex items-center gap-1">
-                        ⏱ {item.preparation_time} mins
-                      </span>
+                      <span class="text-[10px] text-zinc-400 ml-1.5">⏱ {item.preparation_time}m</span>
                     {/if}
                   </div>
                   {#if item.is_available}
                     {#if getTotalQuantity(item.id) > 0}
-                      <div class="flex items-center gap-2 bg-surface rounded-full p-1 border border-border z-20">
+                      <div class="flex items-center gap-1.5 bg-zinc-100 rounded-full p-0.5 border border-zinc-200 z-20">
                         {#if allVariations.filter(v => v.menu_item_id === item.id).length === 0 && allAddons.filter(a => a.menu_item_id === item.id).length === 0}
-                          <button class="w-6 h-6 rounded-full bg-surface-light flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => cart.setQuantity(cart.generateCartKey(item.id), getTotalQuantity(item.id) - 1)}>
-                            <Minus size={12} />
-                          </button>
-                          <span class="w-3 text-center font-medium text-xs">{getTotalQuantity(item.id)}</span>
-                          <button class="w-6 h-6 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => handleMenuAdd(item)}>
-                            <Plus size={12} />
-                          </button>
+                          <button class="w-6 h-6 rounded-full bg-white border border-zinc-200 flex items-center justify-center active:scale-95 transition-transform" onclick={() => cart.setQuantity(cart.generateCartKey(item.id), getTotalQuantity(item.id) - 1)}><Minus size={11} /></button>
+                          <span class="w-3 text-center font-semibold text-xs">{getTotalQuantity(item.id)}</span>
+                          <button class="w-6 h-6 rounded-full bg-zinc-900 text-white flex items-center justify-center active:scale-95 transition-transform" onclick={() => handleMenuAdd(item)}><Plus size={11} /></button>
                         {:else}
-                          <span class="w-3 text-center font-medium text-xs pl-1">{getTotalQuantity(item.id)}</span>
-                          <button class="w-6 h-6 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95 transition-transform" onclick={() => handleMenuAdd(item)}>
-                            <Plus size={12} />
-                          </button>
+                          <span class="w-3 text-center font-semibold text-xs pl-1">{getTotalQuantity(item.id)}</span>
+                          <button class="w-6 h-6 rounded-full bg-zinc-900 text-white flex items-center justify-center active:scale-95 transition-transform" onclick={() => handleMenuAdd(item)}><Plus size={11} /></button>
                         {/if}
                       </div>
                     {:else}
-                      <button class="w-8 h-8 rounded-full bg-surface border border-border text-text-primary flex items-center justify-center z-20 active:scale-95 transition-transform" onclick={() => handleMenuAdd(item)}>
-                        <Plus size={16} />
+                      <button class="w-7 h-7 rounded-full bg-zinc-900 text-white flex items-center justify-center z-20 active:scale-95 transition-transform hover:bg-zinc-700" onclick={() => handleMenuAdd(item)}>
+                        <Plus size={14} />
                       </button>
                     {/if}
                   {/if}
@@ -386,26 +304,26 @@
   {/each}
 </main>
 
-<!-- Floating Action Buttons -->
+<!-- Floating Buttons -->
 <div class="fixed right-4 flex flex-col gap-3 z-40" style="bottom: max(24px, env(safe-area-inset-bottom, 24px));">
-  <!-- Call Waiter FAB -->
+  <!-- Call Waiter -->
   <button 
-    class="w-12 h-12 rounded-full glass-strong shadow-lg flex items-center justify-center text-text-primary transition-transform active:scale-90 {waiterCalled ? 'text-brand animate-pulse-ring' : ''} {waiterCooldown && !waiterCalled ? 'opacity-50' : ''}"
+    class="w-12 h-12 rounded-full bg-white border border-zinc-200 shadow-lg flex items-center justify-center text-zinc-700 transition-all active:scale-90 {waiterCalled ? 'text-orange-500 border-orange-300 animate-pulse' : ''} {waiterCooldown && !waiterCalled ? 'opacity-50' : ''}"
     onclick={handleCallWaiter}
     title="Call Waiter"
   >
-    <Bell size={22} class={waiterCalled ? 'animate-bounce' : ''} />
+    <Bell size={20} class={waiterCalled ? 'animate-bounce' : ''} />
   </button>
 
   <!-- Cart FAB -->
   {#if $cartCount > 0 && !isCartOpen}
     <div transition:fly={{ y: 20, duration: 300 }}>
       <button 
-        class="w-14 h-14 rounded-full bg-brand shadow-[0_4px_20px_rgba(249,115,22,0.4)] flex items-center justify-center text-text-primary transition-transform active:scale-90 relative animate-bounce-in"
+        class="w-14 h-14 rounded-full bg-zinc-900 shadow-xl flex items-center justify-center text-white transition-transform active:scale-90 relative hover:bg-zinc-700"
         onclick={() => isCartOpen = true}
       >
-        <ShoppingCart size={24} />
-        <span class="absolute -top-1 -right-1 bg-white text-brand text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-md border-2 border-brand">
+        <ShoppingCart size={22} />
+        <span class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full shadow">
           {$cartCount}
         </span>
       </button>
@@ -413,103 +331,88 @@
   {/if}
 </div>
 
-<!-- Cart Panel Overlay -->
+<!-- Cart Panel -->
 {#if isCartOpen}
   <div class="fixed inset-0 z-50 flex flex-col justify-end" transition:fade={{ duration: 200 }}>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick={() => isCartOpen = false}></div>
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick={() => isCartOpen = false}></div>
     
     <div 
-      class="bg-card w-full max-h-[85vh] rounded-t-3xl shadow-2xl relative flex flex-col overflow-hidden border-t border-border"
+      class="bg-white w-full max-h-[85vh] rounded-t-2xl shadow-2xl relative flex flex-col overflow-hidden border-t border-zinc-200"
       transition:fly={{ y: '100%', duration: 300, opacity: 1 }}
     >
-      <!-- Handle for dragging (visual only) -->
       <button type="button" aria-label="Close cart" class="w-full flex justify-center py-3" onclick={() => isCartOpen = false}>
-        <div class="w-12 h-1.5 bg-white/20 rounded-full"></div>
+        <div class="w-10 h-1 bg-zinc-200 rounded-full"></div>
       </button>
       
-      <div class="px-6 pb-4 flex items-center justify-between border-b border-border">
-        <h2 class="font-display text-2xl font-bold text-text-primary flex items-center gap-2">
-          Your Order <span class="bg-brand text-text-primary text-sm px-2 py-0.5 rounded-full">{$cartCount}</span>
+      <div class="px-6 pb-4 flex items-center justify-between border-b border-zinc-100">
+        <h2 class="text-xl font-bold text-zinc-950 flex items-center gap-2">
+          Your Order <span class="inline-flex items-center justify-center rounded-full bg-zinc-900 text-white text-xs font-bold w-6 h-6">{$cartCount}</span>
         </h2>
-        <button class="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-text-secondary hover:text-text-primary" onclick={() => isCartOpen = false}>
-          <X size={18} />
+        <button class="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-500 hover:text-zinc-900" onclick={() => isCartOpen = false}>
+          <X size={16} />
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-6 space-y-6">
-        <!-- Cart Items -->
-        <div class="space-y-4">
-          {#each $cart as item}
-            <div class="flex items-center gap-4">
-              <div class="w-16 h-16 rounded-xl bg-surface overflow-hidden">
-                <img src={item.menu_item.image_url} alt={item.menu_item.name} class="w-full h-full object-cover" />
-              </div>
-              <div class="flex-1 flex flex-col">
-                <h4 class="font-medium text-text-primary">{item.menu_item.name}</h4>
-                {#if item.variation}
-                  <span class="text-xs text-text-secondary">{item.variation.name} (+{formatCurrency(item.variation.extra_price)})</span>
-                {/if}
-                {#if item.addons.length > 0}
-                  <span class="text-xs text-text-secondary">{item.addons.map(a => a.name).join(', ')} (+{formatCurrency(item.addons.reduce((sum, a) => sum + a.extra_price, 0))})</span>
-                {/if}
-                <span class="text-brand font-semibold text-sm">
-                  {formatCurrency(item.menu_item.price + (item.variation?.extra_price || 0) + item.addons.reduce((sum, a) => sum + a.extra_price, 0))}
-                </span>
-              </div>
-              <div class="flex items-center gap-3 bg-surface rounded-full p-1 border border-border">
-                <button class="w-7 h-7 rounded-full bg-surface-light flex items-center justify-center text-text-primary active:scale-95" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity - 1)}>
-                  <Minus size={14} />
-                </button>
-                <span class="w-4 text-center font-medium text-sm">{item.quantity}</span>
-                <button class="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity + 1)}>
-                  <Plus size={14} />
-                </button>
-              </div>
+      <div class="flex-1 overflow-y-auto p-6 space-y-4">
+        {#each $cart as item}
+          <div class="flex items-center gap-3">
+            <div class="w-14 h-14 rounded-lg bg-zinc-100 overflow-hidden shrink-0">
+              <img src={item.menu_item.image_url} alt={item.menu_item.name} class="w-full h-full object-cover" />
             </div>
-          {/each}
-        </div>
+            <div class="flex-1 min-w-0">
+              <h4 class="font-medium text-sm text-zinc-900 truncate">{item.menu_item.name}</h4>
+              {#if item.variation}
+                <span class="text-xs text-zinc-400">{item.variation.name} (+{formatCurrency(item.variation.extra_price)})</span>
+              {/if}
+              {#if item.addons.length > 0}
+                <span class="text-xs text-zinc-400">{item.addons.map(a => a.name).join(', ')}</span>
+              {/if}
+              <span class="block font-semibold text-sm text-zinc-900">
+                {formatCurrency(item.menu_item.price + (item.variation?.extra_price || 0) + item.addons.reduce((sum, a) => sum + a.extra_price, 0))}
+              </span>
+            </div>
+            <div class="flex items-center gap-1.5 bg-zinc-100 rounded-full p-0.5 border border-zinc-200">
+              <button class="w-7 h-7 rounded-full bg-white border border-zinc-200 flex items-center justify-center active:scale-95" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity - 1)}><Minus size={13} /></button>
+              <span class="w-4 text-center font-semibold text-sm">{item.quantity}</span>
+              <button class="w-7 h-7 rounded-full bg-zinc-900 text-white flex items-center justify-center active:scale-95" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity + 1)}><Plus size={13} /></button>
+            </div>
+          </div>
+        {/each}
 
-        <!-- Special Instructions -->
-        <div class="space-y-2">
-          <label for="instructions" class="text-sm font-medium text-text-secondary flex items-center gap-1">
-            📝 Special Instructions
-          </label>
+        <div class="space-y-1.5 pt-2">
+          <label for="instructions" class="text-sm font-medium text-zinc-700">📝 Special Instructions</label>
           <textarea 
             id="instructions" 
             bind:value={specialInstructions}
             placeholder="Any allergies or special requests?"
-            class="input-dark w-full h-20 resize-none"
+            class="flex w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 h-20 resize-none"
           ></textarea>
         </div>
       </div>
 
-      <!-- Footer -->
-      <div class="p-6 bg-surface/50 border-t border-border space-y-4 backdrop-blur-md">
-        <div class="flex justify-between text-text-secondary text-sm">
-          <span>Subtotal</span>
-          <span>{formatCurrency($cartTotal)}</span>
+      <div class="p-6 border-t border-zinc-100 bg-zinc-50 space-y-3">
+        <div class="flex justify-between text-sm text-zinc-500">
+          <span>Subtotal</span><span>{formatCurrency($cartTotal)}</span>
         </div>
-        <div class="flex justify-between text-text-secondary text-sm">
-          <span>Taxes (10%)</span>
-          <span>{formatCurrency($cartTotal * 0.1)}</span>
+        <div class="flex justify-between text-sm text-zinc-500">
+          <span>Taxes (10%)</span><span>{formatCurrency($cartTotal * 0.1)}</span>
         </div>
-        <div class="flex justify-between text-text-primary font-bold text-lg pt-2 border-t border-border">
-          <span>Total</span>
-          <span class="text-brand">{formatCurrency($cartTotal * 1.1)}</span>
+        <div class="flex justify-between font-bold text-base text-zinc-950 pt-2 border-t border-zinc-200">
+          <span>Total</span><span>{formatCurrency($cartTotal * 1.1)}</span>
         </div>
         <button 
-          class="btn-brand w-full py-4 text-lg shadow-[0_0_20px_rgba(249,115,22,0.3)] mt-2"
+          class="inline-flex w-full items-center justify-center rounded-md bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-800 h-11 px-4 text-sm font-medium transition-colors mt-1"
           onclick={placeOrder}
         >
           Place Order
         </button>
         <button 
-          class="btn-ghost w-full py-3 text-text-secondary flex justify-center items-center gap-2"
+          class="inline-flex w-full items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 h-9 px-4 text-sm font-medium transition-colors"
           onclick={handleCallWaiter}
         >
-          <Bell size={16} /> Need assistance? Call Waiter
+          <Bell size={14} /> Need assistance? Call Waiter
         </button>
       </div>
     </div>
@@ -521,34 +424,35 @@
   <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center px-4 pb-4 sm:p-0" transition:fade={{ duration: 200 }}>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick={() => activeItem = null}></div>
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick={() => activeItem = null}></div>
     
-    <div class="bg-card w-full max-w-md rounded-3xl relative z-10 flex flex-col overflow-hidden border border-border max-h-[85vh]">
-      <div class="relative h-48 bg-surface">
+    <div class="bg-white w-full max-w-md rounded-2xl relative z-10 flex flex-col overflow-hidden border border-zinc-200 shadow-2xl max-h-[85vh]">
+      <div class="relative h-44 bg-zinc-100">
         <img src={activeItem.image_url} alt={activeItem.name} class="w-full h-full object-cover" />
-        <button class="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center backdrop-blur-md hover:bg-black/70" onclick={() => activeItem = null}>
-          <X size={18} />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+        <button class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 text-zinc-900 flex items-center justify-center hover:bg-white shadow" onclick={() => activeItem = null}>
+          <X size={16} />
         </button>
       </div>
       
-      <div class="p-5 overflow-y-auto flex-1 space-y-6">
+      <div class="p-5 overflow-y-auto flex-1 space-y-5">
         <div>
-          <h3 class="font-display text-2xl font-bold text-text-primary mb-1">{activeItem.name}</h3>
-          <p class="text-sm text-text-secondary">{activeItem.description}</p>
+          <h3 class="text-xl font-bold text-zinc-950 mb-1">{activeItem.name}</h3>
+          <p class="text-sm text-zinc-400">{activeItem.description}</p>
         </div>
 
         {#if allVariations.filter(v => activeItem && v.menu_item_id === activeItem.id).length > 0}
-          <div class="space-y-3">
-            <h4 class="font-bold text-lg text-text-primary">Options <span class="text-brand text-xs font-normal uppercase ml-2 px-2 py-0.5 bg-brand/10 rounded-full border border-brand/20">Required</span></h4>
-            <div class="space-y-2">
+          <div class="space-y-2">
+            <h4 class="font-semibold text-sm text-zinc-900">Options <span class="text-orange-600 text-xs font-normal ml-1 bg-orange-50 border border-orange-200 rounded-full px-2 py-0.5">Required</span></h4>
+            <div class="space-y-1.5">
               {#each allVariations.filter(v => activeItem && v.menu_item_id === activeItem.id) as v}
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div 
-                  class="flex items-center justify-between p-4 rounded-xl border transition-colors cursor-pointer {selectedVariation?.id === v.id ? 'bg-brand/10 border-brand text-brand' : 'bg-surface border-border text-text-primary hover:bg-surface-light'}"
+                  class="flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors {selectedVariation?.id === v.id ? 'bg-zinc-900 border-zinc-900 text-white' : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'}"
                   onclick={() => selectedVariation = v}
                 >
-                  <span class="font-medium">{v.name}</span>
+                  <span class="font-medium text-sm">{v.name}</span>
                   <span class="text-sm">{v.extra_price > 0 ? `+${formatCurrency(v.extra_price)}` : 'Free'}</span>
                 </div>
               {/each}
@@ -557,23 +461,23 @@
         {/if}
 
         {#if allAddons.filter(a => activeItem && a.menu_item_id === activeItem.id).length > 0}
-          <div class="space-y-3">
-            <h4 class="font-bold text-lg text-text-primary">Add-ons <span class="text-text-secondary text-xs font-normal uppercase ml-2 px-2 py-0.5 bg-surface-light rounded-full border border-border">Optional</span></h4>
-            <div class="space-y-2">
+          <div class="space-y-2">
+            <h4 class="font-semibold text-sm text-zinc-900">Add-ons <span class="text-zinc-400 text-xs font-normal ml-1 bg-zinc-50 border border-zinc-200 rounded-full px-2 py-0.5">Optional</span></h4>
+            <div class="space-y-1.5">
               {#each allAddons.filter(a => activeItem && a.menu_item_id === activeItem.id) as a}
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div 
-                  class="flex items-center justify-between p-4 rounded-xl border transition-colors cursor-pointer {selectedAddons.find(sa => sa.id === a.id) ? 'bg-brand/10 border-brand text-brand' : 'bg-surface border-border text-text-primary hover:bg-surface-light'}"
+                  class="flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors {selectedAddons.find(sa => sa.id === a.id) ? 'bg-zinc-900 border-zinc-900 text-white' : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'}"
                   onclick={() => toggleAddon(a)}
                 >
                   <div class="flex items-center gap-3">
-                    <div class="w-5 h-5 rounded border {selectedAddons.find(sa => sa.id === a.id) ? 'border-brand bg-brand flex items-center justify-center text-black' : 'border-text-secondary'}">
+                    <div class="w-4 h-4 rounded border {selectedAddons.find(sa => sa.id === a.id) ? 'border-white bg-white flex items-center justify-center' : 'border-zinc-300'}">
                       {#if selectedAddons.find(sa => sa.id === a.id)}
-                        <svg viewBox="0 0 14 14" fill="none" class="w-3.5 h-3.5"><path d="M3 7.5L5.5 10L11 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <svg viewBox="0 0 14 14" fill="none" class="w-3 h-3 text-zinc-900"><path d="M3 7.5L5.5 10L11 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                       {/if}
                     </div>
-                    <span class="font-medium">{a.name}</span>
+                    <span class="font-medium text-sm">{a.name}</span>
                   </div>
                   <span class="text-sm">+{formatCurrency(a.extra_price)}</span>
                 </div>
@@ -582,23 +486,19 @@
           </div>
         {/if}
         
-        <div class="flex items-center justify-between pt-4">
-          <span class="font-bold text-text-primary">Quantity</span>
-          <div class="flex items-center gap-3 bg-surface rounded-full p-1 border border-border">
-            <button class="w-10 h-10 rounded-full bg-surface-light flex items-center justify-center text-text-primary active:scale-95" onclick={() => itemModalQty = Math.max(1, itemModalQty - 1)}>
-              <Minus size={16} />
-            </button>
-            <span class="w-6 text-center font-bold text-lg">{itemModalQty}</span>
-            <button class="w-10 h-10 rounded-full bg-brand flex items-center justify-center text-text-primary active:scale-95" onclick={() => itemModalQty++}>
-              <Plus size={16} />
-            </button>
+        <div class="flex items-center justify-between pt-2 border-t border-zinc-100">
+          <span class="font-semibold text-sm text-zinc-900">Quantity</span>
+          <div class="flex items-center gap-2 bg-zinc-100 rounded-full p-0.5 border border-zinc-200">
+            <button class="w-9 h-9 rounded-full bg-white border border-zinc-200 flex items-center justify-center active:scale-95" onclick={() => itemModalQty = Math.max(1, itemModalQty - 1)}><Minus size={14} /></button>
+            <span class="w-5 text-center font-bold">{itemModalQty}</span>
+            <button class="w-9 h-9 rounded-full bg-zinc-900 text-white flex items-center justify-center active:scale-95" onclick={() => itemModalQty++}><Plus size={14} /></button>
           </div>
         </div>
       </div>
       
-      <div class="p-5 border-t border-border bg-surface/50 backdrop-blur-md">
+      <div class="p-5 border-t border-zinc-100">
         <button 
-          class="btn-brand w-full py-4 text-lg font-bold flex items-center justify-between px-6"
+          class="inline-flex w-full items-center justify-between rounded-md bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-800 h-12 px-5 text-sm font-semibold transition-colors disabled:opacity-50"
           onclick={confirmItemModal}
           disabled={allVariations.filter(v => activeItem && v.menu_item_id === activeItem.id).length > 0 && !selectedVariation}
         >
@@ -615,73 +515,61 @@
   <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-4 sm:p-0" transition:fade={{ duration: 200 }}>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick={() => !isProcessingPayment && (showCheckoutModal = false)}></div>
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick={() => !isProcessingPayment && (showCheckoutModal = false)}></div>
     
-    <div class="glass w-full max-w-md rounded-3xl p-6 relative z-10 space-y-6">
+    <div class="bg-white w-full max-w-md rounded-2xl p-6 relative z-10 space-y-5 shadow-2xl border border-zinc-200">
       <div class="flex justify-between items-center">
-        <h3 class="font-display text-xl font-bold text-text-primary">Payment</h3>
-        <button class="text-text-secondary hover:text-text-primary" onclick={() => showCheckoutModal = false} disabled={isProcessingPayment}>
-          <X size={20} />
+        <h3 class="text-lg font-bold text-zinc-950">Payment</h3>
+        <button class="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-500 hover:text-zinc-900" onclick={() => showCheckoutModal = false} disabled={isProcessingPayment}>
+          <X size={16} />
         </button>
       </div>
 
-      <div class="text-center py-4 border-b border-border">
-        <p class="text-text-secondary text-sm">Amount to Pay</p>
-        <p class="text-3xl font-display font-bold text-brand">{formatCurrency($cartTotal * 1.1)}</p>
+      <div class="text-center py-4 border-y border-zinc-100">
+        <p class="text-sm text-zinc-400 mb-1">Amount to Pay</p>
+        <p class="text-3xl font-bold text-zinc-950">{formatCurrency($cartTotal * 1.1)}</p>
       </div>
 
       <div class="grid grid-cols-3 gap-2">
-        <button 
-          class="flex flex-col items-center gap-2 p-3 rounded-xl border {paymentMethod === 'upi' ? 'bg-brand/20 border-brand text-brand' : 'bg-surface border-border text-text-secondary'}"
-          onclick={() => paymentMethod = 'upi'}
-        >
-          <Smartphone size={20} />
-          <span class="text-xs font-medium">UPI</span>
-        </button>
-        <button 
-          class="flex flex-col items-center gap-2 p-3 rounded-xl border {paymentMethod === 'card' ? 'bg-brand/20 border-brand text-brand' : 'bg-surface border-border text-text-secondary'}"
-          onclick={() => paymentMethod = 'card'}
-        >
-          <CreditCard size={20} />
-          <span class="text-xs font-medium">Card</span>
-        </button>
-        <button 
-          class="flex flex-col items-center gap-2 p-3 rounded-xl border {paymentMethod === 'cash' ? 'bg-brand/20 border-brand text-brand' : 'bg-surface border-border text-text-secondary'}"
-          onclick={() => paymentMethod = 'cash'}
-        >
-          <Banknote size={20} />
-          <span class="text-xs font-medium">Cash</span>
-        </button>
+        {#each [{ id: 'upi', icon: Smartphone, label: 'UPI' }, { id: 'card', icon: CreditCard, label: 'Card' }, { id: 'cash', icon: Banknote, label: 'Cash' }] as method}
+          <button 
+            class="flex flex-col items-center gap-2 p-3 rounded-xl border transition-colors {paymentMethod === method.id ? 'bg-zinc-900 border-zinc-900 text-white' : 'bg-white border-zinc-200 text-zinc-500 hover:bg-zinc-50'}"
+            onclick={() => paymentMethod = method.id as any}
+          >
+            <method.icon size={18} />
+            <span class="text-xs font-medium">{method.label}</span>
+          </button>
+        {/each}
       </div>
 
-      <div class="min-h-[120px] flex flex-col justify-center">
+      <div class="min-h-[100px] flex flex-col justify-center">
         {#if paymentMethod === 'upi'}
-          <div class="space-y-3">
-            <label class="text-sm text-text-secondary" for="upi-input">Enter UPI ID</label>
-            <input id="upi-input" type="text" class="input-dark w-full" value="goldenfork@upi" />
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-zinc-700" for="upi-input">UPI ID</label>
+            <input id="upi-input" type="text" class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950" value="goldenfork@upi" />
           </div>
         {:else if paymentMethod === 'card'}
-          <div class="space-y-3">
-            <input type="text" class="input-dark w-full" placeholder="Card Number" value="**** **** **** 4242" />
-            <div class="flex gap-3">
-              <input type="text" class="input-dark w-1/2" placeholder="MM/YY" value="12/26" />
-              <input type="text" class="input-dark w-1/2" placeholder="CVV" value="***" />
+          <div class="space-y-2">
+            <input type="text" class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950" placeholder="Card Number" value="**** **** **** 4242" />
+            <div class="flex gap-2">
+              <input type="text" class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950" placeholder="MM/YY" value="12/26" />
+              <input type="text" class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950" placeholder="CVV" value="***" />
             </div>
           </div>
         {:else}
-          <div class="text-center text-text-secondary text-sm">
+          <div class="text-center text-sm text-zinc-400 py-4">
             Our waiter will come to your table to collect cash.
           </div>
         {/if}
       </div>
 
       <button 
-        class="btn-brand w-full py-4 text-lg relative overflow-hidden flex justify-center items-center h-14"
+        class="inline-flex w-full items-center justify-center rounded-md bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-800 h-12 px-4 text-sm font-semibold transition-colors disabled:opacity-50"
         onclick={handlePayment}
         disabled={isProcessingPayment}
       >
         {#if isProcessingPayment}
-          <div class="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+          <div class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
         {:else}
           {paymentMethod === 'cash' ? 'Place Order (Cash)' : 'Confirm Payment'}
         {/if}

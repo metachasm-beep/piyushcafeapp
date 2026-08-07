@@ -88,7 +88,9 @@
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="contact-title"
+			tabindex="-1"
 			onclick={(e) => e.stopPropagation()}
+			onkeydown={(e) => e.stopPropagation()}
 		>
 			<button type="button" class="close" onclick={close} aria-label="Close contact form">
 				<X size={18} strokeWidth={2} />

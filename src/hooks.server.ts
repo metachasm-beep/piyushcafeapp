@@ -17,20 +17,33 @@ export const handle: Handle = async ({ event, resolve }) => {
 		});
 	}
 
-	// 1. Initialize Supabase SSR
-	event.locals.supabase = createServerClient(env.PUBLIC_SUPABASE_URL || '', env.PUBLIC_SUPABASE_ANON_KEY || '', {
-		cookies: {
-			getAll: () => event.cookies.getAll(),
-			setAll: (cookiesToSet) => {
-				cookiesToSet.forEach(({ name, value, options }) => {
-					event.cookies.set(name, value, { ...options, path: '/' });
-				});
+	// 1. Initialize Supabase SSR (skip when env is missing so marketing pages still render)
+	const supabaseUrl = env.PUBLIC_SUPABASE_URL?.trim();
+	const supabaseAnonKey = env.PUBLIC_SUPABASE_ANON_KEY?.trim();
+	const supabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+
+	if (supabaseConfigured) {
+		event.locals.supabase = createServerClient(supabaseUrl!, supabaseAnonKey!, {
+			cookies: {
+				getAll: () => event.cookies.getAll(),
+				setAll: (cookiesToSet) => {
+					cookiesToSet.forEach(({ name, value, options }) => {
+						event.cookies.set(name, value, { ...options, path: '/' });
+					});
+				}
 			}
-		}
-	});
+		});
+	} else {
+		// Minimal stub — public marketing / contact routes do not need auth
+		event.locals.supabase = null as unknown as typeof event.locals.supabase;
+	}
 
 	// Safe session getter
 	event.locals.safeGetSession = async () => {
+		if (!supabaseConfigured || !event.locals.supabase) {
+			return { session: null, user: null };
+		}
+
 		const {
 			data: { session }
 		} = await event.locals.supabase.auth.getSession();

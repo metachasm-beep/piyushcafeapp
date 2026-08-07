@@ -6,16 +6,7 @@ import { redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
 export const handle: Handle = async ({ event, resolve }) => {
 	const startTimer = performance.now();
 
-	// 0. Domain Enforcement
-	const host = event.request.headers.get('host');
-	if (host && !host.includes('localhost') && host !== 'thegoldenfork.vercel.app') {
-		return new Response(null, {
-			status: 301,
-			headers: {
-				Location: 'https://thegoldenfork.vercel.app' + event.url.pathname + event.url.search
-			}
-		});
-	}
+	// 0. Domain Enforcement removed to avoid redirect loops on vercel aliases
 
 	// 1. Initialize Supabase SSR
 	event.locals.supabase = createServerClient(env.PUBLIC_SUPABASE_URL || '', env.PUBLIC_SUPABASE_ANON_KEY || '', {
@@ -55,6 +46,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const routeId = event.route.id || '';
 
 	const SUPERADMIN_EMAIL = 'metachasm@gmail.com';
+
+	// Allow public access to debug endpoint for troubleshooting
+	if (path.startsWith('/api/debug-owner')) {
+		return resolve(event);
+	}
 
 	// Global Login Enforcement (if logged in, MUST be superadmin, approved owner, or staff)
 	if (user && user.email) {

@@ -8,10 +8,10 @@
 
   const links = [
     { href: '/superadmin', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/superadmin/approvals', label: 'Approvals', icon: Users },
     { href: '/superadmin/restaurants', label: 'Restaurants', icon: Store },
-    { href: '/superadmin/users', label: 'Users', icon: Users },
-    { href: '/superadmin/menu', label: 'Global Menu', icon: LayoutDashboard },
-    { href: '/superadmin/settings', label: 'Settings', icon: Settings },
+    { href: '/superadmin/tables', label: 'Tables', icon: LayoutDashboard },
+    { href: '/superadmin/menu', label: 'Global Menu', icon: Settings },
   ];
 </script>
 

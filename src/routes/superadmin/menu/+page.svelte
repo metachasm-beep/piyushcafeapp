@@ -104,15 +104,8 @@
       <p class="sa-page-subtitle">{items.length} items across {categories.length} categories</p>
     </div>
     <div style="display:flex;gap:8px;">
-      <button class="sa-btn-primary" onclick={() => openModal()} use:tooltip={"Create a new menu item"}>
+      <button class="sa-btn-primary" onclick={() => openAdd()} use:tooltip={"Create a new menu item"}>
         <Plus size={15} /> Add Item
-      </button>
-      <button class="sa-btn-secondary" onclick={syncMenu} disabled={syncing} use:tooltip={"Synchronize menu across all active nodes"}>
-        {#if syncing}
-          <RefreshCw size={15} class="animate-spin" /> Syncing...
-        {:else}
-          <RefreshCw size={15} /> Sync Global Menu
-        {/if}
       </button>
     </div>
   </div>
@@ -154,7 +147,7 @@
     <div class="sa-tile" style="padding:64px;text-align:center;">
       <div style="font-size:36px;margin-bottom:12px;">🍽️</div>
       <div style="font-size:16px;font-weight:700;color:#8b84c0;">No items found</div>
-      <button class="sa-btn-primary" style="margin-top:16px;" onclick={() => openModal()}>Add First Item</button>
+      <button class="sa-btn-primary" style="margin-top:16px;" onclick={() => openAdd()}>Add First Item</button>
     </div>
   {:else}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -189,7 +182,7 @@
               <button
                 class="sa-btn-icon"
                 style="width:32px;height:32px;border-radius:9px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.12);color:#6366f1;display:flex;align-items:center;justify-content:center;cursor:pointer;"
-                onclick={() => openModal(item)}
+                onclick={() => openEdit(item)}
                 use:tooltip={"Edit item details"}
               ><Edit2 size={13} /></button>
               <button

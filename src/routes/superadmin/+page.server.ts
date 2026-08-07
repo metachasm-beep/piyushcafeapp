@@ -1,7 +1,6 @@
-import { supabase } from '$lib/supabase';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
   let totalRevenue = 0;
   let platformFees = 0;
   let activeRestaurantsCount = 0;
@@ -16,6 +15,8 @@ export const load: PageServerLoad = async () => {
     { date: new Date(Date.now() - 1 * 86400000).toISOString(), revenue: 0 },
     { date: new Date(Date.now()).toISOString(), revenue: 0 },
   ];
+
+  const supabase = locals.supabase;
 
   if (supabase) {
     // Fetch total revenue and platform fees from paid orders

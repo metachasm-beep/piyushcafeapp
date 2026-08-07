@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { Store, Plus, X, Download, QrCode as QrIcon, Users, Grid2X2 } from 'lucide-svelte';
+  import { Store, Plus, X, Download, QrCode as QrIcon, Users, Grid2X2, Trash2 } from 'lucide-svelte';
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import QRCode from 'qrcode';
   import { fade } from 'svelte/transition';
   import { toast } from 'svelte-sonner';
-
   import Card from '$lib/components/ui/card.svelte';
   import CardHeader from '$lib/components/ui/card-header.svelte';
   import CardContent from '$lib/components/ui/card-content.svelte';
@@ -56,6 +55,19 @@
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  }
+
+  function handleDeleteTable() {
+    return async ({ result, update }: any) => {
+      if (result.type === 'success') {
+        toast.success(`Table deleted successfully`);
+        await update(); // Invalidate and reload tables
+      } else if (result.type === 'failure') {
+        toast.error(result.data?.error || 'Failed to delete table');
+      } else {
+        toast.error('An error occurred');
+      }
+    };
   }
 
   function handleAddTable() {
@@ -153,33 +165,52 @@
       {#each filteredTables as table (table.id)}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div onclick={() => generateQr(table)}>
-          <Card class="cursor-pointer transition-colors hover:bg-zinc-50 group text-center h-full flex flex-col justify-center py-6">
-            <CardContent class="p-0 pb-0">
-              <div class="text-5xl font-black text-zinc-900 tabular-nums tracking-tighter mb-2">{table.table_number}</div>
-              <div class="text-sm font-semibold text-zinc-950 mb-1">{table.display_name || 'Table ' + table.table_number}</div>
-              <div class="flex items-center justify-center gap-1.5 text-xs text-zinc-900 mb-4">
-                <Users size={12} />
-                {table.capacity ?? 4} seats
-              </div>
-              
-              <div class="pt-4 border-t border-zinc-100">
-                {#if table.is_active}
-                  <span class="inline-flex items-center rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 bg-emerald-50">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span> Active
-                  </span>
-                {:else}
-                  <span class="inline-flex items-center rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-900 bg-zinc-100">
-                    Inactive
-                  </span>
-                {/if}
-              </div>
+        <div class="relative group h-full">
+          <!-- Delete Button Form -->
+          <form method="POST" action="?/delete" use:enhance={handleDeleteTable} class="absolute top-2 right-2 z-10">
+            <input type="hidden" name="id" value={table.id} />
+            <button 
+              type="submit" 
+              class="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+              onclick={(e) => {
+                if (!confirm('Are you sure you want to delete this table?')) {
+                  e.preventDefault();
+                }
+              }}
+              title="Delete table"
+            >
+              <Trash2 size={16} />
+            </button>
+          </form>
+          
+          <div onclick={() => generateQr(table)} class="h-full">
+            <Card class="cursor-pointer transition-colors hover:bg-zinc-50 text-center h-full flex flex-col justify-center py-6">
+              <CardContent class="p-0 pb-0">
+                <div class="text-5xl font-black text-zinc-900 tabular-nums tracking-tighter mb-2">{table.table_number}</div>
+                <div class="text-sm font-semibold text-zinc-950 mb-1">{table.display_name || 'Table ' + table.table_number}</div>
+                <div class="flex items-center justify-center gap-1.5 text-xs text-zinc-900 mb-4">
+                  <Users size={12} />
+                  {table.capacity ?? 4} seats
+                </div>
+                
+                <div class="pt-4 border-t border-zinc-100">
+                  {#if table.is_active}
+                    <span class="inline-flex items-center rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 bg-emerald-50">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span> Active
+                    </span>
+                  {:else}
+                    <span class="inline-flex items-center rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-900 bg-zinc-100">
+                      Inactive
+                    </span>
+                  {/if}
+                </div>
 
-              <div class="mt-4 flex items-center justify-center gap-1.5 text-[10px] font-mono text-zinc-900 group-hover:text-zinc-600 transition-colors">
-                <QrIcon size={12} /> Tap for QR
-              </div>
-            </CardContent>
-          </Card>
+                <div class="mt-4 flex items-center justify-center gap-1.5 text-[10px] font-mono text-zinc-900 group-hover:text-zinc-600 transition-colors">
+                  <QrIcon size={12} /> Tap for QR
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       {/each}
     </div>

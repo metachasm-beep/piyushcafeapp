@@ -6,7 +6,7 @@
 import type { Actions, PageServerLoad } from "./$types";
 import { fail } from "@sveltejs/kit";
 import { TableSchema } from "$lib/server/security";
-import { provisionTable, updateTableStatus } from "$lib/server/services/table.service";
+import { provisionTable, updateTableStatus, deleteTable } from "$lib/server/services/table.service";
 import { createClient } from '@supabase/supabase-js';
 import { env } from '$env/dynamic/private';
 import { env as publicEnv } from '$env/dynamic/public';
@@ -69,6 +69,20 @@ export const actions: Actions = {
 			return { success: true, action: "toggleStatus", id, is_active };
 		} catch (e) {
 			return fail(500, { action: "toggleStatus", error: (e as Error).message });
+		}
+	},
+	
+	delete: async ({ request }) => {
+		const formData = await request.formData();
+		const id = formData.get("id") as string;
+		if (!id) return fail(400, { action: "delete", error: "Missing table ID" });
+
+		try {
+			const supabaseAdmin = getSupabaseAdmin();
+			await deleteTable(supabaseAdmin, id);
+			return { success: true, action: "delete", id };
+		} catch (e) {
+			return fail(500, { action: "delete", error: (e as Error).message });
 		}
 	}
 };

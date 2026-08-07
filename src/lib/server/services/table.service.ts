@@ -53,3 +53,12 @@ export async function updateTableStatus(supabaseAdmin: SupabaseClient, id: strin
 		throw new Error("Failed to update table status.");
 	}
 }
+
+export async function deleteTable(supabaseAdmin: SupabaseClient, id: string): Promise<void> {
+	const { error } = await supabaseAdmin.from("tables").delete().eq("id", id);
+
+	if (error) {
+		console.error(JSON.stringify({ level: "error", context: "deleteTable", msg: error.message, id }));
+		throw new Error("Failed to delete table.");
+	}
+}

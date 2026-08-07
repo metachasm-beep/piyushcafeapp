@@ -5,6 +5,19 @@
  */
 import { supabase } from "$lib/supabase";
 import { sanitizeObject, type OrderInput } from "$lib/server/security";
+import { assignAvailableWaiter } from "./staff.service";
+import { env as publicEnv } from '$env/dynamic/public';
+import { env } from '$env/dynamic/private';
+import { createClient } from '@supabase/supabase-js';
+
+const getSupabaseAdmin = () => {
+	const supabaseUrl = publicEnv.PUBLIC_SUPABASE_URL;
+	const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY;
+	if (!supabaseUrl || !supabaseKey) {
+		throw new Error('Supabase admin credentials missing');
+	}
+	return createClient(supabaseUrl, supabaseKey);
+};
 
 export type OrderStatus = "pending" | "preparing" | "ready" | "served" | "paid" | "cancelled";
 
@@ -49,6 +62,15 @@ export async function placeOrder(input: OrderInput): Promise<{ id: string }> {
 	}
 
 	console.log(JSON.stringify({ level: "info", msg: "Order placed successfully via RPC", orderId }));
+
+	// Automatically assign a waiter
+	try {
+		const admin = getSupabaseAdmin();
+		await assignAvailableWaiter(admin, sanitized.restaurant_id, orderId, 'order');
+	} catch (e) {
+		console.error('Failed to assign waiter asynchronously:', e);
+	}
+
 	return { id: orderId };
 }
 

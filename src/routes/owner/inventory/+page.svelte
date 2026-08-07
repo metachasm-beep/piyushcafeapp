@@ -339,7 +339,7 @@
 
         <div class="pt-4 border-t border-[var(--color-border)]">
           <div class="flex items-center justify-between mb-2">
-            <label class="block text-sm font-bold text-[var(--color-text-secondary)]">Variations (e.g. Size, Crust)</label>
+            <span class="block text-sm font-bold text-[var(--color-text-secondary)]">Variations (e.g. Size, Crust)</span>
             <button type="button" class="text-xs text-[var(--color-brand)] font-bold hover:underline" onclick={addVariation}>+ Add Variation</button>
           </div>
           <div class="space-y-2">
@@ -358,7 +358,7 @@
 
         <div class="pt-4 border-t border-[var(--color-border)]">
           <div class="flex items-center justify-between mb-2">
-            <label class="block text-sm font-bold text-[var(--color-text-secondary)]">Add-ons (e.g. Extra Cheese)</label>
+            <span class="block text-sm font-bold text-[var(--color-text-secondary)]">Add-ons (e.g. Extra Cheese)</span>
             <button type="button" class="text-xs text-[var(--color-brand)] font-bold hover:underline" onclick={addAddon}>+ Add Add-on</button>
           </div>
           <div class="space-y-2">

@@ -66,6 +66,7 @@ CREATE TABLE restaurant_staff (
   user_id       UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   role          TEXT NOT NULL DEFAULT 'owner',
+  is_available  BOOLEAN NOT NULL DEFAULT false,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (user_id, restaurant_id)
 );
@@ -147,6 +148,7 @@ CREATE TABLE orders (
   payment_reference TEXT,
   platform_fee      NUMERIC(10, 2) NOT NULL DEFAULT 0,
   restaurant_amount NUMERIC(10, 2) NOT NULL DEFAULT 0,
+  assigned_waiter_id UUID REFERENCES restaurant_staff(id) ON DELETE SET NULL,
   customer_session  TEXT,
   special_notes     TEXT,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -175,6 +177,7 @@ CREATE TABLE waiter_requests (
   order_id        UUID REFERENCES orders(id) ON DELETE SET NULL,
   status          waiter_request_status NOT NULL DEFAULT 'pending',
   message         TEXT DEFAULT 'Customer requires assistance',
+  assigned_waiter_id UUID REFERENCES restaurant_staff(id) ON DELETE SET NULL,
   acknowledged_at TIMESTAMPTZ,
   resolved_at     TIMESTAMPTZ,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()

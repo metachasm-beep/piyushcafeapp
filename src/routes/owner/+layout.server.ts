@@ -32,6 +32,7 @@ export const load: LayoutServerLoad = async ({ locals: { supabase, user } }) => 
 
 	return {
 		restaurant,
-		tables: tables ?? []
+		tables: tables ?? [],
+		userRole: locals.userRole
 	};
 };

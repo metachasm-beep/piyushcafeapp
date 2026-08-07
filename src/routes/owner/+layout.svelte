@@ -2,7 +2,7 @@
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { adminUser, pendingWaiterCount } from '$lib/stores/admin';
-  import { LayoutDashboard, ChefHat, UtensilsCrossed, QrCode, LogOut, Menu, X, Bell, Settings, Table as TableIcon } from 'lucide-svelte';
+  import { LayoutDashboard, ChefHat, UtensilsCrossed, QrCode, LogOut, Menu, X, Bell, Settings, Table as TableIcon, Users, TrendingUp, Banknote } from 'lucide-svelte';
   import type { LayoutData } from './$types';
 
   let { children, data }: { children: any, data: LayoutData } = $props();
@@ -47,58 +47,93 @@
       </div>
 
       <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-        <a 
-          href="/owner" 
-          class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
-          onclick={() => mobileMenuOpen = false}
-        >
-          <LayoutDashboard size={20} />
-          <span class="font-medium">Dashboard</span>
-        </a>
-        <a 
-          href="/owner/kitchen" 
-          class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/kitchen' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
-          onclick={() => mobileMenuOpen = false}
-        >
-          <ChefHat size={20} />
-          <span class="font-medium">Kitchen Display</span>
-        </a>
-        <a 
-          href="/owner/inventory" 
-          class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/inventory' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
-          onclick={() => mobileMenuOpen = false}
-        >
-          <UtensilsCrossed size={20} />
-          <span class="font-medium">Inventory</span>
-        </a>
-        <a 
-          href="/owner/tables" 
-          class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/tables' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
-          onclick={() => mobileMenuOpen = false}
-        >
-          <TableIcon size={20} />
-          <span class="font-medium">Tables & QR</span>
-        </a>
+        {#if data.userRole === 'owner'}
+          <a 
+            href="/owner" 
+            class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+            onclick={() => mobileMenuOpen = false}
+          >
+            <LayoutDashboard size={20} />
+            <span class="font-medium">Dashboard</span>
+          </a>
+        {/if}
         
-        <div class="pt-4 mt-2 border-t border-[var(--color-border)]">
-          <p class="px-4 text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-2">Management</p>
+        {#if data.userRole === 'owner' || data.userRole === 'chef'}
           <a 
-            href="/owner/settings" 
-            class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/settings' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+            href="/owner/kitchen" 
+            class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/kitchen' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
             onclick={() => mobileMenuOpen = false}
           >
-            <Settings size={20} />
-            <span class="font-medium">Settings</span>
+            <ChefHat size={20} />
+            <span class="font-medium">Kitchen Display</span>
           </a>
+        {/if}
+
+        {#if data.userRole === 'owner' || data.userRole === 'waiter'}
           <a 
-            href="/owner/kyc" 
-            class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/kyc' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+            href="/owner/waiter" 
+            class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/waiter' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
             onclick={() => mobileMenuOpen = false}
           >
-            <Banknote size={20} />
-            <span class="font-medium">PayU KYC</span>
+            <Users size={20} />
+            <span class="font-medium">Waiter Dashboard</span>
           </a>
-        </div>
+        {/if}
+        
+        {#if data.userRole === 'owner'}
+          <a 
+            href="/owner/inventory" 
+            class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/inventory' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+            onclick={() => mobileMenuOpen = false}
+          >
+            <UtensilsCrossed size={20} />
+            <span class="font-medium">Inventory</span>
+          </a>
+          <a 
+            href="/owner/tables" 
+            class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/tables' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+            onclick={() => mobileMenuOpen = false}
+          >
+            <TableIcon size={20} />
+            <span class="font-medium">Tables & QR</span>
+          </a>
+          <a 
+            href="/owner/staff" 
+            class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/staff' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+            onclick={() => mobileMenuOpen = false}
+          >
+            <Users size={20} />
+            <span class="font-medium">Staff</span>
+          </a>
+          
+          <div class="pt-4 mt-2 border-t border-[var(--color-border)]">
+            <p class="px-4 text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-2">Management</p>
+            <a 
+              href="/owner/analytics" 
+              class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/analytics' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+              onclick={() => mobileMenuOpen = false}
+            >
+              <TrendingUp size={20} />
+              <span class="font-medium">Analytics</span>
+            </a>
+            <a 
+              href="/owner/settings" 
+              class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/settings' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+              onclick={() => mobileMenuOpen = false}
+            >
+              <Settings size={20} />
+              <span class="font-medium">Settings</span>
+            </a>
+            <a 
+              href="/owner/kyc" 
+              class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/kyc' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
+              onclick={() => mobileMenuOpen = false}
+            >
+              <Banknote size={20} />
+              <span class="font-medium">PayU KYC</span>
+            </a>
+          </div>
+        {/if}
       </nav>
 
       <div class="p-4 border-t border-[var(--color-border)]">

@@ -10,6 +10,8 @@ declare global {
 			safeGetSession: () => Promise<{ session: Session | null; user: any | null }>;
 			session: Session | null;
 			user: any | null;
+			userRole?: 'owner' | 'chef' | 'waiter';
+			restaurantId?: string;
 		}
 		// interface PageData {}
 		// interface PageState {}

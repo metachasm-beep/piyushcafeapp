@@ -56,23 +56,37 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	const SUPERADMIN_EMAIL = 'metachasm@gmail.com';
 
-	// Global Login Enforcement (if logged in, MUST be superadmin or approved owner)
+	// Global Login Enforcement (if logged in, MUST be superadmin, approved owner, or staff)
 	if (user && user.email) {
 		const email = user.email.toLowerCase();
 		if (email !== SUPERADMIN_EMAIL) {
-			const { data: profile } = await event.locals.supabase
-				.from('owner_profiles')
-				.select('is_approved')
-				.eq('id', user.id)
+			// First check if they are restaurant staff
+			const { data: staffData } = await event.locals.supabase
+				.from('restaurant_staff')
+				.select('role, restaurant_id')
+				.eq('user_id', user.id)
 				.single();
 
-			if (!profile || !profile.is_approved) {
-				await event.locals.supabase.auth.signOut();
-				// clear user/session in locals
-				event.locals.session = null;
-				event.locals.user = null;
-				if (path !== '/' && !path.startsWith('/auth/')) {
-					throw redirect(303, '/?error=unauthorized');
+			if (staffData) {
+				event.locals.userRole = staffData.role;
+				event.locals.restaurantId = staffData.restaurant_id;
+			} else {
+				// Fallback to legacy owner_profiles just in case
+				const { data: profile } = await event.locals.supabase
+					.from('owner_profiles')
+					.select('is_approved')
+					.eq('id', user.id)
+					.single();
+
+				if (!profile || !profile.is_approved) {
+					await event.locals.supabase.auth.signOut();
+					event.locals.session = null;
+					event.locals.user = null;
+					if (path !== '/' && !path.startsWith('/auth/')) {
+						throw redirect(303, '/?error=unauthorized');
+					}
+				} else {
+					event.locals.userRole = 'owner';
 				}
 			}
 		}
@@ -89,10 +103,29 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
-	// Owner Guards
+	// Owner / Staff Guards
 	if (routeId.startsWith('/owner')) {
 		if (!event.locals.user) {
 			throw redirect(303, '/');
+		}
+
+		const role = event.locals.userRole;
+
+		if (role === 'chef') {
+			// Chefs can only access kitchen
+			if (!path.startsWith('/owner/kitchen') && !path.startsWith('/owner/settings')) {
+				throw redirect(303, '/owner/kitchen');
+			}
+		} else if (role === 'waiter') {
+			// Waiters can only access waiter dashboard
+			if (!path.startsWith('/owner/waiter') && !path.startsWith('/owner/settings')) {
+				throw redirect(303, '/owner/waiter');
+			}
+		} else if (role === 'owner') {
+			// Owners cannot access the waiter dashboard (or they can, but it's meant for waiters)
+		} else {
+			// Not a recognized role?
+			throw redirect(303, '/?error=unauthorized');
 		}
 	}
 

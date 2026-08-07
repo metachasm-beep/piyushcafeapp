@@ -20,6 +20,15 @@ export type Restaurant = {
   updated_at: string;
 };
 
+export type RestaurantStaff = {
+  id: string;
+  user_id: string;
+  restaurant_id: string;
+  role: 'owner' | 'chef' | 'waiter';
+  is_available: boolean;
+  created_at: string;
+};
+
 export type Table = {
   id: string;
   restaurant_id: string;
@@ -93,6 +102,7 @@ export type Order = {
   payment_reference: string | null;
   platform_fee: number;
   restaurant_amount: number;
+  assigned_waiter_id: string | null;
   customer_session: string | null;
   special_notes: string | null;
   created_at: string;
@@ -126,6 +136,7 @@ export type WaiterRequest = {
   order_id: string | null;
   status: 'pending' | 'acknowledged' | 'resolved';
   message: string;
+  assigned_waiter_id: string | null;
   acknowledged_at: string | null;
   resolved_at: string | null;
   created_at: string;

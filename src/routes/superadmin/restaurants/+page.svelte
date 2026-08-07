@@ -114,6 +114,26 @@
                   >
                     <ExternalLink size={14} class="text-zinc-900" />
                   </button>
+                  <form method="POST" action="?/deleteRestaurant" use:enhance={() => {
+                    if (!confirm('Are you sure you want to completely destroy this node and its owner? This cannot be undone.')) return ({ update }) => update({ reset: false });
+                    return async ({ result, update }) => {
+                      if (result.type === 'success') {
+                        toast.success('Node destroyed');
+                        window.location.reload();
+                      } else {
+                        toast.error(result.data?.error || 'Failed to destroy node');
+                      }
+                      update();
+                    };
+                  }}>
+                    <input type="hidden" name="restaurant_id" value={r.id} />
+                    <button
+                      type="submit"
+                      class="inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500 border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 h-8 px-3 ml-2"
+                    >
+                      Destroy
+                    </button>
+                  </form>
                 </div>
               </CardContent>
             </Card>

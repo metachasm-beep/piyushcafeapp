@@ -154,5 +154,40 @@ export const actions: Actions = {
 
 		console.log('Successfully provisioned restaurant:', restaurant_name);
 		return { success: true };
+	},
+	deleteRestaurant: async ({ request }) => {
+		const formData = await request.formData();
+		const restaurant_id = formData.get('restaurant_id') as string;
+
+		if (!restaurant_id) {
+			return fail(400, { error: 'Restaurant ID is required' });
+		}
+
+		// 1. Find the owner to delete them too
+		const { data: staffData } = await getSupabaseAdmin()
+			.from('restaurant_staff')
+			.select('user_id')
+			.eq('restaurant_id', restaurant_id)
+			.eq('role', 'owner')
+			.single();
+
+		// 2. Delete the restaurant (cascades to staff, menu, etc)
+		const { error: deleteError } = await getSupabaseAdmin()
+			.from('restaurants')
+			.delete()
+			.eq('id', restaurant_id);
+
+		if (deleteError) {
+			console.error('Error deleting restaurant:', deleteError);
+			return fail(500, { error: 'Failed to delete restaurant' });
+		}
+
+		// 3. Delete the owner profile and auth user
+		if (staffData?.user_id) {
+			await getSupabaseAdmin().from('owner_profiles').delete().eq('id', staffData.user_id);
+			await getSupabaseAdmin().auth.admin.deleteUser(staffData.user_id);
+		}
+
+		return { success: true };
 	}
 };

@@ -97,6 +97,32 @@ export const actions: Actions = {
 
 		} else if (id && currentState) {
 			// They are being revoked
+			
+			const { env } = await import('$env/dynamic/private');
+			const { publicEnv } = await import('$env/dynamic/public');
+			const { createClient } = await import('@supabase/supabase-js');
+			
+			const supabaseUrl = publicEnv?.PUBLIC_SUPABASE_URL || process.env.PUBLIC_SUPABASE_URL;
+			const supabaseKey = env?.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+			
+			if (supabaseUrl && supabaseKey) {
+				const adminClient = createClient(supabaseUrl, supabaseKey);
+				
+				// 1. Find their restaurant
+				const { data: staffData } = await adminClient
+					.from('restaurant_staff')
+					.select('restaurant_id')
+					.eq('user_id', id)
+					.eq('role', 'owner')
+					.single();
+					
+				// 2. Delete the restaurant (this cascades to staff, menus, tables, orders)
+				if (staffData?.restaurant_id) {
+					await adminClient.from('restaurants').delete().eq('id', staffData.restaurant_id);
+				}
+			}
+
+			// 3. Mark as unapproved
 			const { error } = await supabase
 				.from('owner_profiles')
 				.update({ is_approved: false })
@@ -114,6 +140,34 @@ export const actions: Actions = {
 		const id = data.get('id');
 
 		if (id) {
+			const { env } = await import('$env/dynamic/private');
+			const { publicEnv } = await import('$env/dynamic/public');
+			const { createClient } = await import('@supabase/supabase-js');
+			
+			const supabaseUrl = publicEnv?.PUBLIC_SUPABASE_URL || process.env.PUBLIC_SUPABASE_URL;
+			const supabaseKey = env?.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+			
+			if (supabaseUrl && supabaseKey) {
+				const adminClient = createClient(supabaseUrl, supabaseKey);
+				
+				// 1. Find their restaurant
+				const { data: staffData } = await adminClient
+					.from('restaurant_staff')
+					.select('restaurant_id')
+					.eq('user_id', id)
+					.eq('role', 'owner')
+					.single();
+					
+				// 2. Delete the restaurant (this cascades)
+				if (staffData?.restaurant_id) {
+					await adminClient.from('restaurants').delete().eq('id', staffData.restaurant_id);
+				}
+				
+				// 3. Delete the auth user entirely to ensure they don't exist without a restaurant
+				// since "owner cannot exist without restaurant". 
+				await adminClient.auth.admin.deleteUser(id);
+			}
+
 			const { error } = await supabase
 				.from('owner_profiles')
 				.delete()

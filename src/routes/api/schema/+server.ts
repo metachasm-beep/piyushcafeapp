@@ -4,14 +4,19 @@ import { env as publicEnv } from '$env/dynamic/public';
 
 export const GET: RequestHandler = async () => {
 	const supabaseUrl = publicEnv.PUBLIC_SUPABASE_URL;
-	const anonKey = publicEnv.PUBLIC_SUPABASE_ANON_KEY;
+	const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
 
-	if (!supabaseUrl || !anonKey) {
+	if (!supabaseUrl || !serviceRoleKey) {
 		return json({ error: 'Missing Supabase credentials' });
 	}
 
 	try {
-		const res = await fetch(`${supabaseUrl}/rest/v1/?apikey=${anonKey}`);
+		const res = await fetch(`${supabaseUrl}/rest/v1/`, {
+			headers: {
+				'apikey': serviceRoleKey,
+				'Authorization': `Bearer ${serviceRoleKey}`
+			}
+		});
 		const data = await res.json();
 		return json(data);
 	} catch (e: any) {

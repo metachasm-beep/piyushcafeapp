@@ -82,8 +82,6 @@ export const actions: Actions = {
 						const { error: upsertError } = await getSupabaseAdmin().from('owner_profiles').upsert({ 
 							id: userId, 
 							email: email, 
-							full_name: 'Superadmin Provisioned',
-							restaurant_name: restaurant_name,
 							is_approved: true 
 						});
 						if (upsertError) {
@@ -101,12 +99,9 @@ export const actions: Actions = {
 				userId = authData.user?.id;
 				console.log('Created auth user with ID:', userId);
 				// We MUST ensure they exist in owner_profiles before creating the restaurant to satisfy foreign key constraints
-				// Provide dummy full_name if required by schema since we only have email
 				const { error: upsertError } = await getSupabaseAdmin().from('owner_profiles').upsert({ 
 					id: userId, 
 					email: email, 
-					full_name: 'Superadmin Provisioned',
-					restaurant_name: restaurant_name,
 					is_approved: true 
 				});
 				if (upsertError) {

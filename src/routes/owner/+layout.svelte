@@ -1,13 +1,18 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { goto } from '$app/navigation';
-  import { adminUser, pendingWaiterCount } from '$lib/stores/admin';
-  import { LayoutDashboard, ChefHat, UtensilsCrossed, QrCode, LogOut, Menu, X, Bell, Settings, Table as TableIcon, Users, TrendingUp, Banknote } from 'lucide-svelte';
+  import { pendingWaiterCount } from '$lib/stores/admin';
+  import { LayoutDashboard, ChefHat, UtensilsCrossed, LogOut, Menu, Bell, Settings, Table as TableIcon, Users, TrendingUp, Banknote } from 'lucide-svelte';
   import type { LayoutData } from './$types';
 
   let { children, data }: { children: any, data: LayoutData } = $props();
   let restaurant = $derived(data?.restaurant);
   
+  // Treat null/undefined role as 'owner' (approved users provisioned via superadmin)
+  let userRole = $derived(data?.userRole ?? 'owner');
+  let userName = $derived(data?.userName ?? 'Owner');
+  let userEmail = $derived(data?.userEmail ?? '');
+  let userInitial = $derived(userName.charAt(0).toUpperCase());
+
   let mobileMenuOpen = $state(false);
 
   let currentPath = $derived(page.url.pathname);
@@ -47,7 +52,7 @@
       </div>
 
       <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-        {#if data.userRole === 'owner'}
+        {#if userRole === 'owner'}
           <a 
             href="/owner" 
             class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
@@ -58,7 +63,7 @@
           </a>
         {/if}
         
-        {#if data.userRole === 'owner' || data.userRole === 'chef'}
+        {#if userRole === 'owner' || userRole === 'chef'}
           <a 
             href="/owner/kitchen" 
             class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/kitchen' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
@@ -69,7 +74,7 @@
           </a>
         {/if}
 
-        {#if data.userRole === 'owner' || data.userRole === 'waiter'}
+        {#if userRole === 'owner' || userRole === 'waiter'}
           <a 
             href="/owner/waiter" 
             class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/waiter' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
@@ -80,7 +85,7 @@
           </a>
         {/if}
         
-        {#if data.userRole === 'owner'}
+        {#if userRole === 'owner'}
           <a 
             href="/owner/inventory" 
             class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {currentPath === '/owner/inventory' ? 'bg-[var(--color-card)] text-[var(--color-brand)] border border-[var(--color-border)]' : 'hover:bg-[var(--color-card)]'}"
@@ -139,11 +144,11 @@
       <div class="p-4 border-t border-[var(--color-border)]">
         <div class="flex items-center gap-3 mb-4 px-2">
           <div class="w-10 h-10 rounded-full bg-[var(--color-card)] border border-[var(--color-border)] flex items-center justify-center">
-            <span class="font-bold text-[var(--color-brand)]">{$adminUser?.email?.charAt(0).toUpperCase() || 'A'}</span>
+            <span class="font-bold text-[var(--color-brand)]">{userInitial}</span>
           </div>
           <div class="overflow-hidden">
-            <p class="text-sm font-medium truncate">{$adminUser?.email?.split('@')[0] || 'Admin'}</p>
-            <p class="text-xs text-[var(--color-text-secondary)] truncate">{$adminUser?.email || 'admin@example.com'}</p>
+            <p class="text-sm font-medium truncate">{userName}</p>
+            <p class="text-xs text-[var(--color-text-secondary)] truncate">{userEmail}</p>
           </div>
         </div>
         <form action="/auth/logout?next=/" method="POST">

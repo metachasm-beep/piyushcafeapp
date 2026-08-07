@@ -34,6 +34,8 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 	return {
 		restaurant,
 		tables: tables ?? [],
-		userRole: locals.userRole ?? 'owner'
+		userRole: locals.userRole ?? 'owner',
+		userEmail: user.email ?? '',
+		userName: user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'Owner'
 	};
 };

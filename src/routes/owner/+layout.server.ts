@@ -1,4 +1,16 @@
 import type { LayoutServerLoad } from './$types';
+import { env } from '$env/dynamic/private';
+import { env as publicEnv } from '$env/dynamic/public';
+import { createClient } from '@supabase/supabase-js';
+
+const getSupabaseAdmin = () => {
+	const supabaseUrl = publicEnv.PUBLIC_SUPABASE_URL;
+	const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY;
+	if (!supabaseUrl || !supabaseKey) {
+		throw new Error('Supabase admin credentials missing');
+	}
+	return createClient(supabaseUrl, supabaseKey);
+};
 
 export const load: LayoutServerLoad = async ({ locals }) => {
 	const { supabase, user } = locals;
@@ -6,8 +18,10 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		return { restaurant: null };
 	}
 
+	const supabaseAdmin = getSupabaseAdmin();
+
 	// Fetch the restaurant the owner belongs to
-	const { data: staffData } = await supabase
+	const { data: staffData } = await supabaseAdmin
 		.from('restaurant_staff')
 		.select('restaurant_id')
 		.eq('user_id', user.id)
@@ -18,7 +32,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 
 	if (!restaurantId) {
 		// Fallback for owners who might not be in the staff table
-		const { data: ownedRestaurant } = await supabase
+		const { data: ownedRestaurant } = await supabaseAdmin
 			.from('restaurants')
 			.select('id')
 			.eq('owner_id', user.id)
@@ -32,17 +46,17 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		}
 	}
 
-	const { data: restaurant } = await supabase
+	const { data: restaurant } = await supabaseAdmin
 		.from('restaurants')
 		.select('*')
 		.eq('id', restaurantId)
 		.limit(1)
 		.single();
 
-	const { data: tables } = await supabase
+	const { data: tables } = await supabaseAdmin
 		.from('tables')
 		.select('*')
-		.eq('restaurant_id', staffData.restaurant_id)
+		.eq('restaurant_id', restaurantId)
 		.order('table_number', { ascending: true });
 
 	return {

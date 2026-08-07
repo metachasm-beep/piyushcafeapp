@@ -184,6 +184,27 @@ export const actions: Actions = {
 		console.log('Successfully provisioned restaurant:', restaurant_name);
 		return { success: true };
 	},
+	editRestaurant: async ({ request }) => {
+		const formData = await request.formData();
+		const id = formData.get('id') as string;
+		const name = formData.get('name') as string;
+
+		if (!id || !name) {
+			return fail(400, { error: 'Restaurant ID and Name are required' });
+		}
+
+		const { error } = await getSupabaseAdmin()
+			.from('restaurants')
+			.update({ name })
+			.eq('id', id);
+
+		if (error) {
+			console.error('Error updating restaurant:', error);
+			return fail(500, { error: error.message });
+		}
+
+		return { success: true };
+	},
 	deleteRestaurant: async ({ request }) => {
 		const formData = await request.formData();
 		const restaurant_id = formData.get('restaurant_id') as string;

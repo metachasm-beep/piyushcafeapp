@@ -7,6 +7,8 @@
   let { data } = $props();
 
   let showAddModal = $state(false);
+  let showEditModal = $state(false);
+  let editingRestaurant = $state<any>(null);
   let expandedRestaurantId = $state<string | null>(null);
   let loading = $state(false);
 
@@ -104,7 +106,7 @@
                 <div class="flex gap-2 mt-6">
                   <button
                     class="inline-flex flex-1 items-center justify-center rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 bg-zinc-100 text-zinc-900 hover:bg-zinc-200 h-8 px-3 gap-1.5"
-                    onclick={() => toast.info('Opening settings...')}
+                    onclick={() => { editingRestaurant = r; showEditModal = true; }}
                   >
                     <Settings2 size={14} /> Manage
                   </button>
@@ -219,6 +221,85 @@
           </button>
           <button type="submit" disabled={loading} class="inline-flex flex-1 items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-900/90 h-9 px-4">
             {loading ? 'Deploying...' : 'Deploy'}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+{/if}
+
+<!-- Edit Restaurant Modal -->
+{#if showEditModal && editingRestaurant}
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div 
+    transition:fade={{ duration: 150 }}
+    class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" 
+    onclick={(e) => { if (e.target === e.currentTarget) { showEditModal = false; editingRestaurant = null; } }}
+  >
+    <div class="bg-white rounded-xl border border-zinc-200 shadow-lg w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200" onclick={(e) => e.stopPropagation()}>
+      <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-zinc-50/50">
+        <div>
+          <h2 class="text-lg font-semibold tracking-tight">Edit Restaurant</h2>
+          <p class="text-xs text-zinc-500">Manage settings for this node.</p>
+        </div>
+        <button class="rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2" onclick={() => { showEditModal = false; editingRestaurant = null; }}>
+          <X size={16} class="text-zinc-900" />
+        </button>
+      </div>
+
+      <form
+        method="POST"
+        action="?/editRestaurant"
+        use:enhance={() => {
+          loading = true;
+          return async ({ result, update }) => { 
+            await update({ reset: false }); 
+            loading = false; 
+            console.log('Edit result:', result);
+            if (result.type === 'success') {
+              toast.success('Restaurant updated successfully!');
+              showEditModal = false;
+              editingRestaurant = null;
+              window.location.reload();
+            } else if (result.type === 'failure') {
+              toast.error(result.data?.error || 'Failed to update restaurant');
+            } else if (result.type === 'error') {
+              toast.error(result.error?.message || 'Server error occurred during update');
+            } else {
+              toast.error(`Unexpected result type: ${result.type}`);
+            }
+          };
+        }}
+        class="p-6 space-y-4"
+      >
+        <input type="hidden" name="id" value={editingRestaurant.id} />
+        <div class="space-y-2">
+          <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="edit_restaurant_name">Restaurant Name</label>
+          <input class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50" id="edit_restaurant_name" name="name" type="text" required value={editingRestaurant.name} />
+        </div>
+        
+        <div class="space-y-2">
+          <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="edit_email">Owner Email</label>
+          <input class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50" id="edit_email" type="email" disabled value={editingRestaurant.owner_email} />
+          <p class="text-[10px] text-zinc-500">The owner email cannot be changed from this panel.</p>
+        </div>
+        
+        <div class="flex gap-2 pt-2 border-t border-zinc-200 mt-6">
+          <button
+            type="button"
+            onclick={() => { showEditModal = false; editingRestaurant = null; }}
+            disabled={loading}
+            class="inline-flex flex-1 items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 border border-zinc-200 bg-white shadow-sm hover:bg-zinc-100 h-9 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            class="inline-flex flex-1 items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-900/90 h-9 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </form>

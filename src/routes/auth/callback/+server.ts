@@ -14,12 +14,31 @@ export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
 				throw redirect(303, '/?error=unauthorized');
 			}
 
-			// Superadmin explicit check
+			// 1. Superadmin check
 			if (user.email.toLowerCase() === 'metachasm@gmail.com') {
 				throw redirect(303, '/superadmin');
 			}
 
-			// For everyone else, check if they are an approved owner
+			// 2. Check if they are restaurant staff (Waiter, Chef, Owner)
+			const { data: staffData } = await supabase
+				.from('restaurant_staff')
+				.select('role')
+				.eq('user_id', user.id)
+				.single();
+
+			if (staffData) {
+				if (staffData.role === 'owner') {
+					throw redirect(303, '/owner');
+				} else if (staffData.role === 'chef') {
+					throw redirect(303, '/owner/kitchen');
+				} else if (staffData.role === 'waiter') {
+					throw redirect(303, '/owner/waiter');
+				}
+				// Default staff fallback
+				throw redirect(303, '/owner');
+			}
+
+			// 3. Fallback to legacy owner_profiles just in case
 			const { data: profile } = await supabase
 				.from('owner_profiles')
 				.select('is_approved')
@@ -28,11 +47,11 @@ export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
 
 			if (profile && profile.is_approved) {
 				throw redirect(303, '/owner');
-			} else {
-				// Not approved or not found in owner_profiles
-				await supabase.auth.signOut();
-				throw redirect(303, '/?error=pending_approval');
 			}
+
+			// 4. If not found in any authorized table, deny access
+			await supabase.auth.signOut();
+			throw redirect(303, '/?error=unauthorized');
 		}
 		console.error("Auth callback error:", error?.message);
 	}

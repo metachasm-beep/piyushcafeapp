@@ -86,7 +86,8 @@
   </div>
 
   <div class="bg-white border border-zinc-200 rounded-2xl p-6 md:p-8 shadow-sm">
-    <h3 class="text-lg font-bold mb-2 text-zinc-950">Business Logo</h3>
+    {#if restaurant}
+      <h3 class="text-lg font-bold mb-2 text-zinc-950">Business Logo</h3>
     <p class="text-sm text-zinc-500 mb-6">
       Upload a high-quality logo. This will be displayed on your Staff Portal and the Customer Table App.
     </p>
@@ -145,6 +146,18 @@
         </button>
       </div>
 
-    </form>
+      </form>
+    {:else}
+      <div class="flex flex-col items-center justify-center py-12 text-center">
+        <Store class="w-12 h-12 text-zinc-300 mb-4" />
+        <h3 class="text-lg font-semibold text-zinc-900">No Restaurant Provisioned</h3>
+        <p class="text-sm text-zinc-500 max-w-md mt-2 mb-6">
+          Your account is not linked to a restaurant yet. If the superadmin just provisioned one for you, please refresh the page to load your data.
+        </p>
+        <button onclick={() => window.location.reload()} class="inline-flex h-9 items-center justify-center rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-zinc-50 shadow transition-colors hover:bg-zinc-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950">
+          Refresh Page
+        </button>
+      </div>
+    {/if}
   </div>
 </div>

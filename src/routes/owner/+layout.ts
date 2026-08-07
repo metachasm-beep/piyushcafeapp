@@ -1,14 +1,18 @@
-﻿import { redirect } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 import type { LayoutLoad } from './$types';
-import { get } from 'svelte/store';
-import { adminUser } from '$lib/stores/admin';
 
 export const ssr = false;
 
-export const load: LayoutLoad = async ({ url }) => {
-  const user = get(adminUser);
-  if (!user && url.pathname !== '/owner/login') {
-    redirect(302, '/owner/login');
+export const load: LayoutLoad = async ({ parent, url }) => {
+  // Get session data from the server-side layout (hooks.server.ts sets user)
+  const data = await parent();
+
+  // If no Supabase session, redirect to main login page
+  // (The server-side hooks already handle the real auth guards,
+  // but we keep this client-side check so the page doesn't flash)
+  if (!(data as any).session && url.pathname !== '/auth/login') {
+    redirect(302, '/');
   }
+
   return {};
 };

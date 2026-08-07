@@ -1,112 +1,122 @@
 <script lang="ts">
+  import { Store, Plus, ExternalLink, X, Settings2, Activity } from 'lucide-svelte';
   import { enhance } from '$app/forms';
+  import { slide, fade } from 'svelte/transition';
   import { toast } from 'svelte-sonner';
-  import type { PageData, ActionData } from './$types';
-  import { Plus, ExternalLink, X } from 'lucide-svelte';
-  import { fly, fade, slide } from 'svelte/transition';
-  import { backOut } from 'svelte/easing';
-  import { tooltip } from '$lib/actions/tooltip';
+  
+  let { data } = $props();
 
-  let expandedRestaurantId = $state<string | null>(null);
-
-  let { data, form }: { data: PageData; form: ActionData } = $props();
-
-  let loading = $state(false);
   let showAddModal = $state(false);
+  let expandedRestaurantId = $state<string | null>(null);
+  let loading = $state(false);
 
-  $effect(() => {
-    if (form?.error) { toast.error(form.error); loading = false; }
-    if (form?.success) { toast.success('Restaurant provisioned!'); loading = false; showAddModal = false; }
-  });
+  import Card from '$lib/components/ui/card.svelte';
+  import CardHeader from '$lib/components/ui/card-header.svelte';
+  import CardContent from '$lib/components/ui/card-content.svelte';
 </script>
 
-<svelte:head><title>Restaurants · Superadmin</title></svelte:head>
+<svelte:head>
+  <title>Restaurants | Superadmin</title>
+</svelte:head>
 
-<div style="font-family:'Cabinet Grotesk',system-ui,sans-serif;color:#1e1b4b;">
-  <div class="sa-page-header">
-    <div>
-      <h1 class="sa-page-title">Restaurant Nodes</h1>
-      <p class="sa-page-subtitle">Active locations and deployment records</p>
+<div class="flex-1 space-y-4">
+  <div class="flex items-center justify-between space-y-2 mb-8">
+    <div class="flex items-center gap-4">
+      <div class="w-10 h-10 rounded-md bg-zinc-100 flex items-center justify-center border border-zinc-200 text-zinc-900">
+        <Store size={20} />
+      </div>
+      <div>
+        <h2 class="text-3xl font-bold tracking-tight text-zinc-950">Restaurants</h2>
+        <p class="text-sm text-zinc-500">Manage {data.restaurants.length} active instances across the platform.</p>
+      </div>
     </div>
-    <button class="sa-btn-primary" onclick={() => showAddModal = true} use:tooltip={"Deploy a new restaurant instance"}>
-      <span style="display:flex;align-items:center;gap:6px;">
-        <Plus size={15} strokeWidth={2.5} /> Provision Node
-      </span>
+    
+    <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:pointer-events-none disabled:opacity-50 bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-900/90 h-9 px-4 py-2 gap-2" onclick={() => showAddModal = true}>
+      <Plus size={16} />
+      Provision Node
     </button>
   </div>
 
-  <!-- Node grid -->
   {#if data.restaurants.length === 0}
-    <div class="sa-tile" style="padding:64px;text-align:center;">
-      <div style="font-size:40px;margin-bottom:16px;">🏪</div>
-      <div style="font-size:18px;font-weight:700;color:#8b84c0;margin-bottom:12px;">No restaurants yet</div>
-      <button class="sa-btn-primary" onclick={() => showAddModal = true}>Provision First Node</button>
+    <div class="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 p-12 text-center animate-in fade-in-50">
+      <div class="flex h-20 w-20 items-center justify-center rounded-full bg-zinc-100 mb-4">
+        <Store size={32} class="text-zinc-400" />
+      </div>
+      <h3 class="mt-4 text-lg font-semibold text-zinc-950">No restaurants provisioned</h3>
+      <p class="mb-4 mt-2 text-sm text-zinc-500">
+        You haven't added any restaurants to the network yet.
+      </p>
+      <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-900/90 h-9 px-4 py-2" onclick={() => showAddModal = true}>
+        Provision First Node
+      </button>
     </div>
   {:else}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {#each data.restaurants as r, i (r.id)}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {#each data.restaurants as r (r.id)}
         {#if expandedRestaurantId === null || expandedRestaurantId === r.id}
           <!-- svelte-ignore a11y_click_events_have_key_events -->
           <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div 
-            class="sa-tile" 
-            style="padding:24px; cursor:pointer; grid-column: {expandedRestaurantId === r.id ? '1 / -1' : 'auto'}; transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);" 
-            in:fly={{ y: 20, duration: 400, delay: i * 50, easing: (t) => 1 - Math.pow(1 - t, 4) }}
+            class="transition-all duration-300 {expandedRestaurantId === r.id ? 'col-span-full' : 'col-span-1'}"
             onclick={(e) => {
-              // Only expand if clicking the card itself, not the action buttons
               if ((e.target as HTMLElement).closest('button')) return;
               expandedRestaurantId = expandedRestaurantId === r.id ? null : r.id;
             }}
           >
-            <!-- Header row -->
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
-              <div>
-                <div style="font-size:18px;font-weight:800;color:#1e1b4b;letter-spacing:-0.03em;margin-bottom:4px;">{r.name}</div>
-                <div style="font-size:10px;font-family:'Geist Mono',monospace;color:#9ca3af;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{r.id}</div>
-              </div>
-              <span class="sa-badge-active" use:tooltip={"Restaurant is currently online"}>
-                <span style="width:5px;height:5px;border-radius:50%;background:#22c55e;display:inline-block;box-shadow:0 0 5px rgba(34,197,94,0.7);"></span>
-                Active
-              </span>
-            </div>
-            <!-- Details -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding-top:16px;border-top:1px solid rgba(99,102,241,0.08);">
-              <div>
-                <div class="sa-label">Owner ID</div>
-                <div style="font-size:12px;font-family:'Geist Mono',monospace;color:#6b6a9c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{r.owner_id ?? 'Unassigned'}</div>
-              </div>
-              <div>
-                <div class="sa-label">Deployed</div>
-                <div style="font-size:12px;font-family:'Geist Mono',monospace;color:#6b6a9c;">{r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN') : '—'}</div>
-              </div>
-            </div>
-            
-            {#if expandedRestaurantId === r.id}
-              <div transition:slide={{ duration: 300 }} style="margin-top:24px;padding-top:24px;border-top:1px solid rgba(0,0,0,0.05);">
-                <h3 style="font-size:14px;font-weight:800;color:#1e1b4b;margin-bottom:12px;">Detailed Configuration</h3>
-                <p style="font-size:12px;color:#6b6a9c;margin-bottom:16px;">(Placeholder for deeply nested restaurant configuration routing, tables, menus, etc.)</p>
-                <div style="display:flex;gap:10px;">
-                   <button class="sa-btn-primary" style="flex:1;">View Menu Dashboard</button>
-                   <button class="sa-btn-primary" style="flex:1;">View Table Config</button>
+            <Card class="h-full cursor-pointer transition-colors hover:bg-zinc-50">
+              <CardHeader class="flex flex-row items-start justify-between space-y-0 pb-2">
+                <div class="space-y-1">
+                  <h3 class="font-semibold leading-none tracking-tight">{r.name}</h3>
+                  <p class="text-xs text-zinc-500 font-mono truncate max-w-[200px]">{r.id}</p>
                 </div>
-              </div>
-            {/if}
+                <span class="inline-flex items-center rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 bg-emerald-50 whitespace-nowrap">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                  Active
+                </span>
+              </CardHeader>
+              <CardContent>
+                <div class="grid grid-cols-2 gap-4 text-sm mt-4">
+                  <div class="space-y-1">
+                    <p class="text-zinc-500 text-xs">Owner ID</p>
+                    <p class="font-medium text-zinc-900 truncate" title={r.owner_id}>{r.owner_id ?? 'Unassigned'}</p>
+                  </div>
+                  <div class="space-y-1">
+                    <p class="text-zinc-500 text-xs">Deployed</p>
+                    <p class="font-medium text-zinc-900">{r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN') : '-'}</p>
+                  </div>
+                </div>
 
-            <!-- Actions -->
-            <div style="display:flex;gap:10px;margin-top:18px;">
-              <button
-                style="flex:1;padding:8px;border-radius:10px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.12);color:#6366f1;font-size:12px;font-weight:600;cursor:pointer;font-family:'Cabinet Grotesk',system-ui,sans-serif;transition:all 0.15s;"
-                onclick={() => toast.info('Opening node settings...')}
-                use:tooltip={"Configure this restaurant"}
-              >Manage</button>
-              <button
-                style="width:36px;height:36px;border-radius:10px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.12);color:#6366f1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;"
-                onclick={() => toast.info('Viewing node externally...')}
-                use:tooltip={"Open in new tab"}
-              >
-                <ExternalLink size={13} />
-              </button>
-            </div>
+                {#if expandedRestaurantId === r.id}
+                  <div transition:slide={{ duration: 200 }} class="mt-6 pt-6 border-t border-zinc-200">
+                    <h4 class="text-sm font-semibold mb-2">Detailed Configuration</h4>
+                    <p class="text-xs text-zinc-500 mb-4">Select an area to manage this instance.</p>
+                    <div class="flex gap-2">
+                       <button class="inline-flex flex-1 items-center justify-center rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 border border-zinc-200 bg-white shadow-sm hover:bg-zinc-100 h-8 px-3">
+                         View Menu
+                       </button>
+                       <button class="inline-flex flex-1 items-center justify-center rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 border border-zinc-200 bg-white shadow-sm hover:bg-zinc-100 h-8 px-3">
+                         View Tables
+                       </button>
+                    </div>
+                  </div>
+                {/if}
+
+                <div class="flex gap-2 mt-6">
+                  <button
+                    class="inline-flex flex-1 items-center justify-center rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 bg-zinc-100 text-zinc-900 hover:bg-zinc-200 h-8 px-3 gap-1.5"
+                    onclick={() => toast.info('Opening settings...')}
+                  >
+                    <Settings2 size={14} /> Manage
+                  </button>
+                  <button
+                    class="inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 border border-zinc-200 bg-white hover:bg-zinc-100 h-8 w-8"
+                    onclick={() => toast.info('Viewing node externally...')}
+                  >
+                    <ExternalLink size={14} class="text-zinc-500" />
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         {/if}
       {/each}
@@ -114,56 +124,65 @@
   {/if}
 </div>
 
-<!-- Provision modal -->
 {#if showAddModal}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    transition:fade={{ duration: 200 }}
-    style="position:fixed;inset:0;background:rgba(30,27,75,0.3);backdrop-filter:blur(10px);z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;"
+    transition:fade={{ duration: 150 }}
+    class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
     onclick={(e) => { if (e.target === e.currentTarget) showAddModal = false; }}
   >
-    <div class="sa-tile" transition:fly={{ y: 40, duration: 600, easing: backOut }} style="width:100%;max-width:460px;padding:36px;position:relative;" onclick={(e) => e.stopPropagation()}>
-      <button
-        style="position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:8px;background:rgba(99,102,241,0.07);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#8b84c0;"
-        onclick={() => showAddModal = false}
-        use:tooltip={"Close"}
-      >
-        <X size={14} />
-      </button>
-
-      <h2 style="font-size:22px;font-weight:900;color:#1e1b4b;letter-spacing:-0.03em;margin-bottom:6px;">Provision New Node</h2>
-      <p style="font-size:12px;font-family:'Geist Mono',monospace;color:#8b84c0;margin-bottom:28px;">Deploy a new restaurant identity to the network</p>
+    <div 
+      class="bg-white rounded-xl border border-zinc-200 shadow-lg w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"
+      onclick={(e) => e.stopPropagation()}
+    >
+      <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
+        <div>
+          <h2 class="text-lg font-semibold tracking-tight">Provision Node</h2>
+          <p class="text-sm text-zinc-500">Deploy a new restaurant identity to the network.</p>
+        </div>
+        <button
+          class="rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
+          onclick={() => showAddModal = false}
+        >
+          <X size={16} class="text-zinc-500" />
+        </button>
+      </div>
 
       <form
         method="POST"
         use:enhance={() => {
           loading = true;
-          return async ({ update }) => { await update({ reset: true }); loading = false; };
+          return async ({ update }) => { await update({ reset: true }); loading = false; showAddModal = false; };
         }}
-        style="display:flex;flex-direction:column;gap:18px;"
+        class="p-6 space-y-4"
       >
-        <div>
-          <label class="sa-label" for="restaurant_name">Restaurant Name</label>
-          <input class="sa-input" id="restaurant_name" name="restaurant_name" type="text" required placeholder="The Golden Fork" />
+        <div class="space-y-2">
+          <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="restaurant_name">Restaurant Name</label>
+          <input class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50" id="restaurant_name" name="restaurant_name" type="text" required placeholder="The Golden Fork" />
         </div>
-        <div>
-          <label class="sa-label" for="email">Owner Email</label>
-          <input class="sa-input" id="email" name="email" type="email" required placeholder="owner@restaurant.com" />
+        
+        <div class="space-y-2">
+          <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="email">Owner Email</label>
+          <input class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50" id="email" name="email" type="email" required placeholder="owner@restaurant.com" />
         </div>
-        <div>
-          <label class="sa-label" for="password">Initial Password</label>
-          <input class="sa-input" id="password" name="password" type="password" required placeholder="••••••••" />
+        
+        <div class="space-y-2">
+          <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="password">Initial Password</label>
+          <input class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50" id="password" name="password" type="password" required placeholder="••••••••" />
         </div>
-        <div style="display:flex;gap:10px;margin-top:8px;">
+        
+        <div class="flex gap-2 pt-2 border-t border-zinc-200 mt-6">
           <button
             type="button"
             onclick={() => showAddModal = false}
             disabled={loading}
-            style="flex:1;padding:10px;border-radius:12px;background:transparent;border:1px solid rgba(99,102,241,0.15);color:#8b84c0;font-size:14px;font-weight:600;cursor:pointer;font-family:'Cabinet Grotesk',system-ui,sans-serif;"
-          >Cancel</button>
-          <button type="submit" disabled={loading} class="sa-btn-primary" style="flex:2;">
-            {loading ? 'Deploying...' : 'Deploy Restaurant'}
+            class="inline-flex flex-1 items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 border border-zinc-200 bg-white shadow-sm hover:bg-zinc-100 h-9 px-4"
+          >
+            Cancel
+          </button>
+          <button type="submit" disabled={loading} class="inline-flex flex-1 items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-900/90 h-9 px-4">
+            {loading ? 'Deploying...' : 'Deploy'}
           </button>
         </div>
       </form>

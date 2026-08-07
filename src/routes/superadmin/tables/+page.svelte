@@ -1,129 +1,135 @@
 <script lang="ts">
+  import { Store, Plus, X, Download, QrCode as QrIcon, Users, Grid2X2 } from 'lucide-svelte';
+  import { page } from '$app/stores';
   import { onMount } from 'svelte';
-  import { supabase } from '$lib/supabase';
-  import { toast } from 'svelte-sonner';
   import QRCode from 'qrcode';
-  import { env } from '$env/dynamic/public';
-  import { Plus, QrCode as QrIcon, Download, X, Users, Store } from 'lucide-svelte';
-  import type { Table } from '$lib/types';
+  import { fade } from 'svelte/transition';
+  import { toast } from 'svelte-sonner';
 
-  let tables = $state<Table[]>([]);
-  let restaurants = $state<any[]>([]);
-  let selectedRestaurantId = $state<string>('');
+  import Card from '$lib/components/ui/card.svelte';
+  import CardHeader from '$lib/components/ui/card-header.svelte';
+  import CardContent from '$lib/components/ui/card-content.svelte';
   
-  let isLoading = $state(true);
+  let { data } = $props();
+  let restaurants = $state(data.restaurants || []);
+  let tables = $state(data.tables || []);
+  
+  let selectedRestaurantId = $state('');
+  let filteredTables = $derived(
+    selectedRestaurantId 
+      ? tables.filter(t => t.restaurant_id === selectedRestaurantId)
+      : tables
+  );
+
   let showAddModal = $state(false);
   let showQrModal = $state(false);
-  let selectedTable = $state<Table | null>(null);
+  let selectedTable = $state<any>(null);
   let qrDataUrl = $state('');
+  let isLoading = $state(false);
   let isSaving = $state(false);
 
-  // Filter tables based on the selected restaurant
-  let filteredTables = $derived.by(() => {
-    return selectedRestaurantId 
-      ? tables.filter(t => t.restaurant_id === selectedRestaurantId)
-      : tables;
-  });
-
-  onMount(async () => {
-    if (!supabase) { 
-      isLoading = false; 
-      return; 
-    }
-    
-    // Fetch restaurants for the selector
-    const { data: restData } = await supabase.from('restaurants').select('id, name').order('name');
-    if (restData) {
-      restaurants = restData;
-      if (restaurants.length > 0) {
-        selectedRestaurantId = restaurants[0].id;
-      }
-    }
-
-    // Fetch all tables
-    const { data } = await supabase.from('tables').select('*').order('table_number');
-    tables = data ?? [];
-    isLoading = false;
-  });
-
-  async function generateQr(table: Table) {
+  async function generateQr(table: any) {
     selectedTable = table;
-    const appUrl = env.PUBLIC_APP_URL || window.location.origin;
-    // Fix: Using the table's actual restaurant_id instead of a hardcoded mock
-    const url = `${appUrl}/table/${table.restaurant_id}/${table.id}`;
-    qrDataUrl = await QRCode.toDataURL(url, { width: 300, margin: 2, color: { dark: '#1e1b4b', light: '#ffffff' } });
-    showQrModal = true;
+    const url = `${$page.url.origin}/m/${table.restaurant_id}?t=${table.id}`;
+    try {
+      qrDataUrl = await QRCode.toDataURL(url, {
+        width: 300,
+        margin: 2,
+        color: { dark: '#09090b', light: '#ffffff' }
+      });
+      showQrModal = true;
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to generate QR code');
+    }
   }
 
   function downloadQr() {
-    if (!qrDataUrl || !selectedTable) return;
+    if (!qrDataUrl) return;
     const a = document.createElement('a');
     a.href = qrDataUrl;
-    a.download = `qr-table-${selectedTable.table_number}.png`;
+    a.download = `table-${selectedTable?.table_number}-qr.png`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
   }
 
-  async function addTable(e: SubmitEvent) {
+  async function addTable(e: Event) {
     e.preventDefault();
     if (!selectedRestaurantId) {
       toast.error('Please select a restaurant first');
       return;
     }
-
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    
     isSaving = true;
-    const fd = new FormData(e.target as HTMLFormElement);
-    const newTable: Partial<Table> = {
-      id: crypto.randomUUID(),
-      table_number: Number(fd.get('table_number')),
-      display_name: fd.get('display_name') as string,
-      capacity: Number(fd.get('capacity')),
-      restaurant_id: selectedRestaurantId,
-      is_active: true,
-    };
-    
-    // Optimistic UI update
-    tables = [...tables, newTable as Table];
-    toast.success('Table added!');
-    showAddModal = false;
-    isSaving = false;
-    
-    if (supabase) {
-      const { error } = await supabase.from('tables').insert(newTable);
-      if (error) {
-        toast.error('Failed to save table to database');
-        // Rollback optimistic update
-        tables = tables.filter(t => t.id !== newTable.id);
+    try {
+      const res = await fetch('?/addTable', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await res.json();
+      if (result.type === 'success') {
+        const data = JSON.parse(result.data);
+        const newTable = data[0];
+        if (newTable) {
+          tables = [...tables, newTable];
+          showAddModal = false;
+          toast.success(`Table ${newTable.table_number} added`);
+        }
+      } else {
+        toast.error('Failed to add table');
       }
+    } catch (err) {
+      console.error(err);
+      toast.error('An error occurred');
+    } finally {
+      isSaving = false;
     }
   }
 </script>
 
-<svelte:head><title>Tables & QR · Superadmin</title></svelte:head>
+<svelte:head>
+  <title>Tables | Superadmin</title>
+</svelte:head>
 
-<div style="font-family:'Cabinet Grotesk',system-ui,sans-serif;color:#1e1b4b;">
-  <div class="sa-page-header">
-    <div>
-      <h1 class="sa-page-title">Tables & QR Codes</h1>
-      <p class="sa-page-subtitle">{filteredTables.length} tables configured for selected restaurant</p>
+<div class="flex-1 space-y-4">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div class="flex items-center gap-4">
+      <div class="w-10 h-10 rounded-md bg-zinc-100 flex items-center justify-center border border-zinc-200 text-zinc-900">
+        <Grid2X2 size={20} />
+      </div>
+      <div>
+        <h2 class="text-3xl font-bold tracking-tight text-zinc-950">Table Management</h2>
+        <p class="text-sm text-zinc-500">Configure tables and generate QR codes.</p>
+      </div>
     </div>
-    <div style="display: flex; gap: 12px; align-items: center;">
-      <!-- Restaurant Selector -->
+    
+    <div class="flex items-center gap-2">
       {#if restaurants.length > 0}
-        <div style="display:flex;align-items:center;background:rgba(255,255,255,0.7);padding:8px 12px;border-radius:12px;border:1px solid rgba(99,102,241,0.2);gap:8px;">
-          <Store size={16} color="#6366f1" />
+        <div class="relative">
           <select 
             bind:value={selectedRestaurantId}
-            style="background:transparent;border:none;outline:none;font-family:'Cabinet Grotesk',system-ui,sans-serif;font-size:14px;font-weight:600;color:#1e1b4b;cursor:pointer;"
+            class="flex h-9 w-full sm:w-[200px] items-center justify-between rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm ring-offset-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
           >
             <option value="">All Restaurants</option>
             {#each restaurants as rest}
               <option value={rest.id}>{rest.name}</option>
             {/each}
           </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-zinc-500">
+            <svg class="h-4 w-4 opacity-50" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </div>
         </div>
       {/if}
-      <button class="sa-btn-primary" onclick={() => showAddModal = true} disabled={!selectedRestaurantId}>
-        <span style="display:flex;align-items:center;gap:6px;"><Plus size={15} strokeWidth={2.5} /> Add Table</span>
+      <button 
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:pointer-events-none disabled:opacity-50 bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-900/90 h-9 px-4 py-2 gap-2" 
+        onclick={() => showAddModal = true} 
+        disabled={!selectedRestaurantId}
+      >
+        <Plus size={16} /> Add Table
       </button>
     </div>
   </div>
@@ -131,17 +137,22 @@
   {#if isLoading}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {#each Array(6) as _}
-        <div class="sa-tile" style="height:180px;animation:pulse 1.5s infinite;background:rgba(99,102,241,0.04);"></div>
+        <div class="h-[180px] rounded-xl border border-zinc-200 bg-zinc-100/50 animate-pulse"></div>
       {/each}
     </div>
   {:else if filteredTables.length === 0}
-    <div class="sa-tile" style="padding:64px;text-align:center;">
-      <div style="font-size:36px;margin-bottom:12px;">🪑</div>
-      <div style="font-size:16px;font-weight:700;color:#8b84c0;">No tables configured</div>
+    <div class="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 p-12 text-center animate-in fade-in-50">
+      <div class="flex h-20 w-20 items-center justify-center rounded-full bg-zinc-100 mb-4">
+        <Grid2X2 size={32} class="text-zinc-400" />
+      </div>
+      <h3 class="mt-4 text-lg font-semibold text-zinc-950">No tables configured</h3>
       {#if !selectedRestaurantId}
-        <div style="font-size:13px;color:#ef4444;margin-top:8px;">Please select a restaurant to add tables.</div>
+        <p class="mb-4 mt-2 text-sm text-amber-600">Please select a restaurant to add tables.</p>
       {:else}
-        <button class="sa-btn-primary" style="margin-top:16px;" onclick={() => showAddModal = true}>Add First Table</button>
+        <p class="mb-4 mt-2 text-sm text-zinc-500">Add the first table for this restaurant.</p>
+        <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-900/90 h-9 px-4 py-2" onclick={() => showAddModal = true}>
+          Add First Table
+        </button>
       {/if}
     </div>
   {:else}
@@ -149,27 +160,33 @@
       {#each filteredTables as table (table.id)}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div class="sa-tile" style="padding:24px;text-align:center;cursor:pointer;" onclick={() => generateQr(table)}>
-          <!-- Big number -->
-          <div style="font-size:52px;font-weight:900;color:#6366f1;line-height:1;letter-spacing:-0.05em;margin-bottom:8px;font-variant-numeric:tabular-nums;">{table.table_number}</div>
-          <div style="font-size:14px;font-weight:700;color:#1e1b4b;margin-bottom:4px;">{table.display_name || 'Table ' + table.table_number}</div>
-          <div style="display:flex;align-items:center;justify-content:center;gap:4px;font-size:12px;color:#8b84c0;margin-bottom:16px;">
-            <Users size={11} />
-            {table.capacity ?? 4} seats
-          </div>
-          <div style="padding-top:16px;border-top:1px solid rgba(99,102,241,0.08);">
-            {#if table.is_active}
-              <span class="sa-badge-active">
-                <span style="width:5px;height:5px;border-radius:50%;background:#22c55e;display:inline-block;"></span>
-                Active
-              </span>
-            {:else}
-              <span class="sa-badge-inactive">Inactive</span>
-            {/if}
-          </div>
-          <div style="margin-top:12px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;font-family:'Geist Mono',monospace;color:#a5b4fc;">
-            <QrIcon size={11} /> Tap to generate QR
-          </div>
+        <div onclick={() => generateQr(table)}>
+          <Card class="cursor-pointer transition-colors hover:bg-zinc-50 group text-center h-full flex flex-col justify-center py-6">
+            <CardContent class="p-0 pb-0">
+              <div class="text-5xl font-black text-zinc-900 tabular-nums tracking-tighter mb-2">{table.table_number}</div>
+              <div class="text-sm font-semibold text-zinc-950 mb-1">{table.display_name || 'Table ' + table.table_number}</div>
+              <div class="flex items-center justify-center gap-1.5 text-xs text-zinc-500 mb-4">
+                <Users size={12} />
+                {table.capacity ?? 4} seats
+              </div>
+              
+              <div class="pt-4 border-t border-zinc-100">
+                {#if table.is_active}
+                  <span class="inline-flex items-center rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 bg-emerald-50">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span> Active
+                  </span>
+                {:else}
+                  <span class="inline-flex items-center rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-500 bg-zinc-100">
+                    Inactive
+                  </span>
+                {/if}
+              </div>
+
+              <div class="mt-4 flex items-center justify-center gap-1.5 text-[10px] font-mono text-zinc-400 group-hover:text-zinc-600 transition-colors">
+                <QrIcon size={12} /> Tap for QR
+              </div>
+            </CardContent>
+          </Card>
         </div>
       {/each}
     </div>
@@ -180,21 +197,34 @@
 {#if showQrModal && selectedTable}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div style="position:fixed;inset:0;background:rgba(30,27,75,0.35);backdrop-filter:blur(10px);z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;" onclick={(e) => { if (e.target === e.currentTarget) showQrModal = false; }}>
-    <div class="sa-tile" style="width:100%;max-width:360px;padding:36px;text-align:center;position:relative;" onclick={(e) => e.stopPropagation()}>
-      <button style="position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:8px;background:rgba(99,102,241,0.07);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#8b84c0;" onclick={() => showQrModal = false}><X size={14} /></button>
-      <div style="font-size:13px;font-family:'Geist Mono',monospace;color:#8b84c0;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Table {selectedTable.table_number}</div>
-      <div style="font-size:20px;font-weight:900;color:#1e1b4b;letter-spacing:-0.03em;margin-bottom:20px;">{selectedTable.display_name || 'Table ' + selectedTable.table_number}</div>
-      {#if qrDataUrl}
-        <div style="padding:16px;border-radius:16px;background:white;display:inline-block;box-shadow:0 4px 20px rgba(99,102,241,0.12);margin-bottom:20px;">
-          <img src={qrDataUrl} alt="QR Code" style="width:200px;height:200px;display:block;" />
-        </div>
-      {/if}
-      <div style="display:flex;gap:10px;">
-        <button onclick={downloadQr} class="sa-btn-primary" style="flex:1;">
-          <span style="display:flex;align-items:center;justify-content:center;gap:6px;"><Download size={14} /> Download</span>
+  <div 
+    transition:fade={{ duration: 150 }}
+    class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" 
+    onclick={(e) => { if (e.target === e.currentTarget) showQrModal = false; }}
+  >
+    <div class="bg-white rounded-xl border border-zinc-200 shadow-lg w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 text-center" onclick={(e) => e.stopPropagation()}>
+      <div class="relative p-6">
+        <button class="absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2" onclick={() => showQrModal = false}>
+          <X size={16} class="text-zinc-500" />
         </button>
-        <button onclick={() => window.print()} style="flex:1;padding:10px;border-radius:12px;background:transparent;border:1px solid rgba(99,102,241,0.2);color:#6366f1;font-size:14px;font-weight:600;cursor:pointer;font-family:'Cabinet Grotesk',system-ui,sans-serif;">Print</button>
+        
+        <div class="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-1 mt-2">Table {selectedTable.table_number}</div>
+        <div class="text-xl font-bold tracking-tight text-zinc-950 mb-6">{selectedTable.display_name || 'Table ' + selectedTable.table_number}</div>
+        
+        {#if qrDataUrl}
+          <div class="inline-block p-4 rounded-xl border border-zinc-200 shadow-sm mb-6 bg-white">
+            <img src={qrDataUrl} alt="QR Code" class="w-[200px] h-[200px] block" />
+          </div>
+        {/if}
+        
+        <div class="flex gap-2">
+          <button onclick={downloadQr} class="inline-flex flex-1 items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-900/90 h-9 px-4 gap-2">
+            <Download size={14} /> Download
+          </button>
+          <button onclick={() => window.print()} class="inline-flex flex-1 items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 border border-zinc-200 bg-white shadow-sm hover:bg-zinc-100 text-zinc-900 h-9 px-4">
+            Print
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -204,26 +234,46 @@
 {#if showAddModal}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div style="position:fixed;inset:0;background:rgba(30,27,75,0.3);backdrop-filter:blur(10px);z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;" onclick={(e) => { if (e.target === e.currentTarget) showAddModal = false; }}>
-    <div class="sa-tile" style="width:100%;max-width:420px;padding:36px;position:relative;" onclick={(e) => e.stopPropagation()}>
-      <button style="position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:8px;background:rgba(99,102,241,0.07);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#8b84c0;" onclick={() => showAddModal = false}><X size={14} /></button>
-      <h2 style="font-size:20px;font-weight:900;color:#1e1b4b;letter-spacing:-0.03em;margin-bottom:24px;">Add New Table</h2>
-      <form onsubmit={addTable} style="display:flex;flex-direction:column;gap:16px;">
+  <div 
+    transition:fade={{ duration: 150 }}
+    class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" 
+    onclick={(e) => { if (e.target === e.currentTarget) showAddModal = false; }}
+  >
+    <div class="bg-white rounded-xl border border-zinc-200 shadow-lg w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200" onclick={(e) => e.stopPropagation()}>
+      <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
         <div>
-          <label class="sa-label" for="table_number">Table Number</label>
-          <input class="sa-input" id="table_number" name="table_number" type="number" required min="1" placeholder="7" />
+          <h2 class="text-lg font-semibold tracking-tight">Add New Table</h2>
         </div>
-        <div>
-          <label class="sa-label" for="display_name">Display Name</label>
-          <input class="sa-input" id="display_name" name="display_name" required placeholder="Window Seat" />
+        <button class="rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2" onclick={() => showAddModal = false}>
+          <X size={16} class="text-zinc-500" />
+        </button>
+      </div>
+
+      <form onsubmit={addTable} class="p-6 space-y-4">
+        <input type="hidden" name="restaurant_id" value={selectedRestaurantId} />
+        
+        <div class="space-y-2">
+          <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="table_number">Table Number</label>
+          <input class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50" id="table_number" name="table_number" type="number" required min="1" placeholder="7" />
         </div>
-        <div>
-          <label class="sa-label" for="capacity">Capacity</label>
-          <input class="sa-input" id="capacity" name="capacity" type="number" min="1" max="50" value="4" />
+        
+        <div class="space-y-2">
+          <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="display_name">Display Name (Optional)</label>
+          <input class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50" id="display_name" name="display_name" placeholder="Window Seat" />
         </div>
-        <div style="display:flex;gap:10px;margin-top:8px;">
-          <button type="button" onclick={() => showAddModal = false} style="flex:1;padding:10px;border-radius:12px;background:transparent;border:1px solid rgba(99,102,241,0.15);color:#8b84c0;font-size:14px;font-weight:600;cursor:pointer;font-family:'Cabinet Grotesk',system-ui,sans-serif;">Cancel</button>
-          <button type="submit" disabled={isSaving} class="sa-btn-primary" style="flex:2;">{isSaving ? 'Adding...' : 'Add Table'}</button>
+        
+        <div class="space-y-2">
+          <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="capacity">Capacity</label>
+          <input class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50" id="capacity" name="capacity" type="number" min="1" max="50" value="4" />
+        </div>
+        
+        <div class="flex gap-2 pt-2 mt-6">
+          <button type="button" onclick={() => showAddModal = false} class="inline-flex flex-1 items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 border border-zinc-200 bg-white shadow-sm hover:bg-zinc-100 h-9 px-4">
+            Cancel
+          </button>
+          <button type="submit" disabled={isSaving} class="inline-flex flex-1 items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-900/90 h-9 px-4">
+            {isSaving ? 'Adding...' : 'Add Table'}
+          </button>
         </div>
       </form>
     </div>

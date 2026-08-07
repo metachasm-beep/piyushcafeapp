@@ -20,21 +20,17 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 
 	const supabaseAdmin = getSupabaseAdmin();
 
-	// Fetch the restaurant the owner belongs to
-	const { data: staffDataList } = await supabaseAdmin
-		.from('restaurant_staff')
-		.select('restaurant_id')
-		.eq('user_id', user.id);
-
-	let restaurantIds = staffDataList?.map(s => s.restaurant_id) || [];
 	let restaurant = null;
 	let validRestaurantId = null;
+	let debugInfo = { step: 'init', email: user.email, user_id: user.id, profiles: null, restaurant: null };
 
-	if (restaurantIds.length > 0) {
+	// 1. If hooks.server.ts found a direct staff mapping, use it! (Covers chefs, waiters, and exact-match owners)
+	if (locals.restaurantId) {
+		debugInfo.step = 'fetching_via_locals';
 		const { data: restaurantList } = await supabaseAdmin
 			.from('restaurants')
 			.select('*')
-			.in('id', restaurantIds)
+			.eq('id', locals.restaurantId)
 			.limit(1);
 
 		if (restaurantList && restaurantList.length > 0) {
@@ -43,13 +39,10 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		}
 	}
 
-	let debugInfo = { step: 'init', email: user.email, user_id: user.id, profiles: null, staff: null };
-
+	// 2. Strict Fallback: If no direct mapping exists (e.g., Google OAuth created a new ID),
+	// fetch via the canonical owner_profiles and the strict owner_id on the restaurants table.
 	if (!restaurant && user.email) {
-		debugInfo.step = 'fallback_started';
-		// Fallback: Check if ANY user with this email has a VALID restaurant. 
-		// This solves issues where a Google OAuth login creates a new Auth user 
-		// that differs from the one the Superadmin provisioned against.
+		debugInfo.step = 'fetching_canonical_profile';
 		const { data: profiles } = await supabaseAdmin
 			.from('owner_profiles')
 			.select('id')
@@ -58,38 +51,32 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		debugInfo.profiles = profiles;
 			
 		if (profiles && profiles.length > 0) {
-			const profileIds = profiles.map(p => p.id);
-			const { data: emailStaffList } = await supabaseAdmin
-				.from('restaurant_staff')
-				.select('restaurant_id')
-				.in('user_id', profileIds);
+			const canonicalIds = profiles.map(p => p.id);
+			debugInfo.step = 'fetching_restaurant_by_owner_id';
+
+			const { data: restaurantList } = await supabaseAdmin
+				.from('restaurants')
+				.select('*')
+				.in('owner_id', canonicalIds)
+				.limit(1);
 				
-			debugInfo.staff = emailStaffList;
+			debugInfo.restaurant = restaurantList;
 				
-			if (emailStaffList && emailStaffList.length > 0) {
-				const fallbackRestaurantIds = emailStaffList.map(s => s.restaurant_id);
-				const { data: fallbackRestaurants } = await supabaseAdmin
-					.from('restaurants')
-					.select('*')
-					.in('id', fallbackRestaurantIds)
-					.limit(1);
-					
-				if (fallbackRestaurants && fallbackRestaurants.length > 0) {
-					restaurant = fallbackRestaurants[0];
-					validRestaurantId = restaurant.id;
-					
-					// Self-healing: Link this current user ID to the valid restaurant as well
-					await supabaseAdmin.from('restaurant_staff').insert({
-						restaurant_id: validRestaurantId,
-						user_id: user.id,
-						role: 'owner'
-					});
-					await supabaseAdmin.from('owner_profiles').upsert({
-						id: user.id,
-						email: user.email,
-						is_approved: true
-					});
-				}
+			if (restaurantList && restaurantList.length > 0) {
+				restaurant = restaurantList[0];
+				validRestaurantId = restaurant.id;
+				
+				// Optional self-healing for the staff table so future lookups are fast
+				await supabaseAdmin.from('restaurant_staff').insert({
+					restaurant_id: validRestaurantId,
+					user_id: user.id,
+					role: 'owner'
+				});
+				await supabaseAdmin.from('owner_profiles').upsert({
+					id: user.id,
+					email: user.email,
+					is_approved: true
+				});
 			}
 		}
 	}

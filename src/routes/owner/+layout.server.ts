@@ -1,6 +1,7 @@
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ locals: { supabase, user } }) => {
+export const load: LayoutServerLoad = async ({ locals }) => {
+	const { supabase, user } = locals;
 	if (!user) {
 		return { restaurant: null };
 	}
@@ -33,6 +34,6 @@ export const load: LayoutServerLoad = async ({ locals: { supabase, user } }) => 
 	return {
 		restaurant,
 		tables: tables ?? [],
-		userRole: locals.userRole
+		userRole: locals.userRole ?? 'owner'
 	};
 };

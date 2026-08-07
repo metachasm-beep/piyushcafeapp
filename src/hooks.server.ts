@@ -121,10 +121,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 			if (!path.startsWith('/owner/waiter') && !path.startsWith('/owner/settings')) {
 				throw redirect(303, '/owner/waiter');
 			}
-		} else if (role === 'owner') {
-			// Owners cannot access the waiter dashboard (or they can, but it's meant for waiters)
+		} else if (role === 'owner' || !role) {
+			// Owners or approved users with no staff role yet — allow access
+			// No restrictions for owners
 		} else {
-			// Not a recognized role?
+			// Unrecognized role
 			throw redirect(303, '/?error=unauthorized');
 		}
 	}

@@ -77,8 +77,8 @@
               <CardContent>
                 <div class="grid grid-cols-2 gap-4 text-sm mt-4">
                   <div class="space-y-1">
-                    <p class="text-zinc-900 text-xs">Owner ID</p>
-                    <p class="font-medium text-zinc-900 truncate" title={r.owner_id}>{r.owner_id ?? 'Unassigned'}</p>
+                    <p class="text-zinc-900 text-xs">Owner Email</p>
+                    <p class="font-medium text-zinc-900 truncate" title={r.owner_email}>{r.owner_email}</p>
                   </div>
                   <div class="space-y-1">
                     <p class="text-zinc-900 text-xs">Deployed</p>

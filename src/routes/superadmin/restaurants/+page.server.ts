@@ -32,12 +32,24 @@ export const load: PageServerLoad = async () => {
 		};
 	}
 
-	// Transform data to inject owner_id from restaurant_staff
+	const { data: ownerProfiles, error: ownerError } = await getSupabaseAdmin()
+		.from('owner_profiles')
+		.select('id, email');
+		
+	if (ownerError) {
+		console.error('Error fetching owner profiles:', ownerError);
+	}
+	
+	const ownerEmailMap = new Map(ownerProfiles?.map(op => [op.id, op.email]) || []);
+
+	// Transform data to inject owner_id and owner_email from restaurant_staff
 	const transformedRestaurants = (restaurants || []).map(r => {
 		const ownerStaff = r.restaurant_staff?.find((s: any) => s.role === 'owner');
+		const ownerId = ownerStaff?.user_id || null;
 		return {
 			...r,
-			owner_id: ownerStaff?.user_id || null
+			owner_id: ownerId,
+			owner_email: ownerId ? ownerEmailMap.get(ownerId) || 'Unknown' : 'Unassigned'
 		};
 	});
 

@@ -35,12 +35,14 @@ export const actions: Actions = {
 	createRestaurant: async ({ request }) => {
 		const formData = await request.formData();
 		const email = formData.get('email') as string;
-		const password = formData.get('password') as string;
 		const restaurant_name = formData.get('restaurant_name') as string;
 
-		if (!email || !password || !restaurant_name) {
-			return fail(400, { error: 'All fields are required' });
+		if (!email || !restaurant_name) {
+			return fail(400, { error: 'Email and Restaurant Name are required' });
 		}
+
+		// Generate a strong random password for initial auth creation
+		const password = crypto.randomUUID() + crypto.randomUUID();
 
 		let userId = null;
 

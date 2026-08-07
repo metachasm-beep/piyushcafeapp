@@ -1,0 +1,10 @@
+
+> the-golden-fork@0.0.1 dev
+> vite dev
+
+
+  [32m[1mVITE[22m v8.2.0[39m  [2mready in [0m[1m1654[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+{"level":"error","errorId":"c1609ba0-870b-41fd-9ac1-6c65d1827d29","path":"/superadmin/restaurants","method":"POST","status":500,"error":"Your project's URL and Key are required to create a Supabase client!\n\nCheck your Supabase project's API settings to find these values\n\nhttps://supabase.com/dashboard/project/_/settings/api","stack":"Error: Your project's URL and Key are required to create a Supabase client!\n\nCheck your Supabase project's API settings to find these values\n\nhttps://supabase.com/dashboard/project/_/settings/api\n    at createServerClient (F:\\Piyush\\piyushcafeapp\\node_modules\\@supabase\\ssr\\dist\\main\\createServerClient.js:12:15)\n    at Object.handle (F:\\Piyush\\piyushcafeapp\\src\\hooks.server.ts:21:26)\n    at F:\\Piyush\\piyushcafeapp\\node_modules\\@sveltejs\\kit\\src\\runtime\\server\\respond.js?v=1cf651e3:457:20\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)\n    at with_request_store (file:///F:/Piyush/piyushcafeapp/node_modules/@sveltejs/kit/src/exports/internal/event.js:77:20)\n    at fn (F:\\Piyush\\piyushcafeapp\\node_modules\\@sveltejs\\kit\\src\\runtime\\server\\respond.js?v=1cf651e3:456:18)\n    at record_span (F:\\Piyush\\piyushcafeapp\\node_modules\\@sveltejs\\kit\\src\\runtime\\telemetry\\record_span.js?v=1cf651e3:9:10)\n    at handle (F:\\Piyush\\piyushcafeapp\\node_modules\\@sveltejs\\kit\\src\\runtime\\server\\respond.js?v=1cf651e3:437:26)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)\n    at Object.before_handle (file:///F:/Piyush/piyushcafeapp/node_modules/@sveltejs/kit/src/exports/vite/dev/index.js:574:40)","timestamp":"2026-08-07T14:18:01.554Z"}

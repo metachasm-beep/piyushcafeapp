@@ -182,14 +182,17 @@
           return async ({ result, update }) => { 
             await update({ reset: false }); 
             loading = false; 
+            console.log('Create result:', result);
             if (result.type === 'success') {
               toast.success('Restaurant node provisioned successfully!');
               showAddModal = false;
-              window.location.reload(); // Refresh to see the new data if invalidate isn't working
+              window.location.reload();
             } else if (result.type === 'failure') {
               toast.error(result.data?.error || 'Failed to provision node');
             } else if (result.type === 'error') {
-              toast.error(result.error?.message || 'Server error occurred');
+              toast.error(result.error?.message || 'Server error occurred during creation');
+            } else {
+              toast.error(`Unexpected result type: ${result.type}`);
             }
           };
         }}

@@ -1,18 +1,36 @@
 <script lang="ts">
   import { cn } from "$lib/utils";
   import type { HTMLAttributes } from "svelte/elements";
+  import { cva, type VariantProps } from "class-variance-authority";
 
-  let { class: className = undefined, children, ...rest }: HTMLAttributes<HTMLDivElement> = $props();
+  const cardVariants = cva(
+    "rounded-xl border bg-white shadow-sm transition-all duration-300 ease-out",
+    {
+      variants: {
+        variant: {
+          default: "border-zinc-200 hover:border-zinc-300 hover:shadow-md",
+          interactive: "border-zinc-200 cursor-pointer hover:border-indigo-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-indigo-500/10",
+          destructive: "border-red-100 hover:border-red-200 bg-red-50/50",
+        },
+      },
+      defaultVariants: {
+        variant: "default",
+      },
+    }
+  );
+
+  type CardVariantProps = VariantProps<typeof cardVariants>;
+
+  let { 
+    class: className = undefined, 
+    variant = "default",
+    children, 
+    ...rest 
+  }: HTMLAttributes<HTMLDivElement> & { variant?: CardVariantProps["variant"] } = $props();
 </script>
 
 <div
-  class={cn(
-    "rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl",
-    "shadow-[0_30px_60px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]",
-    "transition-all duration-500 ease-out",
-    className
-  )}
-  style="transform-style: preserve-3d;"
+  class={cn(cardVariants({ variant }), className)}
   {...rest}
 >
   {@render children?.()}

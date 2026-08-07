@@ -6,8 +6,7 @@
 </script>
 
 <div
-  class={cn("flex flex-col space-y-1.5 p-6 transition-transform duration-500", className)}
-  style="transform: translateZ(20px);"
+  class={cn("flex flex-col space-y-1.5 p-6", className)}
   {...rest}
 >
   {@render children?.()}

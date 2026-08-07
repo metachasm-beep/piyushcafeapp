@@ -6,8 +6,7 @@
 </script>
 
 <div
-  class={cn("p-6 pt-0 transition-transform duration-500 hover:-translate-y-1 hover:translate-z-12", className)}
-  style="transform: translateZ(30px);"
+  class={cn("p-6 pt-0", className)}
   {...rest}
 >
   {@render children?.()}

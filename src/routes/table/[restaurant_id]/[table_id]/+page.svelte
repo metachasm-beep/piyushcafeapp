@@ -7,7 +7,6 @@
   import { session } from '$lib/stores/session';
   // Order placement is now handled through the secure /api/orders endpoint
   import { cart, cartCount, cartTotal } from '$lib/stores/cart';
-  import { adminOrders, waiterRequests } from '$lib/stores/admin';
   import { formatCurrency, generateUUID } from '$lib/utils';
   
   import DietaryBadge from '$lib/components/DietaryBadge.svelte';
@@ -68,18 +67,10 @@
       toast('Waiter is already on the way!');
       return;
     }
-    waiterRequests.add({
-      id: generateUUID(),
-      restaurant_id: restaurant.id,
-      table_id: table.id,
-      order_id: null,
-      status: 'pending',
-      message: 'Customer requires assistance',
-      acknowledged_at: null,
-      resolved_at: null,
-      created_at: new Date().toISOString(),
-      table
-    });
+    
+    // In production, this would make an API call to Supabase to insert a waiter request
+    // fetch('/api/waiter', { method: 'POST', ... })
+    
     toast.success('Waiter called! 🛎️ Someone will be with you shortly.');
     waiterCalled = true;
     waiterCooldown = true;
@@ -137,8 +128,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            amount: currentCartTotal * 1.1,
-            restaurant_id: restaurant.id,
+            order_id: orderId,
             receipt: `rcpt_${orderId}`,
             notes: { internal_order_id: orderId }
           })

@@ -304,12 +304,8 @@ CREATE POLICY "owner_manage_own_items"
   WITH CHECK (restaurant_id = my_restaurant_id());
 
 -- ---- orders ----
-CREATE POLICY "anon_insert_orders"
-  ON orders FOR INSERT TO anon WITH CHECK (TRUE);
-
-CREATE POLICY "anon_read_own_orders"
-  ON orders FOR SELECT TO anon
-  USING (customer_session IS NOT NULL);  -- client filters by session client-side
+-- REMOVED: anon_insert_orders (use /api/orders endpoint instead)
+-- REMOVED: anon_read_own_orders (use /api/orders/[id] endpoint instead)
 
 CREATE POLICY "owner_all_restaurant_orders"
   ON orders FOR ALL TO authenticated
@@ -317,11 +313,8 @@ CREATE POLICY "owner_all_restaurant_orders"
   WITH CHECK (restaurant_id = my_restaurant_id());
 
 -- ---- order_items ----
-CREATE POLICY "anon_insert_order_items"
-  ON order_items FOR INSERT TO anon WITH CHECK (TRUE);
-
-CREATE POLICY "anon_read_order_items"
-  ON order_items FOR SELECT TO anon USING (TRUE);
+-- REMOVED: anon_insert_order_items
+-- REMOVED: anon_read_order_items
 
 CREATE POLICY "owner_all_order_items"
   ON order_items FOR ALL TO authenticated
@@ -332,8 +325,7 @@ CREATE POLICY "owner_all_order_items"
   );
 
 -- ---- waiter_requests ----
-CREATE POLICY "anon_insert_waiter_requests"
-  ON waiter_requests FOR INSERT TO anon WITH CHECK (TRUE);
+-- REMOVED: anon_insert_waiter_requests
 
 CREATE POLICY "owner_manage_waiter_requests"
   ON waiter_requests FOR ALL TO authenticated
@@ -397,6 +389,14 @@ DECLARE
   v_menu_item_price NUMERIC(10, 2);
   v_total_amount NUMERIC(10, 2) := 0;
 BEGIN
+  -- 0. Security Validation: Ensure table belongs to restaurant
+  IF NOT EXISTS (
+    SELECT 1 FROM tables 
+    WHERE id = p_table_id AND restaurant_id = p_restaurant_id
+  ) THEN
+    RAISE EXCEPTION 'Invalid table_id for this restaurant';
+  END IF;
+
   -- 1. Create order header
   INSERT INTO orders (restaurant_id, table_id, special_notes, status)
   VALUES (p_restaurant_id, p_table_id, p_special_instructions, 'pending')

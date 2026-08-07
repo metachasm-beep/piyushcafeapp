@@ -15,9 +15,7 @@ export const POST: RequestHandler = async ({ request, locals: { supabase } }) =>
 		// Initialize Razorpay
 		if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
 			console.error('Razorpay keys not configured');
-			// For demo purposes, we will return a mock account if keys are missing
-			// In production, this should throw an error.
-			return json({ accountId: 'acc_mock_' + Math.random().toString(36).substring(2, 9) });
+			return json({ error: 'Payment gateway not configured' }, { status: 500 });
 		}
 
 		const razorpay = new Razorpay({

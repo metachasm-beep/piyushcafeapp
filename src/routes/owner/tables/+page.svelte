@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { supabase } from '$lib/supabase';
-  import { MOCK_TABLES, MOCK_RESTAURANT } from '$lib/mock-data';
   import { toast } from 'svelte-sonner';
   import QRCode from 'qrcode';
   import { env } from '$env/dynamic/public';
@@ -20,8 +19,6 @@
 
   onMount(async () => {
     if (!supabase) { 
-      tables = MOCK_TABLES; 
-      ownerRestaurantId = MOCK_RESTAURANT.id;
       isLoading = false; 
       return; 
     }
@@ -34,16 +31,14 @@
 
     // Fetch all tables for this owner's restaurant (RLS guarantees they only see theirs)
     const { data } = await supabase.from('tables').select('*').order('table_number');
-    tables = data ?? MOCK_TABLES;
+    tables = data ?? [];
     isLoading = false;
   });
 
   async function generateQr(table: Table) {
     selectedTable = table;
     const appUrl = env.PUBLIC_APP_URL || window.location.origin;
-    // Uses the owner's actual restaurant ID (or mock fallback if undefined)
-    const restId = ownerRestaurantId || MOCK_RESTAURANT.id;
-    const url = `${appUrl}/table/${restId}/${table.id}`;
+    const url = `${appUrl}/table/${ownerRestaurantId}/${table.id}`;
     
     qrDataUrl = await QRCode.toDataURL(url, { width: 300, margin: 2, color: { dark: '#1e1b4b', light: '#ffffff' } });
     showQrModal = true;
@@ -71,7 +66,7 @@
       table_number: Number(fd.get('table_number')),
       display_name: fd.get('display_name') as string,
       capacity: Number(fd.get('capacity')),
-      restaurant_id: ownerRestaurantId || MOCK_RESTAURANT.id,
+      restaurant_id: ownerRestaurantId,
       is_active: true,
     };
     

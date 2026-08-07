@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { supabase } from '$lib/supabase';
-  import { MOCK_TABLES, MOCK_RESTAURANT } from '$lib/mock-data';
   import { toast } from 'svelte-sonner';
   import QRCode from 'qrcode';
   import { env } from '$env/dynamic/public';
@@ -28,7 +27,6 @@
 
   onMount(async () => {
     if (!supabase) { 
-      tables = MOCK_TABLES; 
       isLoading = false; 
       return; 
     }
@@ -44,7 +42,7 @@
 
     // Fetch all tables
     const { data } = await supabase.from('tables').select('*').order('table_number');
-    tables = data ?? MOCK_TABLES;
+    tables = data ?? [];
     isLoading = false;
   });
 

@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // Admin Store — live KDS orders and waiter requests
 // In mock mode: uses in-memory reactive state
 // In production: Supabase real-time subscription channel
@@ -6,11 +6,10 @@
 
 import { writable, derived } from 'svelte/store';
 import type { Order, WaiterRequest, OrderStatus } from '$lib/types';
-import { makeMockOrders, makeMockWaiterRequests } from '$lib/mock-data';
 
 // ─── Orders Store ─────────────────────────────────────────────
 function createOrdersStore() {
-  const { subscribe, set, update } = writable<Order[]>(makeMockOrders());
+  const { subscribe, set, update } = writable<Order[]>([]);
 
   return {
     subscribe,
@@ -58,7 +57,7 @@ export const ordersByStatus = derived(adminOrders, ($orders) => ({
 
 // ─── Waiter Requests Store ────────────────────────────────────
 function createWaiterStore() {
-  const { subscribe, set, update } = writable<WaiterRequest[]>(makeMockWaiterRequests());
+  const { subscribe, set, update } = writable<WaiterRequest[]>([]);
 
   return {
     subscribe,

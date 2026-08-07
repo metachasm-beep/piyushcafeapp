@@ -6,21 +6,34 @@ import { env } from '$env/dynamic/private';
 export const POST: RequestHandler = async ({ request, locals: { supabase } }) => {
 	try {
 		const body = await request.json();
-		const { amount, restaurant_id, receipt, notes } = body;
+		const { order_id, receipt, notes } = body;
 
-		if (!amount || !restaurant_id) {
-			return json({ error: 'Missing required parameters' }, { status: 400 });
+		if (!order_id) {
+			return json({ error: 'Missing required parameter: order_id' }, { status: 400 });
 		}
+
+		// Fetch the order from the database to get the secure amount and restaurant_id
+		const { data: orderRecord, error: orderError } = await supabase
+			.from('orders')
+			.select('total_amount, restaurant_id, status')
+			.eq('id', order_id)
+			.single();
+			
+		if (orderError || !orderRecord) {
+			return json({ error: 'Order not found' }, { status: 404 });
+		}
+		
+		if (orderRecord.status === 'paid') {
+			return json({ error: 'Order is already paid' }, { status: 400 });
+		}
+
+		const amount = orderRecord.total_amount;
+		const restaurant_id = orderRecord.restaurant_id;
 
 		// Initialize Razorpay
 		if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
 			console.error('Razorpay keys not configured');
-			// Return a mock order if keys are missing for demo purposes
-			return json({ 
-				id: 'order_mock_' + Math.random().toString(36).substring(2, 9),
-				amount: Math.round(amount * 100),
-				currency: 'INR'
-			});
+			return json({ error: 'Payment gateway not configured' }, { status: 500 });
 		}
 
 		const razorpay = new Razorpay({

@@ -11,12 +11,12 @@
 
   let { data }: { data: PageData } = $props();
 
-  // Mock historical data for sparklines
+  // Historical data for sparklines (placeholder for actual implementation)
   const sparklineData = [
-    [40, 50, 45, 60, 55, 70, 80],
-    [10, 15, 12, 20, 18, 25, 30],
-    [2, 2, 2, 3, 3, 3, 4],
-    [80, 95, 85, 110, 105, 130, 145]
+    [0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0]
   ];
 
   let stats = $derived([
@@ -44,13 +44,13 @@
   let recentActivity = $derived(data.recentActivity);
 
   const chartData = [
-    { date: new Date(Date.now() - 6 * 86400000), revenue: 12400 },
-    { date: new Date(Date.now() - 5 * 86400000), revenue: 18700 },
-    { date: new Date(Date.now() - 4 * 86400000), revenue: 14200 },
-    { date: new Date(Date.now() - 3 * 86400000), revenue: 22100 },
-    { date: new Date(Date.now() - 2 * 86400000), revenue: 17600 },
-    { date: new Date(Date.now() - 1 * 86400000), revenue: 31400 },
-    { date: new Date(Date.now()), revenue: 19800 },
+    { date: new Date(Date.now() - 6 * 86400000), revenue: 0 },
+    { date: new Date(Date.now() - 5 * 86400000), revenue: 0 },
+    { date: new Date(Date.now() - 4 * 86400000), revenue: 0 },
+    { date: new Date(Date.now() - 3 * 86400000), revenue: 0 },
+    { date: new Date(Date.now() - 2 * 86400000), revenue: 0 },
+    { date: new Date(Date.now() - 1 * 86400000), revenue: 0 },
+    { date: new Date(Date.now()), revenue: 0 },
   ];
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];

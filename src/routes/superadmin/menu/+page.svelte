@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { supabase } from '$lib/supabase';
-  import { MOCK_MENU_ITEMS, MOCK_CATEGORIES, MOCK_RESTAURANT } from '$lib/mock-data';
   import { formatCurrency, DIETARY_META } from '$lib/utils';
   import { toast } from 'svelte-sonner';
   import { Plus, Search, Edit2, Trash2, X, RefreshCw } from 'lucide-svelte';
@@ -30,8 +29,6 @@
 
   onMount(async () => {
     if (!supabase) {
-      items = MOCK_MENU_ITEMS;
-      categories = MOCK_CATEGORIES;
       isLoading = false;
       return;
     }
@@ -39,8 +36,8 @@
       supabase.from('menu_categories').select('*').order('sort_order'),
       supabase.from('menu_items').select('*').order('sort_order')
     ]);
-    categories = catRes.data ?? MOCK_CATEGORIES;
-    items = itemRes.data ?? MOCK_MENU_ITEMS;
+    categories = catRes.data ?? [];
+    items = itemRes.data ?? [];
     isLoading = false;
   });
 
@@ -77,7 +74,13 @@
       toast.success('Item updated');
       if (supabase) await supabase.from('menu_items').update(data).eq('id', editingItem.id);
     } else {
-      const newItem = { ...data, id: crypto.randomUUID(), category_id: selectedCategory, restaurant_id: MOCK_RESTAURANT.id, sort_order: 0 } as MenuItem;
+      const restaurant_id = categories.find(c => c.id === selectedCategory)?.restaurant_id;
+      if (!restaurant_id) {
+        toast.error('Could not determine restaurant for this category');
+        isSaving = false;
+        return;
+      }
+      const newItem = { ...data, id: crypto.randomUUID(), category_id: selectedCategory, restaurant_id, sort_order: 0 } as MenuItem;
       items = [...items, newItem];
       toast.success('Item added');
       if (supabase) await supabase.from('menu_items').insert(newItem);

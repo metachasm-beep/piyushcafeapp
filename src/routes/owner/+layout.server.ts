@@ -24,7 +24,14 @@ export const load: LayoutServerLoad = async ({ locals: { supabase, user } }) => 
 		.limit(1)
 		.single();
 
+	const { data: tables } = await supabase
+		.from('tables')
+		.select('*')
+		.eq('restaurant_id', staffData.restaurant_id)
+		.order('table_number', { ascending: true });
+
 	return {
-		restaurant
+		restaurant,
+		tables: tables ?? []
 	};
 };

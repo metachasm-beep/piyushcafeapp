@@ -20,8 +20,8 @@
   
   let waiterCalled = $state(false);
   
-  // Real-time Simulation
-  let simulationInterval: ReturnType<typeof setInterval>;
+  // Fetch real order status from the secure backend API
+  let pollingInterval: ReturnType<typeof setInterval>;
 
   $effect(() => {
     if (!orderId) {
@@ -29,25 +29,41 @@
       return;
     }
 
-    // Simulate order progression for demo purposes
-    simulationInterval = setInterval(() => {
-      const currentOrder = $adminOrders.find(o => o.id === orderId);
-      if (!currentOrder) return;
-      
-      if (currentOrder.status === 'pending') {
-        adminOrders.updateStatus(orderId!, 'preparing');
-        toast.info('Chefs have started preparing your order! 👨‍🍳');
-      } else if (currentOrder.status === 'preparing') {
-        adminOrders.updateStatus(orderId!, 'ready');
-        toast.success('Your food is ready and on the way! 🔔');
-      } else if (currentOrder.status === 'ready') {
-        adminOrders.updateStatus(orderId!, 'served');
-        toast.success('Your order has been served. Enjoy! 😊');
-        clearInterval(simulationInterval);
+    const fetchOrderData = async () => {
+      try {
+        const res = await fetch(`/api/orders/${orderId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        // Check for state changes to trigger toasts
+        if (order && data.status !== order.status) {
+          if (data.status === 'preparing') {
+            toast.info('Chefs have started preparing your order! 👨‍🍳');
+          } else if (data.status === 'ready') {
+            toast.success('Your food is ready and on the way! 🔔');
+          } else if (data.status === 'served') {
+            toast.success('Your order has been served. Enjoy! 😊');
+          }
+        }
+        
+        // We update the global store with the real database data
+        adminOrders.upsertOrder(data);
+        
+        if (['served', 'paid', 'cancelled'].includes(data.status)) {
+          clearInterval(pollingInterval);
+        }
+      } catch (err) {
+        console.error('Failed to poll order status', err);
       }
-    }, 15000);
+    };
 
-    return () => { if (simulationInterval) clearInterval(simulationInterval); };
+    // Initial fetch
+    fetchOrderData();
+
+    // Poll every 10 seconds
+    pollingInterval = setInterval(fetchOrderData, 10000);
+
+    return () => { if (pollingInterval) clearInterval(pollingInterval); };
   });
 
   function handleCallWaiter() {

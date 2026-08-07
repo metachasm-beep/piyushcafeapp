@@ -6,6 +6,8 @@
   let isLoading = $state(false);
   let errorMessage = $derived(page.url.searchParams.get('error'));
 
+  import { onMount } from 'svelte';
+
   async function handleGoogleLogin() {
     isLoading = true;
     
@@ -32,6 +34,19 @@
       isLoading = false;
     }
   }
+
+  onMount(async () => {
+    // If the user was kicked back to the login page due to lack of approval,
+    // ensure their client-side session is completely purged so they don't appear "logged in"
+    if (errorMessage === 'pending_approval' || errorMessage === 'unauthorized') {
+      const { createBrowserClient } = await import('@supabase/ssr');
+      const supabase = createBrowserClient(
+        env.PUBLIC_SUPABASE_URL || '',
+        env.PUBLIC_SUPABASE_ANON_KEY || ''
+      );
+      await supabase.auth.signOut();
+    }
+  });
 </script>
 
 <svelte:head>

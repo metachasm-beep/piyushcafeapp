@@ -1,9 +1,11 @@
 <script lang="ts">
   import { adminOrders, ordersByStatus, waiterRequests, pendingWaiterCount } from '$lib/stores/admin';
   import { timeAgo } from '$lib/utils';
-  import { MOCK_TABLES } from '$lib/mock-data';
   import { toast } from 'svelte-sonner';
   import { AlertTriangle, Clock, ChefHat, Check, ArrowRight } from '@lucide/svelte';
+
+  let { data } = $props();
+  let tables = $derived(data.tables || []);
 
   // Columns definition
   const columns = [
@@ -33,7 +35,7 @@
   });
 
   function getTableName(id: string) {
-    return MOCK_TABLES.find(t => t.id === id)?.display_name || id;
+    return tables.find(t => t.id === id)?.display_name || id;
   }
 </script>
 

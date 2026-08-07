@@ -1,9 +1,11 @@
 <script lang="ts">
   import { adminOrders, ordersByStatus, waiterRequests, pendingWaiterCount } from '$lib/stores/admin';
-  import { MOCK_TABLES } from '$lib/mock-data';
   import { formatCurrency, timeAgo } from '$lib/utils';
   import { ShoppingBag, TrendingUp, Users, BellRing, CheckCircle, Clock } from '@lucide/svelte';
   
+  let { data } = $props();
+  let tables = $derived(data.tables || []);
+
   let todayDate = $derived(new Intl.DateTimeFormat('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(new Date()));
   
   let totalOrdersToday = $derived($adminOrders.length);
@@ -11,7 +13,7 @@
   let todayRevenue = $derived($adminOrders.reduce((sum, order) => sum + order.total_amount, 0));
   
   let occupiedTables = $derived(
-    MOCK_TABLES.filter(t => $adminOrders.some(o => o.table_id === t.id && ['pending', 'preparing', 'ready'].includes(o.status))).length
+    tables.filter(t => $adminOrders.some(o => o.table_id === t.id && ['pending', 'preparing', 'ready'].includes(o.status))).length
   );
   
   function getTableStatus(tableId: string) {
@@ -70,7 +72,7 @@
       </div>
       <div>
         <p class="text-[var(--color-text-secondary)] text-sm font-medium">Occupied Tables</p>
-        <p class="text-2xl font-bold">{occupiedTables} <span class="text-sm font-normal text-[var(--color-text-secondary)]">/ {MOCK_TABLES.length}</span></p>
+        <p class="text-2xl font-bold">{occupiedTables} <span class="text-sm font-normal text-[var(--color-text-secondary)]">/ {tables.length}</span></p>
       </div>
     </div>
     
@@ -90,7 +92,7 @@
     <div class="lg:col-span-2 space-y-4">
       <h2 class="text-xl font-display font-bold text-[var(--color-text-primary)] border-b border-[var(--color-border)] pb-2">Floor Plan</h2>
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {#each MOCK_TABLES as table}
+        {#each tables as table}
           {@const status = getTableStatus(table.id)}
           <div class="glass border {status.color} p-4 rounded-xl flex flex-col items-center justify-center text-center h-32 transition-all hover:scale-[1.02]">
             <span class="text-2xl font-bold mb-1">{table.display_name}</span>
@@ -130,7 +132,7 @@
                 
                 <div class="flex justify-between items-start mb-2 pl-2">
                   <div>
-                    <h3 class="font-bold text-lg">{MOCK_TABLES.find(t => t.id === request.table_id)?.display_name || 'Unknown Table'}</h3>
+                    <h3 class="font-bold text-lg">{tables.find(t => t.id === request.table_id)?.display_name || 'Unknown Table'}</h3>
                     <p class="text-xs text-[var(--color-text-secondary)] flex items-center gap-1">
                       <Clock size={12} />
                       {timeAgo(request.created_at)}

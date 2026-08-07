@@ -14,14 +14,28 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		.limit(1)
 		.single();
 
-	if (!staffData) {
-		return { restaurant: null };
+	let restaurantId = staffData?.restaurant_id;
+
+	if (!restaurantId) {
+		// Fallback for owners who might not be in the staff table
+		const { data: ownedRestaurant } = await supabase
+			.from('restaurants')
+			.select('id')
+			.eq('owner_id', user.id)
+			.limit(1)
+			.single();
+			
+		if (ownedRestaurant) {
+			restaurantId = ownedRestaurant.id;
+		} else {
+			return { restaurant: null };
+		}
 	}
 
 	const { data: restaurant } = await supabase
 		.from('restaurants')
 		.select('*')
-		.eq('id', staffData.restaurant_id)
+		.eq('id', restaurantId)
 		.limit(1)
 		.single();
 

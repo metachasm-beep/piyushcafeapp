@@ -29,7 +29,9 @@
 
   async function uploadLogo(e: SubmitEvent) {
     e.preventDefault();
-    if (!restaurant || !supabase || !imageFile) return;
+    if (!restaurant) { toast.error('Error: Restaurant data not found'); return; }
+    if (!supabase) { toast.error('Error: Supabase client not initialized'); return; }
+    if (!imageFile) { toast.error('Error: No image file selected'); return; }
 
     isUploading = true;
     try {

@@ -6,7 +6,7 @@
 </script>
 
 <div
-  class={cn("p-6 pt-4 flex-1 relative", className)}
+  class={cn("p-6 pt-0", className)}
   {...rest}
 >
   {@render children?.()}

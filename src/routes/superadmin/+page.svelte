@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { TrendingUp, Users, ShoppingBag, Store, Activity, ArrowUpRight } from 'lucide-svelte';
+  import { TrendingUp, Users, ShoppingBag, Store, Activity, DollarSign, CreditCard } from 'lucide-svelte';
   import { formatCurrency } from '$lib/utils';
   import InteractiveRevenueChart from '$lib/components/InteractiveRevenueChart.svelte';
 
@@ -11,89 +11,92 @@
   let { data }: { data: PageData } = $props();
 
   let stats = $derived([
-    { label: 'Revenue', value: data.stats.totalRevenue, isCurrency: true, icon: TrendingUp },
-    { label: 'Restaurants', value: data.stats.activeRestaurantsCount, isCurrency: false, icon: Store },
-    { label: 'Fees', value: data.stats.platformFees, isCurrency: true, icon: ShoppingBag },
-    { label: 'Orders', value: data.stats.totalOrdersToday, isCurrency: false, icon: Activity },
+    { label: 'Total Revenue', value: data.stats.totalRevenue, isCurrency: true, icon: DollarSign, subtext: '+20.1% from last month' },
+    { label: 'Active Restaurants', value: data.stats.activeRestaurantsCount, isCurrency: false, icon: Store, subtext: '+4 since last week' },
+    { label: 'Platform Fees', value: data.stats.platformFees, isCurrency: true, icon: CreditCard, subtext: '+19% from last month' },
+    { label: 'Total Orders', value: data.stats.totalOrdersToday, isCurrency: false, icon: Activity, subtext: '+201 since last hour' },
   ]);
 
   let recentActivity = $state(data.recentActivity);
   let chartData = $derived(data.chartData.map(d => ({ date: new Date(d.date), revenue: d.revenue })));
-  
-  function getStatusColor(status: string) {
-    if (status === 'OK') return '#34C759'; 
-    if (status === 'WARN') return '#FFCC00';
-    return '#FF3B30'; 
-  }
 </script>
 
 <svelte:head>
-  <title>Spatial Dashboard</title>
+  <title>Dashboard</title>
 </svelte:head>
 
-<div class="mb-10 mt-6 lg:mt-2">
-  <h1 class="text-4xl lg:text-5xl font-bold tracking-tight text-white mb-2 drop-shadow-lg">
-    Overview
-  </h1>
-  <p class="text-lg text-white/60 font-medium tracking-wide">
-    Your global platform metrics in real-time.
-  </p>
-</div>
-
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-  <!-- Volumetric Glass KPI Metrics -->
-  {#each stats as stat}
-    <Card variant="interactive" class="col-span-1">
-      <CardContent class="p-6 flex flex-col justify-between min-h-[160px]">
-        <div class="flex justify-between items-start">
-          <p class="text-[15px] font-semibold text-white/60 tracking-wider uppercase">{stat.label}</p>
-          <div class="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.3)]">
-            <stat.icon size={18} class="text-white drop-shadow-md" />
+<div class="flex-1 space-y-4">
+  <div class="flex items-center justify-between space-y-2 mb-8">
+    <h2 class="text-3xl font-bold tracking-tight">Dashboard</h2>
+    <div class="flex items-center space-x-2">
+      <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:pointer-events-none disabled:opacity-50 bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-900/90 h-9 px-4 py-2">
+        Download Report
+      </button>
+    </div>
+  </div>
+  
+  <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    {#each stats as stat}
+      <Card>
+        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+          <h3 class="tracking-tight text-sm font-medium">{stat.label}</h3>
+          <stat.icon size={16} class="text-zinc-500" />
+        </CardHeader>
+        <CardContent>
+          <div class="text-2xl font-bold text-zinc-950">
+            {stat.isCurrency ? formatCurrency(stat.value) : stat.value.toLocaleString()}
           </div>
-        </div>
-        <p class="text-3xl lg:text-4xl font-bold tracking-tight text-white drop-shadow-md mt-4">
-          {stat.isCurrency ? formatCurrency(stat.value) : stat.value.toLocaleString()}
-        </p>
+          <p class="text-xs text-zinc-500 mt-1">
+            {stat.subtext}
+          </p>
+        </CardContent>
+      </Card>
+    {/each}
+  </div>
+
+  <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-7 pt-4">
+    <!-- Chart Area -->
+    <Card class="col-span-4">
+      <CardHeader>
+        <h3 class="font-semibold leading-none tracking-tight">Overview</h3>
+      </CardHeader>
+      <CardContent class="pl-2 h-[350px]">
+        <InteractiveRevenueChart data={chartData} />
       </CardContent>
     </Card>
-  {/each}
-</div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-  <!-- Glass Chart Area -->
-  <Card class="lg:col-span-2">
-    <CardHeader class="flex flex-row justify-between items-center">
-      <h2 class="text-xl font-bold text-white tracking-tight drop-shadow-md">Performance</h2>
-      <select class="text-[13px] bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white outline-none focus:bg-white/20 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
-        <option class="text-black">Last 7 Days</option>
-        <option class="text-black">Last 30 Days</option>
-      </select>
-    </CardHeader>
-    <CardContent class="p-6 h-[380px]">
-      <InteractiveRevenueChart data={chartData} />
-    </CardContent>
-  </Card>
-
-  <!-- Glass Activity Area -->
-  <Card class="lg:col-span-1">
-    <CardHeader>
-      <h2 class="text-xl font-bold text-white tracking-tight drop-shadow-md">Activity</h2>
-    </CardHeader>
-    <div class="flex-1 overflow-y-auto px-6 py-2 h-[340px]">
-      <div class="flex flex-col gap-4">
-        {#each recentActivity as event}
-          <div class="flex items-center gap-4 group cursor-pointer p-3 rounded-2xl hover:bg-white/10 transition-all duration-300">
-            <div class="w-2.5 h-2.5 rounded-full shrink-0 shadow-[0_0_10px_rgba(255,255,255,0.5)]" style="background-color: {getStatusColor(event.status)}"></div>
-            <div class="flex-1 min-w-0">
-              <p class="text-[15px] font-medium text-white group-hover:text-white transition-colors tracking-tight truncate drop-shadow-sm">{event.restaurant}</p>
-              <p class="text-[13px] text-white/50 group-hover:text-white/70 mt-0.5 leading-snug truncate">{event.action}</p>
+    <!-- Activity Area -->
+    <Card class="col-span-3">
+      <CardHeader>
+        <h3 class="font-semibold leading-none tracking-tight">Recent Activity</h3>
+        <p class="text-sm text-zinc-500">
+          There were {recentActivity.length} recent events across the platform.
+        </p>
+      </CardHeader>
+      <CardContent class="h-[350px] overflow-y-auto">
+        <div class="space-y-8">
+          {#each recentActivity as event}
+            <div class="flex items-center">
+              <div class="ml-4 space-y-1">
+                <p class="text-sm font-medium leading-none text-zinc-950">{event.restaurant}</p>
+                <p class="text-sm text-zinc-500">{event.action}</p>
+              </div>
+              <div class="ml-auto font-medium">
+                {#if event.status === 'OK'}
+                  <span class="inline-flex items-center rounded-full border border-zinc-200 px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 text-emerald-600 bg-emerald-50">Active</span>
+                {:else if event.status === 'WARN'}
+                  <span class="inline-flex items-center rounded-full border border-zinc-200 px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 text-amber-600 bg-amber-50">Warning</span>
+                {:else}
+                  <span class="inline-flex items-center rounded-full border border-zinc-200 px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 text-red-600 bg-red-50">Error</span>
+                {/if}
+              </div>
             </div>
-          </div>
-        {/each}
-        {#if recentActivity.length === 0}
-          <div class="text-[14px] text-white/40 font-medium text-center mt-8">No recent activity</div>
-        {/if}
-      </div>
-    </div>
-  </Card>
+          {/each}
+          {#if recentActivity.length === 0}
+            <div class="text-sm text-zinc-500 text-center py-4">No recent activity</div>
+          {/if}
+        </div>
+      </CardContent>
+    </Card>
+  </div>
 </div>

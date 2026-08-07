@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { LayoutDashboard, Users, Store, Settings, Menu, X, LogOut, Search, Bell } from 'lucide-svelte';
+  import { LayoutDashboard, Users, Store, Settings, Menu, X, LogOut, Search, Bell, Command } from 'lucide-svelte';
   
   let { children } = $props();
   let mobileMenuOpen = $state(false);
@@ -16,167 +16,104 @@
 
 <style>
   :global(body) {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #000000;
-    color: #ffffff;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    background-color: #ffffff;
+    color: #09090b; /* zinc-950 */
     -webkit-font-smoothing: antialiased;
     margin: 0;
     padding: 0;
   }
-
-  /* visionOS inspired animated mesh background */
-  .spatial-bg {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    overflow: hidden;
-    background-color: #0f0c29;
-    background-image: 
-      radial-gradient(circle at 15% 50%, rgba(79, 70, 229, 0.4), transparent 50%),
-      radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.3), transparent 50%),
-      radial-gradient(circle at 50% 80%, rgba(14, 165, 233, 0.4), transparent 50%);
-    filter: blur(60px);
-    animation: pulseBg 15s ease-in-out infinite alternate;
-  }
-
-  @keyframes pulseBg {
-    0% { transform: scale(1); opacity: 0.8; }
-    100% { transform: scale(1.1); opacity: 1; }
-  }
-
-  /* Official Taste-Skill Liquid Glass Approximation (adapted for variable radii) */
-  :global(.liquid-glass) {
-    position: relative;
-    isolation: isolate;
-    border: 1px solid rgb(255 255 255 / .32);
-    background:
-      linear-gradient(135deg, rgb(255 255 255 / .20), rgb(255 255 255 / .02)),
-      rgb(255 255 255 / .08);
-    backdrop-filter: blur(24px) saturate(180%) contrast(1.05);
-    -webkit-backdrop-filter: blur(24px) saturate(180%) contrast(1.05);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / .48),
-      inset 0 -1px 0 rgb(255 255 255 / .12),
-      0 18px 60px rgb(0 0 0 / .30);
-  }
-
-  :global(.liquid-glass::before) {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    border-radius: inherit;
-    background:
-      radial-gradient(circle at 20% 0%, rgb(255 255 255 / .35), transparent 34%),
-      linear-gradient(90deg, rgb(255 255 255 / .12), transparent 42%, rgb(255 255 255 / .08));
-    pointer-events: none;
-  }
-
-  :global(.liquid-glass::after) {
-    content: "";
-    position: absolute;
-    inset: 1px;
-    border-radius: inherit;
-    border: 1px solid rgb(255 255 255 / .10);
-    pointer-events: none;
-  }
 </style>
 
-<div class="spatial-bg"></div>
-
-<div class="flex h-screen w-screen overflow-hidden text-white/90">
+<div class="flex min-h-screen w-full flex-col bg-muted/40">
   
   <!-- Mobile Overlay -->
   {#if mobileMenuOpen}
     <div 
-      class="fixed inset-0 bg-black/40 z-40 lg:hidden backdrop-blur-md"
+      class="fixed inset-0 z-50 bg-black/80 lg:hidden"
       onclick={() => mobileMenuOpen = false}
       aria-hidden="true"
     ></div>
   {/if}
 
-  <!-- Spatial Sidebar -->
+  <!-- Sidebar -->
   <aside 
-    class="fixed lg:static inset-y-0 left-0 z-50 w-[280px] lg:m-4 lg:mr-2 rounded-3xl liquid-glass flex flex-col pt-10 pb-8 px-6 transform transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] lg:translate-x-0 {mobileMenuOpen ? 'translate-x-0' : '-translate-x-[120%]'}"
+    class="fixed inset-y-0 left-0 z-50 w-[260px] bg-white border-r border-zinc-200 flex flex-col transform transition-transform duration-300 ease-in-out lg:translate-x-0 {mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}"
   >
-    <div class="flex items-center justify-between lg:hidden mb-10">
-      <h2 class="text-xl font-bold tracking-tight text-white">Menu</h2>
-      <button onclick={() => mobileMenuOpen = false} class="p-2 text-white/50 hover:text-white transition-colors">
-        <X size={24} />
+    <div class="flex h-[60px] items-center border-b border-zinc-200 px-6">
+      <a href="/superadmin" class="flex items-center gap-2 font-semibold tracking-tight text-zinc-950">
+        <div class="flex h-6 w-6 items-center justify-center rounded-md bg-zinc-950 text-zinc-50">
+          <Command size={14} />
+        </div>
+        <span>Golden Fork</span>
+      </a>
+      <button onclick={() => mobileMenuOpen = false} class="ml-auto lg:hidden text-zinc-500 hover:text-zinc-950">
+        <X size={20} />
       </button>
     </div>
 
-    <!-- Logo -->
-    <div class="hidden lg:block mb-12 px-2">
-      <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-3">
-        <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center border border-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]">
-          <Store size={16} class="text-white" />
-        </div>
-        Golden Fork
-      </h1>
+    <div class="flex-1 overflow-auto py-4">
+      <nav class="grid items-start px-4 text-sm font-medium">
+        {#each links as link}
+          {@const active = $page.url.pathname === link.href}
+          <a
+            href={link.href}
+            class="flex items-center gap-3 rounded-md px-3 py-2 transition-all {active ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-100/50 hover:text-zinc-900'}"
+            onclick={() => mobileMenuOpen = false}
+          >
+            <link.icon size={16} class={active ? 'text-zinc-900' : 'text-zinc-500'} />
+            {link.label}
+          </a>
+        {/each}
+      </nav>
     </div>
 
-    <!-- Navigation -->
-    <nav class="flex-1 flex flex-col gap-2">
-      {#each links as link}
-        {@const active = $page.url.pathname === link.href}
-        <a
-          href={link.href}
-          class="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 {active ? 'bg-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)]' : 'hover:bg-white/10'}"
-          onclick={() => mobileMenuOpen = false}
-        >
-          <link.icon size={20} strokeWidth={active ? 2.5 : 2} class="text-white drop-shadow-md" />
-          <span class="text-[15px] font-medium tracking-wide {active ? 'text-white' : 'text-white/80'}">
-            {link.label}
-          </span>
-        </a>
-      {/each}
-    </nav>
-
     <!-- Bottom Action -->
-    <div class="mt-auto pt-6 border-t border-white/10">
+    <div class="mt-auto border-t border-zinc-200 p-4">
       <form action="/auth/logout?next=/" method="POST">
         <button
           type="submit"
-          class="flex items-center gap-3 w-full px-4 py-3 rounded-2xl hover:bg-red-500/20 transition-all duration-300 group"
+          class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-zinc-500 transition-all hover:bg-red-50 hover:text-red-600"
         >
-          <LogOut size={20} class="text-white/70 group-hover:text-red-400 transition-colors drop-shadow-md" />
-          <span class="text-[15px] font-medium tracking-wide text-white/70 group-hover:text-red-400 transition-colors">
-            Sign Out
-          </span>
+          <LogOut size={16} />
+          Sign Out
         </button>
       </form>
     </div>
   </aside>
 
   <!-- Main Content Panel -->
-  <div class="flex-1 flex flex-col h-full overflow-hidden relative z-10 lg:py-4 lg:pr-4">
+  <div class="flex flex-col lg:pl-[260px] h-screen overflow-hidden bg-zinc-50/50">
     
-    <!-- Header -->
-    <header class="h-20 lg:h-auto lg:mb-6 flex items-center justify-between px-6 lg:px-8 py-4 lg:rounded-3xl liquid-glass lg:shadow-[0_8px_32px_rgba(0,0,0,0.2)] flex-none">
-      <div class="flex items-center gap-4">
-        <button 
-          class="p-2 -ml-2 rounded-xl text-white/70 hover:bg-white/10 lg:hidden transition-colors"
-          onclick={() => mobileMenuOpen = true}
-        >
-          <Menu size={24} />
-        </button>
-      </div>
+    <!-- Top Header -->
+    <header class="flex h-[60px] items-center gap-4 border-b border-zinc-200 bg-white px-6">
+      <button 
+        class="lg:hidden text-zinc-500 hover:text-zinc-950"
+        onclick={() => mobileMenuOpen = true}
+      >
+        <Menu size={20} />
+      </button>
       
-      <div class="flex items-center gap-4">
-        <div class="hidden md:flex items-center bg-white/10 border border-white/20 rounded-full px-4 py-2 w-64 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] focus-within:bg-white/20 transition-all">
-          <Search size={16} class="text-white/60 mr-2" />
-          <input type="text" placeholder="Search spatial..." class="bg-transparent border-none outline-none text-[14px] placeholder-white/40 w-full text-white" />
-        </div>
-        <button class="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
-          <Bell size={18} />
-        </button>
+      <div class="w-full flex-1">
+        <form class="relative">
+          <Search size={16} class="absolute left-2.5 top-2.5 text-zinc-500" />
+          <input
+            type="search"
+            placeholder="Search..."
+            class="flex h-9 w-full sm:w-[300px] md:w-[200px] lg:w-[300px] rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 pl-9"
+          />
+        </form>
       </div>
+
+      <button class="h-9 w-9 inline-flex items-center justify-center rounded-md border border-zinc-200 bg-white text-sm font-medium shadow-sm transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950">
+        <Bell size={16} class="text-zinc-950" />
+      </button>
+      <div class="h-9 w-9 rounded-full bg-zinc-200 border border-zinc-300"></div>
     </header>
 
     <!-- Page Content -->
-    <main class="flex-1 overflow-y-auto px-4 lg:px-0 pb-12 lg:pb-0">
-      <div class="max-w-6xl mx-auto h-full lg:pr-2">
+    <main class="flex-1 overflow-y-auto p-6 md:p-8">
+      <div class="mx-auto max-w-6xl">
         {@render children()}
       </div>
     </main>

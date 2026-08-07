@@ -131,54 +131,50 @@
         toast.success('Order placed successfully! 🎉 Waiter will collect cash.');
         goto(`/table/${restaurant.id}/${table.id}/order`);
       } else {
-        toast.info('Redirecting to payment gateway...');
+        toast.info('Initializing payment...');
         
-        const payuRes = await fetch('/api/payu/hash', {
+        const rzpRes = await fetch('/api/razorpay/order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            txnid: orderId,
-            productinfo: `Order ${orderId}`,
-            firstname: 'Customer', 
-            email: 'customer@example.com',
-            udf1: restaurant.id,
-            udf2: table.id
+            amount: currentCartTotal * 1.1,
+            restaurant_id: restaurant.id,
+            receipt: `rcpt_${orderId}`,
+            notes: { internal_order_id: orderId }
           })
         });
 
-        if (!payuRes.ok) throw new Error('Failed to initialize payment gateway.');
-        const payuData = await payuRes.json();
+        if (!rzpRes.ok) throw new Error('Failed to initialize payment gateway.');
+        const rzpData = await rzpRes.json();
         
-        // Dynamically create a form and submit to PayU Test URL
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = 'https://test.payu.in/_payment';
-        
-        const params = {
-          key: payuData.key,
-          txnid: orderId,
-          amount: payuData.amount,
-          productinfo: `Order ${orderId}`,
-          firstname: 'Customer',
-          email: 'customer@example.com',
-          phone: '9999999999',
-          surl: `${window.location.origin}/api/payu/response`,
-          furl: `${window.location.origin}/api/payu/response`,
-          hash: payuData.hash,
-          udf1: restaurant.id,
-          udf2: table.id,
-          child_details: payuData.childDetails // PayU parameter for split transactions
+        const options = {
+          key: rzpData.key || 'dummy_key',
+          amount: rzpData.amount,
+          currency: rzpData.currency,
+          name: restaurant.name,
+          description: `Order ${orderId}`,
+          order_id: rzpData.id,
+          handler: function (response: any) {
+             toast.success('Payment successful! 🎉');
+             isProcessingPayment = false;
+             goto(`/table/${restaurant.id}/${table.id}/order`);
+          },
+          prefill: {
+             name: 'Customer',
+             email: 'customer@example.com',
+             contact: '9999999999'
+          },
+          theme: {
+             color: '#f97316' // brand orange
+          }
         };
 
-        for (const [key, value] of Object.entries(params)) {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = key;
-          input.value = value;
-          form.appendChild(input);
-        }
-        document.body.appendChild(form);
-        form.submit();
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on('payment.failed', function (response: any) {
+             toast.error(response.error.description || 'Payment failed');
+             isProcessingPayment = false;
+        });
+        rzp.open();
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to place order. Please try again.';
@@ -194,6 +190,7 @@
 
 <svelte:head>
   <title>{restaurant.name} - Menu</title>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </svelte:head>
 
 <!-- Sticky Header -->

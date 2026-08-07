@@ -3,42 +3,42 @@
   import { adminUser } from '$lib/stores/admin';
   import { CheckCircle } from 'lucide-svelte';
 
+  let email = $state('');
+  let phone = $state('');
+  let businessName = $state('');
   let panNumber = $state('');
-  let aadharNumber = $state('');
-  let accountNumber = $state('');
-  let ifscCode = $state('');
   
   let isSubmitting = $state(false);
   let isVerified = $state(false);
-  let subMerchantId = $state('');
+  let accountId = $state('');
 
   async function submitKyc(e: Event) {
     e.preventDefault();
     isSubmitting = true;
 
     try {
-      const res = await fetch('/api/payu/onboard', {
+      const res = await fetch('/api/razorpay/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           restaurant_id: $adminUser?.restaurant_id,
-          pan_number: panNumber,
-          aadhar_number: aadharNumber,
-          account_number: accountNumber,
-          ifsc_code: ifscCode
+          email,
+          phone,
+          business_name: businessName,
+          pan_number: panNumber
         })
       });
 
       if (!res.ok) {
-        throw new Error('Failed to submit KYC details');
+        throw new Error('Failed to submit onboarding details');
       }
 
       const data = await res.json();
-      subMerchantId = data.subMerchantId;
+      accountId = data.accountId;
       isVerified = true;
-      toast.success('KYC Submitted Successfully! Your Sub-Merchant ID has been generated.');
+      toast.success('Onboarding Submitted! Your Razorpay Account ID has been generated.');
     } catch (e) {
-      toast.error('Error submitting KYC');
+      toast.error('Error submitting onboarding details');
     } finally {
       isSubmitting = false;
     }
@@ -46,13 +46,13 @@
 </script>
 
 <svelte:head>
-  <title>PayU KYC - The Golden Fork</title>
+  <title>Razorpay Onboarding - The Golden Fork</title>
 </svelte:head>
 
 <div class="max-w-2xl mx-auto space-y-6">
   <div>
-    <h1 class="text-2xl font-display font-bold text-[var(--color-text-primary)]">PayU Merchant Onboarding</h1>
-    <p class="text-[var(--color-text-secondary)] mt-1">Complete your KYC to enable split payments and receive payouts directly into your bank account.</p>
+    <h1 class="text-2xl font-display font-bold text-[var(--color-text-primary)]">Razorpay Onboarding</h1>
+    <p class="text-[var(--color-text-secondary)] mt-1">Complete your profile to enable split payments and receive payouts directly into your bank account.</p>
   </div>
 
   {#if isVerified}
@@ -60,15 +60,53 @@
       <div class="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
         <CheckCircle size={32} />
       </div>
-      <h2 class="text-xl font-bold text-green-500">KYC Verified</h2>
+      <h2 class="text-xl font-bold text-green-500">Account Linked</h2>
       <p class="text-center text-[var(--color-text-secondary)]">Your account is active. Funds from orders will be directly settled into your bank account.</p>
       <div class="px-4 py-2 mt-4 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg font-mono text-sm text-[var(--color-brand)]">
-        Sub-Merchant ID: {subMerchantId}
+        Account ID: {accountId}
       </div>
     </div>
   {:else}
     <form class="glass p-6 rounded-2xl space-y-6" onsubmit={submitKyc}>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-2">
+          <label for="businessName" class="text-sm font-medium text-[var(--color-text-secondary)]">Legal Business Name</label>
+          <input 
+            type="text" 
+            id="businessName" 
+            bind:value={businessName} 
+            required 
+            placeholder="The Golden Fork LLC" 
+            class="input-dark w-full"
+          />
+        </div>
+
+        <div class="space-y-2">
+          <label for="email" class="text-sm font-medium text-[var(--color-text-secondary)]">Business Email</label>
+          <input 
+            type="email" 
+            id="email" 
+            bind:value={email} 
+            required 
+            placeholder="contact@restaurant.com" 
+            class="input-dark w-full"
+          />
+        </div>
+
+        <div class="space-y-2">
+          <label for="phone" class="text-sm font-medium text-[var(--color-text-secondary)]">Phone Number</label>
+          <input 
+            type="text" 
+            id="phone" 
+            bind:value={phone} 
+            required 
+            placeholder="9876543210" 
+            class="input-dark w-full"
+            pattern="\d{10}"
+            title="10 digit phone number"
+          />
+        </div>
+
         <div class="space-y-2">
           <label for="pan" class="text-sm font-medium text-[var(--color-text-secondary)]">PAN Number</label>
           <input 
@@ -79,44 +117,6 @@
             placeholder="ABCDE1234F" 
             class="input-dark w-full uppercase" 
             pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}"
-          />
-        </div>
-        
-        <div class="space-y-2">
-          <label for="aadhar" class="text-sm font-medium text-[var(--color-text-secondary)]">Aadhar Number</label>
-          <input 
-            type="text" 
-            id="aadhar" 
-            bind:value={aadharNumber} 
-            required 
-            placeholder="1234 5678 9012" 
-            class="input-dark w-full"
-            pattern="\d{12}"
-            title="12 digit Aadhar number"
-          />
-        </div>
-
-        <div class="space-y-2">
-          <label for="account" class="text-sm font-medium text-[var(--color-text-secondary)]">Bank Account Number</label>
-          <input 
-            type="text" 
-            id="account" 
-            bind:value={accountNumber} 
-            required 
-            placeholder="00000000000" 
-            class="input-dark w-full"
-          />
-        </div>
-
-        <div class="space-y-2">
-          <label for="ifsc" class="text-sm font-medium text-[var(--color-text-secondary)]">IFSC Code</label>
-          <input 
-            type="text" 
-            id="ifsc" 
-            bind:value={ifscCode} 
-            required 
-            placeholder="SBIN0001234" 
-            class="input-dark w-full uppercase"
           />
         </div>
       </div>
@@ -130,7 +130,7 @@
           {#if isSubmitting}
             <div class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
           {:else}
-            Submit KYC & Generate Sub-Merchant ID
+            Submit Details & Link Account
           {/if}
         </button>
       </div>

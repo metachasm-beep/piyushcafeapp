@@ -90,6 +90,8 @@ export const actions: Actions = {
 			} else {
 				userId = authData.user?.id;
 				console.log('Created auth user with ID:', userId);
+				// We MUST ensure they exist in owner_profiles before creating the restaurant to satisfy foreign key constraints
+				await getSupabaseAdmin().from('owner_profiles').upsert({ id: userId, email: email, is_approved: true });
 			}
 		}
 

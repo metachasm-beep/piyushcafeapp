@@ -1,9 +1,11 @@
 <script lang="ts">
+	import ContactForm from '$lib/components/marketing/ContactForm.svelte';
 	import Reveal from '$lib/components/marketing/Reveal.svelte';
-	import { ArrowRight, Check } from 'lucide-svelte';
+	import { ArrowRight, Check, MessageCircle } from 'lucide-svelte';
 
 	type Mode = 'fee' | 'sub';
 	let mode = $state<Mode>('fee');
+	let contactOpen = $state(false);
 
 	const feePoints = [
 		'₹0 monthly commitment',
@@ -216,19 +218,29 @@
 		<Reveal delay={180}>
 			<div class="cta-band">
 				<div>
-					<h2 class="mk-display">Ready in about five minutes.</h2>
-					<p>Google login → approval → Razorpay KYC → table QR codes live.</p>
+					<p class="cta-eyebrow">Last fold · Talk to us</p>
+					<h2 class="mk-display">Ready to wire your floor?</h2>
+					<p>Tell us about your venue — we will help you choose platform fee or subscription.</p>
 				</div>
-				<a href="/login" class="mk-btn">
-					Start owner onboarding
-					<span class="mk-btn-icon"><ArrowRight size={16} strokeWidth={2.25} /></span>
-				</a>
+				<div class="cta-actions">
+					<button type="button" class="mk-btn mk-btn-as-button" onclick={() => (contactOpen = true)}>
+						Contact us
+						<span class="mk-btn-icon"><MessageCircle size={16} strokeWidth={2.25} /></span>
+					</button>
+					<a href="/login" class="cta-secondary">
+						Or start onboarding
+						<ArrowRight size={14} strokeWidth={2.25} />
+					</a>
+				</div>
 			</div>
 		</Reveal>
 
 		<footer class="mk-fold-footer">
 			<span>© The Golden Fork</span>
 			<div class="links">
+				<button type="button" class="footer-contact" onclick={() => (contactOpen = true)}>
+					Contact
+				</button>
 				<a href="/T&C">Terms</a>
 				<a href="/privacy_policy">Privacy</a>
 				<a href="/refund_policy">Refunds</a>
@@ -236,6 +248,8 @@
 		</footer>
 	</div>
 </section>
+
+<ContactForm bind:open={contactOpen} />
 
 <style>
 	.toggle {
@@ -493,15 +507,26 @@
 
 	.cta-band {
 		margin-top: 2.75rem;
-		padding: 1.6rem 1.5rem;
+		padding: 1.75rem 1.6rem;
 		border-radius: 1.4rem;
-		background: var(--mk-ink);
+		background:
+			radial-gradient(ellipse at 85% 20%, rgba(184, 151, 78, 0.28), transparent 45%),
+			var(--mk-ink);
 		color: var(--mk-paper);
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
 		gap: 1.25rem;
+	}
+
+	.cta-eyebrow {
+		margin: 0 0 0.55rem !important;
+		font-size: 0.68rem;
+		font-weight: 700;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--mk-brass-bright) !important;
 	}
 
 	.cta-band h2 {
@@ -512,11 +537,72 @@
 	.cta-band p {
 		margin: 0;
 		color: rgba(242, 240, 236, 0.7);
+		max-width: 36ch;
+		line-height: 1.45;
+	}
+
+	.cta-actions {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.75rem;
+	}
+
+	:global(.mk-btn-as-button) {
+		appearance: none;
+		border: 0;
+		cursor: pointer;
+		font-family: var(--font-mk-body);
+	}
+
+	.cta-band :global(.mk-btn) {
+		background: var(--mk-brass);
+		color: var(--mk-ink);
+	}
+
+	.cta-band :global(.mk-btn:hover) {
+		background: var(--mk-brass-bright);
+	}
+
+	.cta-band :global(.mk-btn-icon) {
+		background: var(--mk-ink);
+		color: var(--mk-paper);
+	}
+
+	.cta-secondary {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		color: rgba(242, 240, 236, 0.72);
+		font-size: 0.88rem;
+		font-weight: 500;
+		text-decoration: none;
+		padding-left: 0.35rem;
+		transition: color 0.35s var(--mk-ease);
+	}
+
+	.cta-secondary:hover {
+		color: var(--mk-paper);
 	}
 
 	.links {
 		display: flex;
 		gap: 1.25rem;
+		align-items: center;
+	}
+
+	.footer-contact {
+		appearance: none;
+		border: 0;
+		background: transparent;
+		padding: 0;
+		font: inherit;
+		color: inherit;
+		cursor: pointer;
+	}
+
+	.footer-contact:hover {
+		color: var(--mk-brass-deep);
 	}
 
 	@media (max-width: 960px) {

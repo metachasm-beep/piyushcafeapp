@@ -61,12 +61,14 @@ export const load: PageServerLoad = async () => {
 export const actions: Actions = {
 	createRestaurant: async ({ request }) => {
 		const formData = await request.formData();
-		const email = formData.get('email') as string;
+		let emailRaw = formData.get('email') as string;
 		const restaurant_name = formData.get('restaurant_name') as string;
 
-		if (!email || !restaurant_name) {
+		if (!emailRaw || !restaurant_name) {
 			return fail(400, { error: 'Email and Restaurant Name are required' });
 		}
+		
+		const email = emailRaw.toLowerCase();
 
 		// Generate a strong random password for initial auth creation
 		const password = crypto.randomUUID() + crypto.randomUUID();
@@ -77,7 +79,7 @@ export const actions: Actions = {
 		const { data: existingProfiles } = await getSupabaseAdmin()
 			.from('owner_profiles')
 			.select('id')
-			.eq('email', email);
+			.ilike('email', email);
 
 		if (existingProfiles && existingProfiles.length > 0) {
 			userIds = existingProfiles.map(p => p.id);

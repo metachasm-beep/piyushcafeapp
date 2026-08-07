@@ -26,16 +26,31 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		.select('restaurant_id')
 		.eq('user_id', user.id);
 
-	let restaurantId = staffDataList && staffDataList.length > 0 ? staffDataList[0].restaurant_id : null;
+	let restaurantIds = staffDataList?.map(s => s.restaurant_id) || [];
+	let restaurant = null;
+	let validRestaurantId = null;
 
-	if (!restaurantId && user.email) {
-		// Fallback: Check if ANY user with this email has a restaurant. 
+	if (restaurantIds.length > 0) {
+		const { data: restaurantList } = await supabaseAdmin
+			.from('restaurants')
+			.select('*')
+			.in('id', restaurantIds)
+			.limit(1);
+
+		if (restaurantList && restaurantList.length > 0) {
+			restaurant = restaurantList[0];
+			validRestaurantId = restaurant.id;
+		}
+	}
+
+	if (!restaurant && user.email) {
+		// Fallback: Check if ANY user with this email has a VALID restaurant. 
 		// This solves issues where a Google OAuth login creates a new Auth user 
 		// that differs from the one the Superadmin provisioned against.
 		const { data: profiles } = await supabaseAdmin
 			.from('owner_profiles')
 			.select('id')
-			.eq('email', user.email);
+			.ilike('email', user.email);
 			
 		if (profiles && profiles.length > 0) {
 			const profileIds = profiles.map(p => p.id);
@@ -45,42 +60,41 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 				.in('user_id', profileIds);
 				
 			if (emailStaffList && emailStaffList.length > 0) {
-				restaurantId = emailStaffList[0].restaurant_id;
-				
-				// Self-healing: Link this current user ID to the restaurant as well
-				await supabaseAdmin.from('restaurant_staff').insert({
-					restaurant_id: restaurantId,
-					user_id: user.id,
-					role: 'owner'
-				});
-				await supabaseAdmin.from('owner_profiles').upsert({
-					id: user.id,
-					email: user.email,
-					is_approved: true
-				});
+				const fallbackRestaurantIds = emailStaffList.map(s => s.restaurant_id);
+				const { data: fallbackRestaurants } = await supabaseAdmin
+					.from('restaurants')
+					.select('*')
+					.in('id', fallbackRestaurantIds)
+					.limit(1);
+					
+				if (fallbackRestaurants && fallbackRestaurants.length > 0) {
+					restaurant = fallbackRestaurants[0];
+					validRestaurantId = restaurant.id;
+					
+					// Self-healing: Link this current user ID to the valid restaurant as well
+					await supabaseAdmin.from('restaurant_staff').insert({
+						restaurant_id: validRestaurantId,
+						user_id: user.id,
+						role: 'owner'
+					});
+					await supabaseAdmin.from('owner_profiles').upsert({
+						id: user.id,
+						email: user.email,
+						is_approved: true
+					});
+				}
 			}
 		}
 	}
 
-	if (!restaurantId) {
-		return { restaurant: null };
-	}
-
-	const { data: restaurantList } = await supabaseAdmin
-		.from('restaurants')
-		.select('*')
-		.eq('id', restaurantId);
-
-	const restaurant = restaurantList && restaurantList.length > 0 ? restaurantList[0] : null;
-
-	if (!restaurant) {
+	if (!restaurant || !validRestaurantId) {
 		return { restaurant: null };
 	}
 
 	const { data: tables } = await supabaseAdmin
 		.from('tables')
 		.select('*')
-		.eq('restaurant_id', restaurantId)
+		.eq('restaurant_id', validRestaurantId)
 		.order('table_number', { ascending: true });
 
 	return {

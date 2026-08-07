@@ -4,12 +4,12 @@
   import { cva, type VariantProps } from "class-variance-authority";
 
   const cardVariants = cva(
-    "relative overflow-hidden bg-white/10 backdrop-blur-3xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-[32px] transition-all duration-500 ease-out",
+    "bg-white rounded-[32px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
     {
       variants: {
         variant: {
-          default: "hover:border-white/40 hover:shadow-[0_8px_32px_rgba(255,255,255,0.1)]",
-          interactive: "cursor-pointer hover:scale-[1.02] hover:border-white/50 hover:bg-white/20 hover:shadow-[0_0_40px_rgba(255,255,255,0.2)]",
+          default: "",
+          interactive: "cursor-pointer transition-transform duration-300 hover:scale-[1.02]",
         },
       },
       defaultVariants: {
@@ -32,8 +32,7 @@
   class={cn(cardVariants({ variant }), className)}
   {...rest}
 >
-  <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none rounded-[32px]"></div>
-  <div class="relative z-10 h-full flex flex-col">
+  <div class="relative h-full flex flex-col">
     {@render children?.()}
   </div>
 </div>

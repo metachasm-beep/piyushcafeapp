@@ -92,12 +92,18 @@ export const actions: Actions = {
 			return fail(500, { error: 'Failed to retrieve or create user ID' });
 		}
 
+		// Generate a simple slug from the restaurant name
+		const baseSlug = restaurant_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+		const randomSuffix = Math.random().toString(36).substring(2, 6);
+		const slug = `${baseSlug}-${randomSuffix}`;
+
 		// 2. Insert into restaurants table linked to owner_id
 		const { data: restData, error: dbError } = await getSupabaseAdmin()
 			.from('restaurants')
 			.insert({
 				owner_id: userId,
-				name: restaurant_name
+				name: restaurant_name,
+				slug: slug
 			})
 			.select('id')
 			.single();

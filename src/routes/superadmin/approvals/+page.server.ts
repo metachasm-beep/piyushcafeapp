@@ -35,5 +35,22 @@ export const actions: Actions = {
 		}
 
 		return { success: true };
+	},
+	denyApproval: async ({ request, locals: { supabase } }) => {
+		const data = await request.formData();
+		const id = data.get('id');
+
+		if (id) {
+			const { error } = await supabase
+				.from('owner_profiles')
+				.delete()
+				.eq('id', id);
+
+			if (error) {
+				console.error('Error denying approval (deleting profile):', error);
+			}
+		}
+
+		return { success: true };
 	}
 };

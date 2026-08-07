@@ -78,18 +78,33 @@
                   {/if}
                 </td>
                 <td class="p-4 align-middle text-right">
-                  <form method="POST" action="?/toggleApproval" use:enhance>
-                    <input type="hidden" name="id" value={profile.id} />
-                    <input type="hidden" name="currentState" value={profile.is_approved.toString()} />
+                  <div class="flex items-center justify-end gap-2">
+                    <form method="POST" action="?/toggleApproval" use:enhance>
+                      <input type="hidden" name="id" value={profile.id} />
+                      <input type="hidden" name="currentState" value={profile.is_approved.toString()} />
+                      
+                      <button
+                        type="submit"
+                        disabled={isUpdating}
+                        class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:pointer-events-none disabled:opacity-50 h-8 px-3 shadow-sm {profile.is_approved ? 'border border-zinc-200 bg-white text-red-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200' : 'bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-900/90'}"
+                      >
+                        {profile.is_approved ? 'Revoke' : 'Approve'}
+                      </button>
+                    </form>
                     
-                    <button
-                      type="submit"
-                      disabled={isUpdating}
-                      class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:pointer-events-none disabled:opacity-50 h-8 px-3 shadow-sm {profile.is_approved ? 'border border-zinc-200 bg-white text-red-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200' : 'bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-900/90'}"
-                    >
-                      {profile.is_approved ? 'Revoke' : 'Approve'}
-                    </button>
-                  </form>
+                    {#if !profile.is_approved}
+                      <form method="POST" action="?/denyApproval" use:enhance onsubmit={(e) => { if (!confirm('Are you sure you want to deny this request? This will permanently delete the profile.')) e.preventDefault(); }}>
+                        <input type="hidden" name="id" value={profile.id} />
+                        <button
+                          type="submit"
+                          disabled={isUpdating}
+                          class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:pointer-events-none disabled:opacity-50 h-8 px-3 shadow-sm border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-100 hover:text-red-600"
+                        >
+                          Deny
+                        </button>
+                      </form>
+                    {/if}
+                  </div>
                 </td>
               </tr>
             {/each}

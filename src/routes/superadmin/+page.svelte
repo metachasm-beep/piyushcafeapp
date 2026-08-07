@@ -40,13 +40,13 @@
       <Card>
         <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
           <h3 class="tracking-tight text-sm font-medium">{stat.label}</h3>
-          <stat.icon size={16} class="text-zinc-500" />
+          <stat.icon size={16} class="text-zinc-900" />
         </CardHeader>
         <CardContent>
           <div class="text-2xl font-bold text-zinc-950">
             {stat.isCurrency ? formatCurrency(stat.value) : stat.value.toLocaleString()}
           </div>
-          <p class="text-xs text-zinc-500 mt-1">
+          <p class="text-xs text-zinc-900 mt-1">
             {stat.subtext}
           </p>
         </CardContent>
@@ -69,7 +69,7 @@
     <Card class="col-span-3">
       <CardHeader>
         <h3 class="font-semibold leading-none tracking-tight">Recent Activity</h3>
-        <p class="text-sm text-zinc-500">
+        <p class="text-sm text-zinc-900">
           There were {recentActivity.length} recent events across the platform.
         </p>
       </CardHeader>
@@ -79,7 +79,7 @@
             <div class="flex items-center">
               <div class="ml-4 space-y-1">
                 <p class="text-sm font-medium leading-none text-zinc-950">{event.restaurant}</p>
-                <p class="text-sm text-zinc-500">{event.action}</p>
+                <p class="text-sm text-zinc-900">{event.action}</p>
               </div>
               <div class="ml-auto font-medium">
                 {#if event.status === 'OK'}
@@ -93,7 +93,7 @@
             </div>
           {/each}
           {#if recentActivity.length === 0}
-            <div class="text-sm text-zinc-500 text-center py-4">No recent activity</div>
+            <div class="text-sm text-zinc-900 text-center py-4">No recent activity</div>
           {/if}
         </div>
       </CardContent>

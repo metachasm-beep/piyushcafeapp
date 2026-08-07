@@ -47,7 +47,7 @@
         </div>
         <span>Golden Fork</span>
       </a>
-      <button onclick={() => mobileMenuOpen = false} class="ml-auto lg:hidden text-zinc-500 hover:text-zinc-950">
+      <button onclick={() => mobileMenuOpen = false} class="ml-auto lg:hidden text-zinc-900 hover:text-zinc-950">
         <X size={20} />
       </button>
     </div>
@@ -58,10 +58,10 @@
           {@const active = $page.url.pathname === link.href}
           <a
             href={link.href}
-            class="flex items-center gap-3 rounded-md px-3 py-2 transition-all {active ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-100/50 hover:text-zinc-900'}"
+            class="flex items-center gap-3 rounded-md px-3 py-2 transition-all {active ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-900 hover:bg-zinc-100/50 hover:text-zinc-900'}"
             onclick={() => mobileMenuOpen = false}
           >
-            <link.icon size={16} class={active ? 'text-zinc-900' : 'text-zinc-500'} />
+            <link.icon size={16} class={active ? 'text-zinc-900' : 'text-zinc-900'} />
             {link.label}
           </a>
         {/each}
@@ -73,7 +73,7 @@
       <form action="/auth/logout?next=/" method="POST">
         <button
           type="submit"
-          class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-zinc-500 transition-all hover:bg-red-50 hover:text-red-600"
+          class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-zinc-900 transition-all hover:bg-red-50 hover:text-red-600"
         >
           <LogOut size={16} />
           Sign Out
@@ -88,7 +88,7 @@
     <!-- Top Header -->
     <header class="flex h-[60px] items-center gap-4 border-b border-zinc-200 bg-white px-6">
       <button 
-        class="lg:hidden text-zinc-500 hover:text-zinc-950"
+        class="lg:hidden text-zinc-900 hover:text-zinc-950"
         onclick={() => mobileMenuOpen = true}
       >
         <Menu size={20} />
@@ -96,11 +96,11 @@
       
       <div class="w-full flex-1">
         <form class="relative">
-          <Search size={16} class="absolute left-2.5 top-2.5 text-zinc-500" />
+          <Search size={16} class="absolute left-2.5 top-2.5 text-zinc-900" />
           <input
             type="search"
             placeholder="Search..."
-            class="flex h-9 w-full sm:w-[300px] md:w-[200px] lg:w-[300px] rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 pl-9"
+            class="flex h-9 w-full sm:w-[300px] md:w-[200px] lg:w-[300px] rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 pl-9"
           />
         </form>
       </div>

@@ -138,7 +138,7 @@
       </div>
       <div>
         <h2 class="text-3xl font-bold tracking-tight text-zinc-950">Global Menu</h2>
-        <p class="text-sm text-zinc-500">Manage standard items deployed across all restaurants.</p>
+        <p class="text-sm text-zinc-900">Manage standard items deployed across all restaurants.</p>
       </div>
     </div>
     
@@ -150,12 +150,12 @@
   <div class="mb-6 overflow-x-auto pb-2">
     <div class="flex items-center gap-2 min-w-max p-1 rounded-lg bg-zinc-100 border border-zinc-200 inline-flex">
       <button
-        class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 {selectedCategory === null ? 'bg-white text-zinc-950 shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}"
+        class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 {selectedCategory === null ? 'bg-white text-zinc-950 shadow-sm' : 'text-zinc-900 hover:text-zinc-900'}"
         onclick={() => selectedCategory = null}
       >All Items</button>
       {#each categories as cat}
         <button
-          class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 {selectedCategory === cat.id ? 'bg-white text-zinc-950 shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}"
+          class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 {selectedCategory === cat.id ? 'bg-white text-zinc-950 shadow-sm' : 'text-zinc-900 hover:text-zinc-900'}"
           onclick={() => selectedCategory = cat.id}
         >
           {cat.icon_emoji ?? ''} {cat.name}
@@ -173,10 +173,10 @@
   {:else if filteredItems.length === 0}
     <div class="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 p-12 text-center animate-in fade-in-50">
       <div class="flex h-20 w-20 items-center justify-center rounded-full bg-zinc-100 mb-4">
-        <Settings size={32} class="text-zinc-400" />
+        <Settings size={32} class="text-zinc-900" />
       </div>
       <h3 class="mt-4 text-lg font-semibold text-zinc-950">No items found</h3>
-      <p class="mb-4 mt-2 text-sm text-zinc-500">Add the first item to this category.</p>
+      <p class="mb-4 mt-2 text-sm text-zinc-900">Add the first item to this category.</p>
       <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-900/90 h-9 px-4 py-2" onclick={openAdd}>
         Add First Item
       </button>
@@ -204,11 +204,11 @@
               <h3 class="font-semibold leading-tight text-zinc-950 line-clamp-2">{item.name}</h3>
               <span class="font-bold text-zinc-900 whitespace-nowrap">{formatCurrency(item.price)}</span>
             </div>
-            <p class="text-xs text-zinc-500 font-mono mb-4">{getCategoryName(item.category_id ?? null)}</p>
+            <p class="text-xs text-zinc-900 font-mono mb-4">{getCategoryName(item.category_id ?? null)}</p>
             
             <div class="mt-auto flex items-center gap-2 pt-4">
               <button
-                class="inline-flex flex-1 items-center justify-center rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 h-8 px-2 border {item.is_available ? 'border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-100' : 'bg-zinc-100 border-zinc-200 text-zinc-500 hover:bg-zinc-200'}"
+                class="inline-flex flex-1 items-center justify-center rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 h-8 px-2 border {item.is_available ? 'border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-100' : 'bg-zinc-100 border-zinc-200 text-zinc-900 hover:bg-zinc-200'}"
                 onclick={() => toggleAvailability(item)}
               >
                 {item.is_available ? 'Available' : 'Unavailable'}
@@ -248,25 +248,25 @@
           <h2 class="text-lg font-semibold tracking-tight">{editingItem ? 'Edit Item' : 'Add Menu Item'}</h2>
         </div>
         <button class="rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2" onclick={() => showModal = false}>
-          <X size={16} class="text-zinc-500" />
+          <X size={16} class="text-zinc-900" />
         </button>
       </div>
 
       <form onsubmit={saveItem} class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
         <div class="space-y-2">
           <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="name">Item Name</label>
-          <input class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50" id="name" name="name" required value={editingItem?.name ?? ''} placeholder="Butter Chicken" />
+          <input class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50" id="name" name="name" required value={editingItem?.name ?? ''} placeholder="Butter Chicken" />
         </div>
         
         <div class="space-y-2">
           <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="description">Description (Optional)</label>
-          <input class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50" id="description" name="description" value={editingItem?.description ?? ''} placeholder="Creamy tomato-based curry..." />
+          <input class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50" id="description" name="description" value={editingItem?.description ?? ''} placeholder="Creamy tomato-based curry..." />
         </div>
         
         <div class="grid grid-cols-2 gap-4">
           <div class="space-y-2">
             <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="price">Price (₹)</label>
-            <input class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50" id="price" name="price" type="number" step="0.01" required value={editingItem?.price ?? ''} placeholder="350" />
+            <input class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50" id="price" name="price" type="number" step="0.01" required value={editingItem?.price ?? ''} placeholder="350" />
           </div>
           <div class="space-y-2">
             <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="category_id">Category</label>
@@ -281,7 +281,7 @@
 
         <div class="space-y-2">
           <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="image_url">Image URL</label>
-          <input class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50" id="image_url" name="image_url" type="url" value={editingItem?.image_url ?? ''} placeholder="https://..." />
+          <input class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50" id="image_url" name="image_url" type="url" value={editingItem?.image_url ?? ''} placeholder="https://..." />
         </div>
         
         <div class="space-y-2">

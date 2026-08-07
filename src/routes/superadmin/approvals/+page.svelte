@@ -23,7 +23,7 @@
       </div>
       <div>
         <h2 class="text-3xl font-bold tracking-tight text-zinc-950">User Approvals</h2>
-        <p class="text-sm text-zinc-500">Manage access to the Owner portal</p>
+        <p class="text-sm text-zinc-900">Manage access to the Owner portal</p>
       </div>
     </div>
   </div>
@@ -31,10 +31,10 @@
   <Card>
     <CardHeader>
       <div class="flex items-center gap-2">
-        <ShieldAlert size={16} class="text-zinc-500" />
+        <ShieldAlert size={16} class="text-zinc-900" />
         <h3 class="font-semibold leading-none tracking-tight">Registered Users</h3>
       </div>
-      <p class="text-sm text-zinc-500">Review and approve new restaurant owners.</p>
+      <p class="text-sm text-zinc-900">Review and approve new restaurant owners.</p>
     </CardHeader>
     
     <CardContent class="p-0">
@@ -42,16 +42,16 @@
         <table class="w-full caption-bottom text-sm">
           <thead class="[&_tr]:border-b [&_tr]:border-zinc-200 bg-zinc-50/50">
             <tr class="border-b border-zinc-200 transition-colors hover:bg-zinc-50/50 data-[state=selected]:bg-zinc-50">
-              <th class="h-12 px-4 text-left align-middle font-medium text-zinc-500">User / Email</th>
-              <th class="h-12 px-4 text-left align-middle font-medium text-zinc-500">Registered</th>
-              <th class="h-12 px-4 text-left align-middle font-medium text-zinc-500">Status</th>
-              <th class="h-12 px-4 align-middle font-medium text-zinc-500 text-right">Action</th>
+              <th class="h-12 px-4 text-left align-middle font-medium text-zinc-900">User / Email</th>
+              <th class="h-12 px-4 text-left align-middle font-medium text-zinc-900">Registered</th>
+              <th class="h-12 px-4 text-left align-middle font-medium text-zinc-900">Status</th>
+              <th class="h-12 px-4 align-middle font-medium text-zinc-900 text-right">Action</th>
             </tr>
           </thead>
           <tbody class="[&_tr:last-child]:border-0">
             {#if data.profiles.length === 0}
               <tr>
-                <td colspan="4" class="p-8 text-center text-zinc-500">
+                <td colspan="4" class="p-8 text-center text-zinc-900">
                   No users found. They will appear here once they attempt to log in.
                 </td>
               </tr>
@@ -61,9 +61,9 @@
               <tr class="border-b border-zinc-200 transition-colors hover:bg-zinc-50/50 data-[state=selected]:bg-zinc-50">
                 <td class="p-4 align-middle">
                   <div class="font-medium text-zinc-950">{profile.email}</div>
-                  <div class="text-xs text-zinc-500 font-mono mt-0.5">{profile.id}</div>
+                  <div class="text-xs text-zinc-900 font-mono mt-0.5">{profile.id}</div>
                 </td>
-                <td class="p-4 align-middle text-zinc-500">
+                <td class="p-4 align-middle text-zinc-900">
                   {new Date(profile.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                 </td>
                 <td class="p-4 align-middle">

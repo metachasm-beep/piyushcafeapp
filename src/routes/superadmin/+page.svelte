@@ -1,69 +1,64 @@
 <script lang="ts">
-  import { TrendingUp, Users, ShoppingBag, Store, ArrowUpRight, ArrowDownRight, Activity, Zap } from 'lucide-svelte';
+  import type { PageData } from './$types';
+  import { TrendingUp, Users, ShoppingBag, Store, ArrowUpRight, ArrowDownRight, Activity, Zap, AlertTriangle, CheckCircle2 } from 'lucide-svelte';
   import { formatCurrency } from '$lib/utils';
   import InteractiveRevenueChart from '$lib/components/InteractiveRevenueChart.svelte';
   import LiveOrderParticles from '$lib/components/LiveOrderParticles.svelte';
-  import { slide, fade } from 'svelte/transition';
+  import { slide, fade, fly } from 'svelte/transition';
   import { tooltip } from '$lib/actions/tooltip';
   import { toast } from 'svelte-sonner';
+  import { onMount } from 'svelte';
+
+  import Card from '$lib/components/ui/card.svelte';
+  import CardHeader from '$lib/components/ui/card-header.svelte';
+  import CardTitle from '$lib/components/ui/card-title.svelte';
+  import CardContent from '$lib/components/ui/card-content.svelte';
+  import Badge from '$lib/components/ui/badge.svelte';
+  import Skeleton from '$lib/components/ui/skeleton.svelte';
 
   let expandedStatIndex = $state<number | null>(null);
 
   let { data }: { data: PageData } = $props();
 
-  // Historical data for sparklines (placeholder for actual implementation)
-  const sparklineData = [
-    [0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0]
-  ];
-
   let stats = $derived([
-    { label: 'Total Revenue', value: data.stats.totalRevenue, isCurrency: true, trend: 12, up: true, color: '#6366f1', bg: 'rgba(99,102,241,0.08)', icon: TrendingUp, sparkline: sparklineData[0], target: 150000 },
-    { label: 'Platform Fees', value: data.stats.platformFees, isCurrency: true, trend: 8, up: true, color: '#22c55e', bg: 'rgba(34,197,94,0.08)', icon: Activity, sparkline: sparklineData[1], target: 3000 },
-    { label: 'Active Restaurants', value: data.stats.activeRestaurantsCount, isCurrency: false, trend: 0, up: true, color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', icon: Store, sparkline: sparklineData[2], target: 5 },
-    { label: 'Total Orders Today', value: data.stats.totalOrdersToday, isCurrency: false, trend: -3, up: false, color: '#06b6d4', bg: 'rgba(6,182,212,0.08)', icon: ShoppingBag, sparkline: sparklineData[3], target: 200 },
+    { label: 'Total Revenue', value: data.stats.totalRevenue, isCurrency: true, trend: 12, up: true, color: '#6366f1', icon: TrendingUp, target: 150000 },
+    { label: 'Active Restaurants', value: data.stats.activeRestaurantsCount, isCurrency: false, trend: 0, up: true, color: '#8b5cf6', icon: Store, target: 5 },
+    { label: 'Platform Fees', value: data.stats.platformFees, isCurrency: true, trend: 8, up: true, color: '#22c55e', icon: Activity, target: 3000 },
+    { label: 'Total Orders', value: data.stats.totalOrdersToday, isCurrency: false, trend: -3, up: false, color: '#06b6d4', icon: ShoppingBag, target: 200 },
   ]);
 
-  // Helper to generate SVG path for sparkline
-  function getSparklinePath(data: number[], width: number, height: number) {
-    if (!data || data.length === 0) return '';
-    const min = Math.min(...data);
-    const max = Math.max(...data);
-    const range = max - min || 1;
-    const stepX = width / (data.length - 1);
-    
-    return data.map((val, i) => {
-      const x = i * stepX;
-      const y = height - ((val - min) / range) * height;
-      return `${i === 0 ? 'M' : 'L'} ${x},${y}`;
-    }).join(' ');
-  }
-
   let recentActivity = $derived(data.recentActivity);
-
-  // Use the chart data generated from the server
   let chartData = $derived(data.chartData.map(d => ({ date: new Date(d.date), revenue: d.revenue })));
-
   let amounts = $derived(chartData.map(d => d.revenue));
 
   function statusColor(s: string) {
-    if (s === 'OK') return '#22c55e';
-    if (s === 'WARN') return '#f59e0b';
-    if (s === 'ERR') return '#ef4444';
-    return '#6366f1';
+    if (s === 'OK') return 'success';
+    if (s === 'WARN') return 'warning';
+    if (s === 'ERR') return 'destructive';
+    return 'default';
   }
 
-  // Pull to refresh logic
   let startY = 0;
   let currentY = $state(0);
   let isRefreshing = $state(false);
+  let mounted = $state(false);
+  
+  // Parallax rotation state based on mouse movement to give a subtle float effect
+  let mouseX = $state(0);
+  let mouseY = $state(0);
+
+  onMount(() => {
+    mounted = true;
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX = (e.clientX / window.innerWidth) - 0.5;
+      mouseY = (e.clientY / window.innerHeight) - 0.5;
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  });
 
   function handleTouchStart(e: TouchEvent) {
-    if (window.scrollY === 0) {
-      startY = e.touches[0].clientY;
-    }
+    if (window.scrollY === 0) startY = e.touches[0].clientY;
   }
 
   function handleTouchMove(e: TouchEvent) {
@@ -79,8 +74,7 @@
   function handleTouchEnd() {
     if (currentY > 60 && !isRefreshing) {
       isRefreshing = true;
-      toast.success('Refreshing data...');
-      // Simulate network request
+      toast.success('Refreshing telemetry...');
       setTimeout(() => {
         isRefreshing = false;
         currentY = 0;
@@ -93,169 +87,191 @@
   }
 </script>
 
-<svelte:head><title>Dashboard · Superadmin</title></svelte:head>
+<svelte:head><title>Command Center · Antigravity Spatial</title></svelte:head>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div 
-  style="font-family:'Cabinet Grotesk',system-ui,sans-serif;color:#1e1b4b;position:relative;z-index:1; transform: translateY({currentY}px); transition: {isRefreshing ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'};"
+  class="relative z-10 text-zinc-100 min-h-screen bg-[#050505] font-sans antialiased overflow-hidden perspective-1000"
+  style="transform: translateY({currentY}px); transition: {isRefreshing ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'};"
   ontouchstart={handleTouchStart}
   ontouchmove={handleTouchMove}
   ontouchend={handleTouchEnd}
 >
+  
+  <!-- Deep Space Telemetry Background Grid -->
+  <div class="fixed inset-0 pointer-events-none opacity-20"
+       style="background-image: linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; transform: perspective(1000px) rotateX(60deg) translateY(-100px) translateZ(-200px);">
+  </div>
+  
+  <div class="absolute inset-0 pointer-events-none opacity-50 z-0">
+     <LiveOrderParticles />
+  </div>
+  
   {#if currentY > 0}
-    <div style="position:absolute;top:-50px;left:0;right:0;display:flex;justify-content:center;align-items:center;height:50px;">
-      <div style="width:24px;height:24px;border-radius:50%;border:2px solid #6366f1;border-top-color:transparent;animation:spin 1s linear infinite; opacity: {Math.min(currentY / 60, 1)}; transform: rotate({currentY * 5}deg);"></div>
+    <div class="absolute top-[20px] left-0 right-0 flex justify-center items-center h-[50px] z-50">
+      <div class="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin opacity-[{Math.min(currentY / 60, 1)}] shadow-[0_0_15px_rgba(255,255,255,0.5)]"></div>
     </div>
   {/if}
 
-  <LiveOrderParticles />
-  
-  <!-- Page header -->
-  <div class="sa-page-header">
+  <!-- Floating Header -->
+  <div class="relative z-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-8 px-8 lg:px-12 backdrop-blur-md bg-black/20 border-b border-white/5 pb-6 shadow-[0_20px_40px_rgba(0,0,0,0.5)]" style="transform: translateZ(50px);">
     <div>
-      <h1 class="sa-page-title">Network Dashboard</h1>
-      <p class="sa-page-subtitle">Real-time telemetry across all restaurant nodes</p>
+      <h1 class="text-4xl font-bold tracking-tight text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">Spatial Command</h1>
+      <p class="text-xs text-white/50 mt-2 font-mono uppercase tracking-[0.2em]">Network Telemetry / Node Alpha</p>
     </div>
-    <div style="display:flex;gap:10px;">
-      <button class="sa-btn-primary" onclick={() => import('svelte-sonner').then(m => m.toast.success('Report exported'))} use:tooltip={"Export CSV Report"}>
-        Export Report
+    <div class="flex gap-3">
+      <button class="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full font-mono text-xs uppercase tracking-widest transition-all active:scale-95 border border-white/20 backdrop-blur-xl shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]" onclick={() => toast.success('Telemetry exported')}>
+        Extract Data
       </button>
     </div>
   </div>
 
-  <!-- Bento grid -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-    {#each stats as stat, i}
-      {#if expandedStatIndex === null || expandedStatIndex === i}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div 
-          class="sa-tile" 
-          style="padding:22px 24px;position:relative;overflow:hidden;cursor:pointer; grid-column: {expandedStatIndex === i ? '1 / -1' : 'auto'};"
-          onclick={() => expandedStatIndex = expandedStatIndex === i ? null : i}
-          in:fade={{ duration: 200 }}
-          use:tooltip={`View breakdown for ${stat.label}`}
-        >
-          <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:{stat.bg};filter:blur(20px);"></div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-            <span style="font-size:11px;font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:0.07em;color:#8b84c0;">{stat.label}</span>
-            <div style="width:32px;height:32px;border-radius:10px;background:{stat.bg};display:flex;align-items:center;justify-content:center;color:{stat.color};">
-              <stat.icon size={15} strokeWidth={2} />
+  <div class="relative w-full h-[calc(100vh-120px)] flex items-center justify-center p-8 lg:p-16">
+    <!-- Isometric 3D Container -->
+    {#if mounted}
+    <div 
+      class="w-full max-w-7xl grid grid-cols-1 xl:grid-cols-12 gap-8 preserve-3d"
+      style="transform: perspective(1500px) rotateX({55 - mouseY * 10}deg) rotateZ({-35 - mouseX * 10}deg) translateZ({mouseY * 50}px); transition: transform 0.5s ease-out;"
+    >
+      
+      <!-- Main Content (Left) -->
+      <div class="xl:col-span-8 flex flex-col gap-8 preserve-3d">
+        
+        <!-- Top Stats Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 preserve-3d">
+          {#each stats.slice(0, 2) as stat, i}
+            <div in:fly={{ y: -200, duration: 1000, delay: i * 150, opacity: 0 }} class="preserve-3d">
+              <Card class="h-full hover:shadow-[0_40px_80px_rgba(0,0,0,0.6)] cursor-pointer group hover:-translate-y-2 transition-transform duration-500">
+                <CardHeader class="flex flex-row items-center justify-between pb-2 space-y-0 border-b border-white/5">
+                  <CardTitle class="text-xs font-mono uppercase tracking-widest text-white/50 group-hover:text-white/80 transition-colors">{stat.label}</CardTitle>
+                  <stat.icon class="w-4 h-4 text-white/30 group-hover:text-white/70 transition-colors drop-shadow-[0_0_5px_rgba(255,255,255,0.3)]" />
+                </CardHeader>
+                <CardContent class="pt-6">
+                  <div class="text-4xl font-light tracking-tighter text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+                    {stat.isCurrency ? formatCurrency(stat.value) : stat.value.toLocaleString()}
+                  </div>
+                  <div class="flex items-center gap-2 mt-4" style="transform: translateZ(10px);">
+                    <Badge variant={stat.up ? 'success' : 'destructive'} class="rounded-full px-2 py-0.5 bg-white/5 backdrop-blur-md border border-white/10">
+                      {#if stat.up}<ArrowUpRight class="w-3 h-3 mr-1" />{:else}<ArrowDownRight class="w-3 h-3 mr-1" />{/if}
+                      {Math.abs(stat.trend)}%
+                    </Badge>
+                    <span class="text-[10px] uppercase tracking-wider text-white/40">vs cycle</span>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </div>
-          <div style="font-size:30px;font-weight:900;letter-spacing:-0.04em;color:#1e1b4b;line-height:1;margin-bottom:12px;font-variant-numeric:tabular-nums;">
-            {stat.isCurrency ? formatCurrency(stat.value) : stat.value.toLocaleString()}
-          </div>
-          
-          <!-- Pacing Gauge / Progress -->
-          <div style="margin-bottom: 12px;">
-            <div style="display:flex; justify-content:space-between; font-size:10px; color:#8b84c0; margin-bottom:4px; font-family:'Geist Mono',monospace;">
-              <span>Target: {stat.isCurrency ? formatCurrency(stat.target) : stat.target}</span>
-              <span>{Math.round((stat.value / stat.target) * 100)}%</span>
-            </div>
-            <div style="width:100%; height:4px; background:rgba(0,0,0,0.05); border-radius:2px; overflow:hidden;">
-              <div style="height:100%; background:{stat.color}; width:{Math.min(100, (stat.value / stat.target) * 100)}%; border-radius:2px;"></div>
-            </div>
-          </div>
+          {/each}
+        </div>
 
-          <div style="display:flex; align-items:center; justify-content:space-between;">
-            {#if stat.trend !== 0}
-              <div style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:{stat.up ? '#16a34a' : '#dc2626'};">
-                {#if stat.up}<ArrowUpRight size={13} />{:else}<ArrowDownRight size={13} />{/if}
-                {Math.abs(stat.trend)}% vs last month
+        <!-- Revenue Chart -->
+        <div in:fly={{ y: -200, duration: 1000, delay: 300, opacity: 0 }} class="preserve-3d h-[400px]">
+          <Card class="h-full flex flex-col group hover:shadow-[0_50px_100px_rgba(0,0,0,0.5)] transition-all duration-700">
+            <CardHeader class="flex flex-row items-center justify-between border-b border-white/5 backdrop-blur-md bg-white/[0.02]">
+              <div style="transform: translateZ(20px);">
+                <CardTitle class="text-sm font-mono uppercase tracking-widest">Revenue Stream</CardTitle>
+                <p class="text-[10px] text-white/40 mt-1 uppercase tracking-wider">Spatial brushing enabled</p>
               </div>
-            {:else}
-              <div style="font-size:12px;color:#9ca3af;">No change</div>
-            {/if}
-            
-            <!-- Sparkline -->
-            <svg width="60" height="20" viewBox="0 0 60 20" style="overflow:visible;">
-              <path d={getSparklinePath(stat.sparkline, 60, 20)} fill="none" stroke="{stat.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </div>
-
-          {#if expandedStatIndex === i}
-            <div transition:slide={{ duration: 300 }} style="margin-top:24px;padding-top:24px;border-top:1px solid rgba(0,0,0,0.05);">
-              <h3 style="font-size:14px;font-weight:800;color:#1e1b4b;margin-bottom:12px;">Detailed Breakdown</h3>
-              <table style="width:100%;text-align:left;font-size:13px;border-collapse:collapse;">
-                <thead>
-                  <tr style="color:#8b84c0;font-family:'Geist Mono',monospace;font-size:10px;text-transform:uppercase;">
-                    <th style="padding-bottom:8px;font-weight:500;">Restaurant</th>
-                    <th style="padding-bottom:8px;font-weight:500;">Value</th>
-                    <th style="padding-bottom:8px;font-weight:500;">Trend</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr style="border-top:1px solid rgba(0,0,0,0.05);">
-                    <td style="padding:10px 0;font-weight:600;color:#1e1b4b;">The Golden Fork</td>
-                    <td style="padding:10px 0;">{stat.isCurrency ? formatCurrency(stat.value * 0.4) : Math.round(stat.value * 0.4)}</td>
-                    <td style="padding:10px 0;color:#16a34a;">+12%</td>
-                  </tr>
-                  <tr style="border-top:1px solid rgba(0,0,0,0.05);">
-                    <td style="padding:10px 0;font-weight:600;color:#1e1b4b;">Spice Symphony</td>
-                    <td style="padding:10px 0;">{stat.isCurrency ? formatCurrency(stat.value * 0.35) : Math.round(stat.value * 0.35)}</td>
-                    <td style="padding:10px 0;color:#16a34a;">+5%</td>
-                  </tr>
-                  <tr style="border-top:1px solid rgba(0,0,0,0.05);">
-                    <td style="padding:10px 0;font-weight:600;color:#1e1b4b;">Urban Bites</td>
-                    <td style="padding:10px 0;">{stat.isCurrency ? formatCurrency(stat.value * 0.25) : Math.round(stat.value * 0.25)}</td>
-                    <td style="padding:10px 0;color:#dc2626;">-2%</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          {/if}
-        </div>
-      {/if}
-    {/each}
-  </div>
-
-  <!-- Bottom row: chart + activity log -->
-  <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
-
-    <!-- Revenue chart tile -->
-    <div class="sa-tile" style="padding:28px 28px 24px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
-        <div>
-          <div style="font-size:17px;font-weight:800;color:#1e1b4b;letter-spacing:-0.02em;">Revenue Stream</div>
-          <div style="font-size:11px;font-family:'Geist Mono',monospace;color:#8b84c0;margin-top:2px;text-transform:uppercase;letter-spacing:0.06em;">Past 7 days</div>
-        </div>
-        <div style="font-size:22px;font-weight:900;color:#6366f1;letter-spacing:-0.03em;">
-          {formatCurrency(amounts.reduce((a,b) => a+b, 0))}
+              <div class="text-2xl font-light tracking-tighter text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" style="transform: translateZ(30px);">
+                {formatCurrency(amounts.reduce((a: number, b: number) => a+b, 0))}
+              </div>
+            </CardHeader>
+            <CardContent class="flex-1 relative pt-4" style="transform: translateZ(40px);">
+              <InteractiveRevenueChart data={chartData} />
+            </CardContent>
+          </Card>
         </div>
       </div>
-      <!-- Interactive Chart -->
-      <div style="height:200px;position:relative; margin-top:20px;">
-        <InteractiveRevenueChart data={chartData} />
+
+      <!-- Right Column (Alerts & Secondary Stats) -->
+      <div class="xl:col-span-4 flex flex-col gap-8 preserve-3d">
+        
+        <div class="grid grid-cols-2 gap-8 preserve-3d">
+          {#each stats.slice(2, 4) as stat, i}
+            <div in:fly={{ y: -200, duration: 1000, delay: 450 + (i * 150), opacity: 0 }} class="preserve-3d">
+              <Card class="hover:shadow-[0_40px_80px_rgba(0,0,0,0.6)] cursor-pointer group hover:-translate-y-2 transition-transform duration-500 h-full">
+                <CardHeader class="pb-2 flex flex-col items-center text-center">
+                  <stat.icon class="w-6 h-6 text-white/30 group-hover:text-white/80 transition-colors drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] mb-3" />
+                  <CardTitle class="text-[10px] font-medium text-white/40 uppercase tracking-[0.2em]">{stat.label}</CardTitle>
+                </CardHeader>
+                <CardContent class="text-center pt-2">
+                  <div class="text-2xl font-light tracking-tighter text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+                    {stat.isCurrency ? formatCurrency(stat.value) : stat.value.toLocaleString()}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          {/each}
+        </div>
+
+        <!-- Alerts & Action Center -->
+        <div in:fly={{ y: -200, duration: 1000, delay: 750, opacity: 0 }} class="preserve-3d flex-1">
+          <Card class="h-full flex flex-col group hover:shadow-[0_50px_100px_rgba(0,0,0,0.5)] transition-all duration-700 max-h-[500px]">
+            <CardHeader class="flex flex-row items-center justify-between pb-4 border-b border-white/5 bg-white/[0.02]">
+              <CardTitle class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-white/70" style="transform: translateZ(20px);">
+                <AlertTriangle class="w-4 h-4 text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]" />
+                Network Events
+              </CardTitle>
+              <Badge variant="warning" class="bg-white/10 text-white border-white/20 blur-none backdrop-blur-md shadow-[0_0_10px_rgba(255,255,255,0.2)]" style="transform: translateZ(20px);">3 Pending</Badge>
+            </CardHeader>
+            <CardContent class="p-0 flex-1 overflow-y-auto custom-scrollbar" style="transform: translateZ(10px);">
+              <div class="divide-y divide-white/5">
+                
+                <!-- High Priority Action -->
+                <div class="p-5 flex items-start gap-4 hover:bg-white/[0.05] transition-colors cursor-pointer group/item border-l-2 border-transparent hover:border-white">
+                  <div class="mt-1"><div class="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,1)] animate-pulse"></div></div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-light text-white tracking-wide">Node Request</p>
+                    <p class="text-[11px] text-white/50 mt-1 truncate font-mono">Bistro Cafe connection pending.</p>
+                  </div>
+                  <button class="text-[10px] font-mono uppercase tracking-widest text-white/40 group-hover/item:text-white transition-colors border border-white/10 px-2 py-1 rounded-sm hover:bg-white/10">Authorize</button>
+                </div>
+
+                <!-- System Log Feed -->
+                {#each recentActivity as event}
+                  <div class="p-5 flex items-start gap-4 hover:bg-white/[0.03] transition-colors border-l-2 border-transparent hover:border-white/20">
+                    <div class="mt-1"><div class="w-1.5 h-1.5 rounded-full {event.status === 'OK' ? 'bg-white/60 shadow-[0_0_5px_rgba(255,255,255,0.5)]' : event.status === 'WARN' ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,1)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]'}"></div></div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex justify-between items-center">
+                        <p class="text-xs font-light text-white/80 tracking-wide truncate">{event.restaurant}</p>
+                        <span class="text-[9px] text-white/30 font-mono tracking-widest">{event.time}</span>
+                      </div>
+                      <p class="text-[11px] text-white/40 mt-1 font-mono">{event.action}</p>
+                    </div>
+                  </div>
+                {/each}
+                
+                <div class="p-6 flex items-center justify-center gap-3 text-white/30">
+                  <div class="w-1.5 h-1.5 rounded-full bg-white/30 animate-ping"></div>
+                  <span class="text-[10px] font-mono uppercase tracking-[0.2em]">Listening to network...</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
       </div>
     </div>
-
-    <!-- Activity log tile -->
-    <div class="sa-tile" style="padding:24px 22px;display:flex;flex-direction:column;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
-        <div style="font-size:15px;font-weight:800;color:#1e1b4b;letter-spacing:-0.02em;">System Log</div>
-        <div style="display:flex;align-items:center;gap:5px;">
-          <div style="width:5px;height:5px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,0.7);"></div>
-          <span style="font-size:10px;font-family:'Geist Mono',monospace;color:#8b84c0;text-transform:uppercase;letter-spacing:0.05em;">Live</span>
-        </div>
-      </div>
-      <div style="flex:1;display:flex;flex-direction:column;gap:12px;overflow-y:auto;">
-        {#each recentActivity as event}
-          <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:10px;background:rgba(99,102,241,0.04);border:1px solid rgba(99,102,241,0.07);">
-            <div style="width:6px;height:6px;border-radius:50%;background:{statusColor(event.status)};margin-top:5px;flex-shrink:0;box-shadow:0 0 5px {statusColor(event.status)};"></div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:12px;font-weight:700;color:#1e1b4b;truncate;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{event.restaurant}</div>
-              <div style="font-size:11px;color:#8b84c0;margin-top:1px;">{event.action}</div>
-            </div>
-            <span style="font-size:10px;font-family:'Geist Mono',monospace;color:#9ca3af;flex-shrink:0;">{event.time}</span>
-          </div>
-        {/each}
-        <div style="display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:rgba(99,102,241,0.03);">
-          <div style="width:6px;height:6px;border-radius:50%;background:#6366f1;animation:pulse 1.5s infinite;"></div>
-          <span style="font-size:11px;font-family:'Geist Mono',monospace;color:#a5b4fc;">Waiting for events...</span>
-        </div>
-      </div>
-    </div>
-
+    {/if}
   </div>
 </div>
+
+<style>
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  
+  /* Custom scrollbar for network events */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.3);
+  }
+</style>

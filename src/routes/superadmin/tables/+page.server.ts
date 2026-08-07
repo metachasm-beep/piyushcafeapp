@@ -25,7 +25,7 @@ export const load: PageServerLoad = async () => {
 	
 	const [{ data: restaurants }, { data: tables }] = await Promise.all([
 		supabaseAdmin.from('restaurants').select('*').order('created_at', { ascending: false }),
-		supabaseAdmin.from('tables').select('*').order('created_at', { ascending: false })
+		supabaseAdmin.from('tables').select('*').order('table_number', { ascending: true })
 	]);
 
 	return {

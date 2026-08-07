@@ -66,6 +66,10 @@
         showAddModal = false;
         toast.success(`Table added successfully`);
         await update(); // Invalidate and reload tables
+        
+        if (result.data?.table) {
+            generateQr(result.data.table);
+        }
       } else if (result.type === 'failure') {
         if (result.data?.errors) {
             const errs = Object.values(result.data.errors).flat().join(', ');

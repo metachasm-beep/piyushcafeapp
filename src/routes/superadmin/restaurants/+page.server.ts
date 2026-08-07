@@ -123,13 +123,13 @@ export const actions: Actions = {
 		const randomSuffix = Math.random().toString(36).substring(2, 6);
 		const slug = `${baseSlug}-${randomSuffix}`;
 
-		// 2. Insert into restaurants table. We omit owner_id because ownership is linked 
-		// via restaurant_staff and owner_id has a broken legacy foreign key constraint.
+		// 2. Insert into restaurants table.
 		const { data: restData, error: dbError } = await getSupabaseAdmin()
 			.from('restaurants')
 			.insert({
 				name: restaurant_name,
-				slug: slug
+				slug: slug,
+				owner_id: userId
 			})
 			.select('id')
 			.single();

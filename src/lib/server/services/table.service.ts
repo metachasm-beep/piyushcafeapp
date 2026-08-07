@@ -4,12 +4,11 @@
  * Applies: database-architect, postgres-best-practices
  */
 import { supabase } from "$lib/supabase";
-import { MOCK_TABLES } from "$lib/mock-data";
 import type { Table } from "$lib/types";
 import { sanitizeObject, type TableInput } from "$lib/server/security";
 
 export async function fetchTables(restaurantId: string): Promise<Table[]> {
-	if (!supabase) return MOCK_TABLES.filter((t) => t.restaurant_id === restaurantId || true);
+	if (!supabase) return [];
 
 	const { data, error } = await supabase
 		.from("tables")

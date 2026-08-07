@@ -1,11 +1,10 @@
-﻿/**
+/**
  * menu.service.ts
  * Service layer for all menu-related database operations.
  * Uses Supabase as the backend; gracefully falls back to mock data.
  * Applies: backend-architect, database-optimizer, postgres-best-practices
  */
 import { supabase } from "$lib/supabase";
-import { MOCK_MENU_ITEMS, MOCK_CATEGORIES } from "$lib/mock-data";
 import type { MenuItem, MenuCategory } from "$lib/types";
 import { sanitizeObject, type MenuItemInput } from "$lib/server/security";
 
@@ -15,8 +14,8 @@ import { sanitizeObject, type MenuItemInput } from "$lib/server/security";
 
 export async function fetchMenuItems(restaurantId: string): Promise<MenuItem[]> {
 	if (!supabase) {
-		console.log(JSON.stringify({ level: "warn", msg: "Supabase not configured. Using mock menu items." }));
-		return MOCK_MENU_ITEMS;
+		console.log(JSON.stringify({ level: "warn", msg: "Supabase not configured." }));
+		return [];
 	}
 
 	const { data, error } = await supabase
@@ -34,7 +33,7 @@ export async function fetchMenuItems(restaurantId: string): Promise<MenuItem[]> 
 }
 
 export async function fetchCategories(restaurantId: string): Promise<MenuCategory[]> {
-	if (!supabase) return MOCK_CATEGORIES;
+	if (!supabase) return [];
 
 	const { data, error } = await supabase
 		.from("menu_categories")

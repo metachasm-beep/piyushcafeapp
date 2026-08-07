@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import { MOCK_RESTAURANT, MOCK_TABLES, MOCK_CATEGORIES, MOCK_MENU_ITEMS } from './mock-data';
 import type { Restaurant, Table, MenuCategory, MenuItem } from './types';
 
 // ==========================================
@@ -7,7 +6,7 @@ import type { Restaurant, Table, MenuCategory, MenuItem } from './types';
 // ==========================================
 
 export async function getRestaurant(id: string): Promise<Restaurant | null> {
-  if (!supabase) return MOCK_RESTAURANT;
+  if (!supabase) return null;
   
   const { data, error } = await supabase
     .from('restaurants')
@@ -20,7 +19,7 @@ export async function getRestaurant(id: string): Promise<Restaurant | null> {
 }
 
 export async function getTable(id: string): Promise<Table | null> {
-  if (!supabase) return MOCK_TABLES.find(t => t.id === id) || null;
+  if (!supabase) return null;
   
   const { data, error } = await supabase
     .from('tables')
@@ -33,7 +32,7 @@ export async function getTable(id: string): Promise<Table | null> {
 }
 
 export async function getCategories(restaurant_id: string): Promise<MenuCategory[]> {
-  if (!supabase) return MOCK_CATEGORIES;
+  if (!supabase) return [];
   
   const { data, error } = await supabase
     .from('menu_categories')
@@ -46,7 +45,7 @@ export async function getCategories(restaurant_id: string): Promise<MenuCategory
 }
 
 export async function getMenuItems(restaurant_id: string): Promise<MenuItem[]> {
-  if (!supabase) return MOCK_MENU_ITEMS;
+  if (!supabase) return [];
   
   const { data, error } = await supabase
     .from('menu_items')

@@ -157,6 +157,12 @@
         <button onclick={() => window.location.reload()} class="inline-flex h-9 items-center justify-center rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-zinc-50 shadow transition-colors hover:bg-zinc-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950">
           Refresh Page
         </button>
+        {#if data.debugInfo}
+          <div class="mt-8 p-4 bg-zinc-100 rounded text-left text-xs text-zinc-700 w-full overflow-auto font-mono">
+            <strong>Debug Info:</strong>
+            <pre>{JSON.stringify(data.debugInfo, null, 2)}</pre>
+          </div>
+        {/if}
       </div>
     {/if}
   </div>

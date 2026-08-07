@@ -43,7 +43,10 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		}
 	}
 
+	let debugInfo = { step: 'init', email: user.email, user_id: user.id, profiles: null, staff: null };
+
 	if (!restaurant && user.email) {
+		debugInfo.step = 'fallback_started';
 		// Fallback: Check if ANY user with this email has a VALID restaurant. 
 		// This solves issues where a Google OAuth login creates a new Auth user 
 		// that differs from the one the Superadmin provisioned against.
@@ -52,12 +55,16 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 			.select('id')
 			.ilike('email', user.email);
 			
+		debugInfo.profiles = profiles;
+			
 		if (profiles && profiles.length > 0) {
 			const profileIds = profiles.map(p => p.id);
 			const { data: emailStaffList } = await supabaseAdmin
 				.from('restaurant_staff')
 				.select('restaurant_id')
 				.in('user_id', profileIds);
+				
+			debugInfo.staff = emailStaffList;
 				
 			if (emailStaffList && emailStaffList.length > 0) {
 				const fallbackRestaurantIds = emailStaffList.map(s => s.restaurant_id);
@@ -88,7 +95,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 	}
 
 	if (!restaurant || !validRestaurantId) {
-		return { restaurant: null };
+		return { restaurant: null, debugInfo };
 	}
 
 	const { data: tables } = await supabaseAdmin

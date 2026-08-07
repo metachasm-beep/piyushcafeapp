@@ -15,8 +15,7 @@ export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
 			}
 
 			// Superadmin explicit check
-			const SUPERADMIN_EMAILS = ['metachasm@gmail.com', 'nit.uniyal@gmail.com'];
-			if (SUPERADMIN_EMAILS.includes(user.email.toLowerCase())) {
+			if (user.email.toLowerCase() === 'metachasm@gmail.com') {
 				throw redirect(303, '/superadmin');
 			}
 

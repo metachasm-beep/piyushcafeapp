@@ -66,16 +66,22 @@ export const actions: Actions = {
 			});
 
 			if (authError) {
-				if (authError.message.includes('already registered') || authError.message.includes('already exists')) {
+				const errorMsg = authError.message.toLowerCase();
+				if (errorMsg.includes('registered') || errorMsg.includes('exists') || errorMsg.includes('already')) {
 					// Fallback: fetch users to find ID
-					const { data: listData } = await getSupabaseAdmin().auth.admin.listUsers();
+					const { data: listData, error: listError } = await getSupabaseAdmin().auth.admin.listUsers();
+					if (listError) {
+						console.error('Error fetching list of users:', listError);
+						return fail(500, { error: 'Could not fetch user list to resolve existing user.' });
+					}
 					const found = listData?.users?.find(u => u.email === email);
 					if (found) {
 						userId = found.id;
 						console.log('Found existing auth user via listUsers:', userId);
-						await getSupabaseAdmin().from('owner_profiles').update({ is_approved: true }).eq('id', userId);
+						// We'll also ensure they exist in owner_profiles
+						await getSupabaseAdmin().from('owner_profiles').upsert({ id: userId, email: email, is_approved: true });
 					} else {
-						return fail(400, { error: 'User already registered but could not be located.' });
+						return fail(400, { error: 'User exists in auth but could not be located in list.' });
 					}
 				} else {
 					console.error('Auth Error creating user:', authError);

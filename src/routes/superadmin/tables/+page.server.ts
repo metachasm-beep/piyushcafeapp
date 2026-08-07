@@ -49,7 +49,8 @@ export const actions: Actions = {
 		}
 
 		try {
-			const table = await provisionTable(parsed.data);
+			const supabaseAdmin = getSupabaseAdmin();
+			const table = await provisionTable(supabaseAdmin, parsed.data);
 			return { success: true, action: "provision", table };
 		} catch (e) {
 			return fail(500, { action: "provision", error: (e as Error).message });
@@ -63,7 +64,8 @@ export const actions: Actions = {
 		if (!id) return fail(400, { action: "toggleStatus", error: "Missing table ID" });
 
 		try {
-			await updateTableStatus(id, is_active);
+			const supabaseAdmin = getSupabaseAdmin();
+			await updateTableStatus(supabaseAdmin, id, is_active);
 			return { success: true, action: "toggleStatus", id, is_active };
 		} catch (e) {
 			return fail(500, { action: "toggleStatus", error: (e as Error).message });

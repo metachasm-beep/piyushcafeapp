@@ -41,12 +41,17 @@ export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
 			// 3. Fallback to legacy owner_profiles just in case
 			const { data: profile } = await supabase
 				.from('owner_profiles')
-				.select('is_approved')
+				.select('is_approved, restaurant_name')
 				.eq('id', user.id)
 				.single();
 
-			if (profile && profile.is_approved) {
-				throw redirect(303, '/owner');
+			if (profile) {
+				if (profile.is_approved) {
+					throw redirect(303, '/owner');
+				} else if (!profile.restaurant_name) {
+					// If they are not approved AND haven't provided a restaurant name yet, send to onboarding
+					throw redirect(303, '/onboarding');
+				}
 			}
 
 			// 4. If not found in any authorized table, deny access

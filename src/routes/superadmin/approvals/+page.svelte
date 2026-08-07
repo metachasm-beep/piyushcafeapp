@@ -61,7 +61,8 @@
               <tr class="border-b border-zinc-200 transition-colors hover:bg-zinc-50/50 data-[state=selected]:bg-zinc-50">
                 <td class="p-4 align-middle">
                   <div class="font-medium text-zinc-950">{profile.email}</div>
-                  <div class="text-xs text-zinc-900 font-mono mt-0.5">{profile.id}</div>
+                  <div class="text-xs text-[var(--color-brand)] font-medium mt-1">{profile.restaurant_name || 'No restaurant name provided'}</div>
+                  <div class="text-xs text-zinc-500 font-mono mt-0.5">{profile.id}</div>
                 </td>
                 <td class="p-4 align-middle text-zinc-900">
                   {new Date(profile.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}

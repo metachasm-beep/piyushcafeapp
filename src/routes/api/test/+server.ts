@@ -10,11 +10,13 @@ export const GET = async () => {
 
     const { data: restaurants } = await supabase.from('restaurants').select('*');
     const { data: staff } = await supabase.from('restaurant_staff').select('*');
+    const { data: profiles } = await supabase.from('owner_profiles').select('*');
     const { data: users } = await supabase.auth.admin.listUsers();
 
     return json({
         restaurants,
         staff,
+        profiles,
         users: users?.users?.map(u => ({ id: u.id, email: u.email }))
     });
 };

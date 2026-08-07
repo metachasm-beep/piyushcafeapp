@@ -74,16 +74,21 @@ export const handle: Handle = async ({ event, resolve }) => {
 				// Fallback to legacy owner_profiles just in case
 				const { data: profile } = await event.locals.supabase
 					.from('owner_profiles')
-					.select('is_approved')
+					.select('is_approved, restaurant_name')
 					.eq('id', user.id)
 					.single();
 
 				if (!profile || !profile.is_approved) {
-					await event.locals.supabase.auth.signOut();
-					event.locals.session = null;
-					event.locals.user = null;
-					if (path !== '/' && !path.startsWith('/auth/')) {
-						throw redirect(303, '/?error=unauthorized');
+					// Allow access to onboarding if they haven't provided a restaurant name
+					if (path === '/onboarding' && profile && !profile.restaurant_name) {
+						// Let them through to onboarding
+					} else {
+						await event.locals.supabase.auth.signOut();
+						event.locals.session = null;
+						event.locals.user = null;
+						if (path !== '/' && !path.startsWith('/auth/')) {
+							throw redirect(303, '/?error=unauthorized');
+						}
 					}
 				} else {
 					event.locals.userRole = 'owner';

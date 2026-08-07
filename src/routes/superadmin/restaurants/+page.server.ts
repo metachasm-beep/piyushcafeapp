@@ -156,6 +156,16 @@ export const actions: Actions = {
 		}
 
 		if (restData) {
+			// Clear any existing (potentially orphaned) staff records for these users
+			// to avoid UNIQUE constraint violations if they were previously linked to a deleted restaurant.
+			for (const id of userIds) {
+				await getSupabaseAdmin()
+					.from('restaurant_staff')
+					.delete()
+					.eq('user_id', id);
+			}
+
+			// Now insert the fresh records
 			for (const id of userIds) {
 				const { error: staffError } = await getSupabaseAdmin()
 					.from('restaurant_staff')

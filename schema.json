@@ -1,0 +1,2911 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "",
+    "title": "standard public schema",
+    "version": "14.15"
+  },
+  "host": "dgcfkgfoezkvlvizbatp.supabase.co:443",
+  "basePath": "/",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json",
+    "application/vnd.pgrst.object+json;nulls=stripped",
+    "application/vnd.pgrst.object+json",
+    "text/csv"
+  ],
+  "produces": [
+    "application/json",
+    "application/vnd.pgrst.object+json;nulls=stripped",
+    "application/vnd.pgrst.object+json",
+    "text/csv"
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "produces": [
+          "application/openapi+json",
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "OpenAPI description (this document)",
+        "tags": [
+          "Introspection"
+        ]
+      }
+    },
+    "/restaurant_staff": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.user_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.role"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.is_available"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.created_at"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/restaurant_staff"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "restaurant_staff"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.restaurant_staff"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "restaurant_staff"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.user_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.role"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.is_available"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.created_at"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "restaurant_staff"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.user_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.role"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.is_available"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurant_staff.created_at"
+          },
+          {
+            "$ref": "#/parameters/body.restaurant_staff"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "restaurant_staff"
+        ]
+      }
+    },
+    "/tables": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.tables.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tables.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tables.table_number"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tables.display_name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tables.is_active"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/tables"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "tables"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.tables"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "tables"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.tables.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tables.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tables.table_number"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tables.display_name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tables.is_active"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "tables"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.tables.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tables.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tables.table_number"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tables.display_name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tables.is_active"
+          },
+          {
+            "$ref": "#/parameters/body.tables"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "tables"
+        ]
+      }
+    },
+    "/orders": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.orders.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.table_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.status"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.payment_method"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.is_paid"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.total_amount"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.platform_fee"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.special_instructions"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.created_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.assigned_waiter_id"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/orders"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.orders"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.orders.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.table_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.status"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.payment_method"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.is_paid"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.total_amount"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.platform_fee"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.special_instructions"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.created_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.assigned_waiter_id"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.orders.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.table_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.status"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.payment_method"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.is_paid"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.total_amount"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.platform_fee"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.special_instructions"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.created_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.orders.assigned_waiter_id"
+          },
+          {
+            "$ref": "#/parameters/body.orders"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/restaurants": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.owner_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.slug"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.upi_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.platform_fee_percent"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.is_active"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.created_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.razorpay_account_id"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/restaurants"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "restaurants"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.restaurants"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "restaurants"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.owner_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.slug"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.upi_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.platform_fee_percent"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.is_active"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.created_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.razorpay_account_id"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "restaurants"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.owner_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.slug"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.upi_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.platform_fee_percent"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.is_active"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.created_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.restaurants.razorpay_account_id"
+          },
+          {
+            "$ref": "#/parameters/body.restaurants"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "restaurants"
+        ]
+      }
+    },
+    "/order_items": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.order_items.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.order_items.order_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.order_items.menu_item_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.order_items.quantity"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.order_items.subtotal"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/order_items"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "order_items"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.order_items"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "order_items"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.order_items.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.order_items.order_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.order_items.menu_item_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.order_items.quantity"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.order_items.subtotal"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "order_items"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.order_items.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.order_items.order_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.order_items.menu_item_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.order_items.quantity"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.order_items.subtotal"
+          },
+          {
+            "$ref": "#/parameters/body.order_items"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "order_items"
+        ]
+      }
+    },
+    "/owner_profiles": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.owner_profiles.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.owner_profiles.email"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.owner_profiles.is_approved"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.owner_profiles.created_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.owner_profiles.restaurant_name"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/owner_profiles"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "owner_profiles"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.owner_profiles"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "owner_profiles"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.owner_profiles.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.owner_profiles.email"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.owner_profiles.is_approved"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.owner_profiles.created_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.owner_profiles.restaurant_name"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "owner_profiles"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.owner_profiles.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.owner_profiles.email"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.owner_profiles.is_approved"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.owner_profiles.created_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.owner_profiles.restaurant_name"
+          },
+          {
+            "$ref": "#/parameters/body.owner_profiles"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "owner_profiles"
+        ]
+      }
+    },
+    "/menu_categories": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.icon_emoji"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.sort_order"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.is_active"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/menu_categories"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "menu_categories"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.menu_categories"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "menu_categories"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.icon_emoji"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.sort_order"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.is_active"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "menu_categories"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.icon_emoji"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.sort_order"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_categories.is_active"
+          },
+          {
+            "$ref": "#/parameters/body.menu_categories"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "menu_categories"
+        ]
+      }
+    },
+    "/waiter_requests": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.table_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.order_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.status"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.message"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.assigned_waiter_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.acknowledged_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.resolved_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.created_at"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/waiter_requests"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "waiter_requests"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.waiter_requests"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "waiter_requests"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.table_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.order_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.status"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.message"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.assigned_waiter_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.acknowledged_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.resolved_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.created_at"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "waiter_requests"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.table_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.order_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.status"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.message"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.assigned_waiter_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.acknowledged_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.resolved_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.waiter_requests.created_at"
+          },
+          {
+            "$ref": "#/parameters/body.waiter_requests"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "waiter_requests"
+        ]
+      }
+    },
+    "/profiles": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.profiles.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.profiles.role"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.profiles.full_name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.profiles.created_at"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/profiles"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "profiles"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.profiles"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "profiles"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.profiles.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.profiles.role"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.profiles.full_name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.profiles.created_at"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "profiles"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.profiles.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.profiles.role"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.profiles.full_name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.profiles.created_at"
+          },
+          {
+            "$ref": "#/parameters/body.profiles"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "profiles"
+        ]
+      }
+    },
+    "/menu_items": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.category_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.description"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.price"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.image_url"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.is_available"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.dietary_tags"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.sort_order"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/menu_items"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "menu_items"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.menu_items"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "menu_items"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.category_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.description"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.price"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.image_url"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.is_available"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.dietary_tags"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.sort_order"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "menu_items"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.restaurant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.category_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.description"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.price"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.image_url"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.is_available"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.dietary_tags"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.menu_items.sort_order"
+          },
+          {
+            "$ref": "#/parameters/body.menu_items"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "menu_items"
+        ]
+      }
+    },
+    "/rpc/get_user_role": {
+      "post": {
+        "parameters": [
+          {
+            "in": "body",
+            "name": "args",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/parameters/preferParams"
+          }
+        ],
+        "produces": [
+          "application/json",
+          "application/vnd.pgrst.object+json;nulls=stripped",
+          "application/vnd.pgrst.object+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "(rpc) get_user_role"
+        ]
+      }
+    },
+    "/rpc/rls_auto_enable": {
+      "post": {
+        "parameters": [
+          {
+            "in": "body",
+            "name": "args",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/parameters/preferParams"
+          }
+        ],
+        "produces": [
+          "application/json",
+          "application/vnd.pgrst.object+json;nulls=stripped",
+          "application/vnd.pgrst.object+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "(rpc) rls_auto_enable"
+        ]
+      }
+    },
+    "/rpc/my_restaurant_id": {
+      "get": {
+        "produces": [
+          "application/json",
+          "application/vnd.pgrst.object+json;nulls=stripped",
+          "application/vnd.pgrst.object+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "(rpc) my_restaurant_id"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "in": "body",
+            "name": "args",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/parameters/preferParams"
+          }
+        ],
+        "produces": [
+          "application/json",
+          "application/vnd.pgrst.object+json;nulls=stripped",
+          "application/vnd.pgrst.object+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "(rpc) my_restaurant_id"
+        ]
+      }
+    },
+    "/rpc/place_order": {
+      "post": {
+        "parameters": [
+          {
+            "in": "body",
+            "name": "args",
+            "required": true,
+            "schema": {
+              "properties": {
+                "p_items": {
+                  "format": "jsonb"
+                },
+                "p_restaurant_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "p_special_instructions": {
+                  "format": "text",
+                  "type": "string"
+                },
+                "p_table_id": {
+                  "format": "uuid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "p_restaurant_id",
+                "p_table_id",
+                "p_special_instructions",
+                "p_items"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/parameters/preferParams"
+          }
+        ],
+        "produces": [
+          "application/json",
+          "application/vnd.pgrst.object+json;nulls=stripped",
+          "application/vnd.pgrst.object+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "(rpc) place_order"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "restaurant_staff": {
+      "required": [
+        "id",
+        "user_id",
+        "restaurant_id",
+        "role",
+        "is_available",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "default": "extensions.uuid_generate_v4()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "user_id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "restaurant_id": {
+          "description": "Note:\nThis is a Foreign Key to `restaurants.id`.<fk table='restaurants' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "role": {
+          "default": "owner",
+          "format": "text",
+          "type": "string"
+        },
+        "is_available": {
+          "default": false,
+          "format": "boolean",
+          "type": "boolean"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "tables": {
+      "required": [
+        "id",
+        "restaurant_id",
+        "table_number"
+      ],
+      "properties": {
+        "id": {
+          "default": "extensions.uuid_generate_v4()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "restaurant_id": {
+          "description": "Note:\nThis is a Foreign Key to `restaurants.id`.<fk table='restaurants' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "table_number": {
+          "format": "text",
+          "type": "string"
+        },
+        "display_name": {
+          "format": "text",
+          "type": "string"
+        },
+        "is_active": {
+          "default": true,
+          "format": "boolean",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "orders": {
+      "required": [
+        "id",
+        "restaurant_id",
+        "total_amount",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "default": "extensions.uuid_generate_v4()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "restaurant_id": {
+          "description": "Note:\nThis is a Foreign Key to `restaurants.id`.<fk table='restaurants' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "table_id": {
+          "description": "Note:\nThis is a Foreign Key to `tables.id`.<fk table='tables' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "status": {
+          "default": "pending",
+          "enum": [
+            "pending",
+            "preparing",
+            "ready",
+            "served",
+            "cancelled"
+          ],
+          "format": "public.order_status",
+          "type": "string"
+        },
+        "payment_method": {
+          "enum": [
+            "upi",
+            "card",
+            "cash"
+          ],
+          "format": "public.payment_method",
+          "type": "string"
+        },
+        "is_paid": {
+          "default": false,
+          "format": "boolean",
+          "type": "boolean"
+        },
+        "total_amount": {
+          "format": "numeric",
+          "type": "number"
+        },
+        "platform_fee": {
+          "default": 0,
+          "format": "numeric",
+          "type": "number"
+        },
+        "special_instructions": {
+          "format": "text",
+          "type": "string"
+        },
+        "created_at": {
+          "default": "timezone('utc'::text, now())",
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "assigned_waiter_id": {
+          "description": "Note:\nThis is a Foreign Key to `restaurant_staff.id`.<fk table='restaurant_staff' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "restaurants": {
+      "required": [
+        "id",
+        "name",
+        "slug",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "default": "extensions.uuid_generate_v4()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "owner_id": {
+          "description": "Note:\nThis is a Foreign Key to `profiles.id`.<fk table='profiles' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "name": {
+          "format": "text",
+          "type": "string"
+        },
+        "slug": {
+          "format": "text",
+          "type": "string"
+        },
+        "upi_id": {
+          "format": "text",
+          "type": "string"
+        },
+        "platform_fee_percent": {
+          "default": 2,
+          "format": "numeric",
+          "type": "number"
+        },
+        "is_active": {
+          "default": true,
+          "format": "boolean",
+          "type": "boolean"
+        },
+        "created_at": {
+          "default": "timezone('utc'::text, now())",
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "razorpay_account_id": {
+          "format": "text",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "order_items": {
+      "required": [
+        "id",
+        "order_id",
+        "quantity",
+        "subtotal"
+      ],
+      "properties": {
+        "id": {
+          "default": "extensions.uuid_generate_v4()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "order_id": {
+          "description": "Note:\nThis is a Foreign Key to `orders.id`.<fk table='orders' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "menu_item_id": {
+          "description": "Note:\nThis is a Foreign Key to `menu_items.id`.<fk table='menu_items' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "quantity": {
+          "default": 1,
+          "format": "int32",
+          "type": "integer"
+        },
+        "subtotal": {
+          "format": "numeric",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "owner_profiles": {
+      "required": [
+        "id",
+        "email"
+      ],
+      "properties": {
+        "id": {
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "email": {
+          "format": "text",
+          "type": "string"
+        },
+        "is_approved": {
+          "default": false,
+          "format": "boolean",
+          "type": "boolean"
+        },
+        "created_at": {
+          "default": "timezone('utc'::text, now())",
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "restaurant_name": {
+          "format": "text",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "menu_categories": {
+      "required": [
+        "id",
+        "restaurant_id",
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "default": "extensions.uuid_generate_v4()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "restaurant_id": {
+          "description": "Note:\nThis is a Foreign Key to `restaurants.id`.<fk table='restaurants' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "name": {
+          "format": "text",
+          "type": "string"
+        },
+        "icon_emoji": {
+          "default": "🍽️",
+          "format": "text",
+          "type": "string"
+        },
+        "sort_order": {
+          "default": 0,
+          "format": "int32",
+          "type": "integer"
+        },
+        "is_active": {
+          "default": true,
+          "format": "boolean",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "waiter_requests": {
+      "required": [
+        "id",
+        "restaurant_id",
+        "table_id",
+        "status",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "default": "extensions.uuid_generate_v4()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "restaurant_id": {
+          "description": "Note:\nThis is a Foreign Key to `restaurants.id`.<fk table='restaurants' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "table_id": {
+          "description": "Note:\nThis is a Foreign Key to `tables.id`.<fk table='tables' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "order_id": {
+          "description": "Note:\nThis is a Foreign Key to `orders.id`.<fk table='orders' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "status": {
+          "default": "pending",
+          "enum": [
+            "pending",
+            "acknowledged",
+            "resolved"
+          ],
+          "format": "public.waiter_request_status",
+          "type": "string"
+        },
+        "message": {
+          "default": "Customer requires assistance",
+          "format": "text",
+          "type": "string"
+        },
+        "assigned_waiter_id": {
+          "description": "Note:\nThis is a Foreign Key to `restaurant_staff.id`.<fk table='restaurant_staff' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "acknowledged_at": {
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "resolved_at": {
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "profiles": {
+      "required": [
+        "id",
+        "role",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "role": {
+          "default": "owner",
+          "enum": [
+            "superadmin",
+            "owner"
+          ],
+          "format": "public.user_role",
+          "type": "string"
+        },
+        "full_name": {
+          "format": "text",
+          "type": "string"
+        },
+        "created_at": {
+          "default": "timezone('utc'::text, now())",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "menu_items": {
+      "required": [
+        "id",
+        "restaurant_id",
+        "name",
+        "price"
+      ],
+      "properties": {
+        "id": {
+          "default": "extensions.uuid_generate_v4()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "restaurant_id": {
+          "description": "Note:\nThis is a Foreign Key to `restaurants.id`.<fk table='restaurants' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "category_id": {
+          "description": "Note:\nThis is a Foreign Key to `menu_categories.id`.<fk table='menu_categories' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "name": {
+          "format": "text",
+          "type": "string"
+        },
+        "description": {
+          "format": "text",
+          "type": "string"
+        },
+        "price": {
+          "format": "numeric",
+          "type": "number"
+        },
+        "image_url": {
+          "format": "text",
+          "type": "string"
+        },
+        "is_available": {
+          "default": true,
+          "format": "boolean",
+          "type": "boolean"
+        },
+        "dietary_tags": {
+          "format": "text[]",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "sort_order": {
+          "default": 0,
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "parameters": {
+    "preferParams": {
+      "name": "Prefer",
+      "description": "Preference",
+      "required": false,
+      "in": "header",
+      "type": "string"
+    },
+    "preferReturn": {
+      "name": "Prefer",
+      "description": "Preference",
+      "required": false,
+      "enum": [
+        "return=representation",
+        "return=minimal",
+        "return=none"
+      ],
+      "in": "header",
+      "type": "string"
+    },
+    "preferCount": {
+      "name": "Prefer",
+      "description": "Preference",
+      "required": false,
+      "enum": [
+        "count=none"
+      ],
+      "in": "header",
+      "type": "string"
+    },
+    "preferPost": {
+      "name": "Prefer",
+      "description": "Preference",
+      "required": false,
+      "enum": [
+        "return=representation",
+        "return=minimal",
+        "return=none",
+        "resolution=ignore-duplicates",
+        "resolution=merge-duplicates"
+      ],
+      "in": "header",
+      "type": "string"
+    },
+    "select": {
+      "name": "select",
+      "description": "Filtering Columns",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "on_conflict": {
+      "name": "on_conflict",
+      "description": "On Conflict",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "order": {
+      "name": "order",
+      "description": "Ordering",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "range": {
+      "name": "Range",
+      "description": "Limiting and Pagination",
+      "required": false,
+      "in": "header",
+      "type": "string"
+    },
+    "rangeUnit": {
+      "name": "Range-Unit",
+      "description": "Limiting and Pagination",
+      "required": false,
+      "default": "items",
+      "in": "header",
+      "type": "string"
+    },
+    "offset": {
+      "name": "offset",
+      "description": "Limiting and Pagination",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "limit": {
+      "name": "limit",
+      "description": "Limiting and Pagination",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.restaurant_staff": {
+      "name": "restaurant_staff",
+      "description": "restaurant_staff",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/restaurant_staff"
+      }
+    },
+    "rowFilter.restaurant_staff.id": {
+      "name": "id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.restaurant_staff.user_id": {
+      "name": "user_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.restaurant_staff.restaurant_id": {
+      "name": "restaurant_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.restaurant_staff.role": {
+      "name": "role",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.restaurant_staff.is_available": {
+      "name": "is_available",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.restaurant_staff.created_at": {
+      "name": "created_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.tables": {
+      "name": "tables",
+      "description": "tables",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/tables"
+      }
+    },
+    "rowFilter.tables.id": {
+      "name": "id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.tables.restaurant_id": {
+      "name": "restaurant_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.tables.table_number": {
+      "name": "table_number",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.tables.display_name": {
+      "name": "display_name",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.tables.is_active": {
+      "name": "is_active",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.orders": {
+      "name": "orders",
+      "description": "orders",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/orders"
+      }
+    },
+    "rowFilter.orders.id": {
+      "name": "id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.orders.restaurant_id": {
+      "name": "restaurant_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.orders.table_id": {
+      "name": "table_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.orders.status": {
+      "name": "status",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.orders.payment_method": {
+      "name": "payment_method",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.orders.is_paid": {
+      "name": "is_paid",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.orders.total_amount": {
+      "name": "total_amount",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.orders.platform_fee": {
+      "name": "platform_fee",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.orders.special_instructions": {
+      "name": "special_instructions",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.orders.created_at": {
+      "name": "created_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.orders.assigned_waiter_id": {
+      "name": "assigned_waiter_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.restaurants": {
+      "name": "restaurants",
+      "description": "restaurants",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/restaurants"
+      }
+    },
+    "rowFilter.restaurants.id": {
+      "name": "id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.restaurants.owner_id": {
+      "name": "owner_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.restaurants.name": {
+      "name": "name",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.restaurants.slug": {
+      "name": "slug",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.restaurants.upi_id": {
+      "name": "upi_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.restaurants.platform_fee_percent": {
+      "name": "platform_fee_percent",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.restaurants.is_active": {
+      "name": "is_active",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.restaurants.created_at": {
+      "name": "created_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.restaurants.razorpay_account_id": {
+      "name": "razorpay_account_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.order_items": {
+      "name": "order_items",
+      "description": "order_items",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/order_items"
+      }
+    },
+    "rowFilter.order_items.id": {
+      "name": "id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.order_items.order_id": {
+      "name": "order_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.order_items.menu_item_id": {
+      "name": "menu_item_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.order_items.quantity": {
+      "name": "quantity",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.order_items.subtotal": {
+      "name": "subtotal",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.owner_profiles": {
+      "name": "owner_profiles",
+      "description": "owner_profiles",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/owner_profiles"
+      }
+    },
+    "rowFilter.owner_profiles.id": {
+      "name": "id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.owner_profiles.email": {
+      "name": "email",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.owner_profiles.is_approved": {
+      "name": "is_approved",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.owner_profiles.created_at": {
+      "name": "created_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.owner_profiles.restaurant_name": {
+      "name": "restaurant_name",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.menu_categories": {
+      "name": "menu_categories",
+      "description": "menu_categories",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/menu_categories"
+      }
+    },
+    "rowFilter.menu_categories.id": {
+      "name": "id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.menu_categories.restaurant_id": {
+      "name": "restaurant_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.menu_categories.name": {
+      "name": "name",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.menu_categories.icon_emoji": {
+      "name": "icon_emoji",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.menu_categories.sort_order": {
+      "name": "sort_order",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.menu_categories.is_active": {
+      "name": "is_active",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.waiter_requests": {
+      "name": "waiter_requests",
+      "description": "waiter_requests",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/waiter_requests"
+      }
+    },
+    "rowFilter.waiter_requests.id": {
+      "name": "id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.waiter_requests.restaurant_id": {
+      "name": "restaurant_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.waiter_requests.table_id": {
+      "name": "table_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.waiter_requests.order_id": {
+      "name": "order_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.waiter_requests.status": {
+      "name": "status",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.waiter_requests.message": {
+      "name": "message",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.waiter_requests.assigned_waiter_id": {
+      "name": "assigned_waiter_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.waiter_requests.acknowledged_at": {
+      "name": "acknowledged_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.waiter_requests.resolved_at": {
+      "name": "resolved_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.waiter_requests.created_at": {
+      "name": "created_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.profiles": {
+      "name": "profiles",
+      "description": "profiles",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/profiles"
+      }
+    },
+    "rowFilter.profiles.id": {
+      "name": "id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.profiles.role": {
+      "name": "role",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.profiles.full_name": {
+      "name": "full_name",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.profiles.created_at": {
+      "name": "created_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.menu_items": {
+      "name": "menu_items",
+      "description": "menu_items",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/menu_items"
+      }
+    },
+    "rowFilter.menu_items.id": {
+      "name": "id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.menu_items.restaurant_id": {
+      "name": "restaurant_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.menu_items.category_id": {
+      "name": "category_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.menu_items.name": {
+      "name": "name",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.menu_items.description": {
+      "name": "description",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.menu_items.price": {
+      "name": "price",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.menu_items.image_url": {
+      "name": "image_url",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.menu_items.is_available": {
+      "name": "is_available",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.menu_items.dietary_tags": {
+      "name": "dietary_tags",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.menu_items.sort_order": {
+      "name": "sort_order",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    }
+  },
+  "externalDocs": {
+    "description": "PostgREST Documentation",
+    "url": "https://postgrest.org/en/v14/references/api.html"
+  }
+}

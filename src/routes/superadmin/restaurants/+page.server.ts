@@ -149,6 +149,19 @@ export const actions: Actions = {
 
 		const canonicalOwnerId = userIds[0];
 
+		// THE SMOKING GUN: The database schema constraint `restaurants_owner_id_fkey` actually points
+		// to a legacy `profiles` table, NOT `owner_profiles`! To appease the database constraint and
+		// maintain our strict binding, we must copy the canonical ID into the legacy `profiles` table.
+		const { error: legacyProfileError } = await getSupabaseAdmin().from('profiles').upsert({
+			id: canonicalOwnerId,
+			role: 'owner'
+		});
+		
+		if (legacyProfileError) {
+			console.error('Legacy Profile Error:', legacyProfileError);
+			return fail(500, { error: 'Database Constraint Error: ' + legacyProfileError.message });
+		}
+
 		// 2. Insert into restaurants table. We strictly bind it to the owner_id.
 		const { data: restData, error: dbError } = await getSupabaseAdmin()
 			.from('restaurants')

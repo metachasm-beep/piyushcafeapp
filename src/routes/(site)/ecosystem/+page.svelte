@@ -50,11 +50,11 @@
 			{#each apps as app, i}
 				<Reveal delay={i * 90}>
 					<article class="app">
-						<div class="app-top">
+						<div class="app-meta">
 							<span class="app-n">{app.n}</span>
-							<app.icon size={22} strokeWidth={1.5} />
+							<span class="app-role">{app.role}</span>
+							<app.icon size={20} strokeWidth={1.5} class="app-icon" />
 						</div>
-						<p class="app-role">{app.role}</p>
 						<h2>{app.title}</h2>
 						<p>{app.body}</p>
 					</article>
@@ -97,47 +97,27 @@
 
 <style>
 	.apps {
-		display: grid;
-		grid-template-columns: 1.15fr 0.95fr 0.9fr;
-		gap: 1rem;
 		margin-top: 3.25rem;
+		display: grid;
+		gap: 0;
+		border-top: 1px solid var(--mk-line);
 	}
 
 	.app {
-		min-height: 100%;
-		padding: 1.6rem 1.5rem 1.75rem;
-		border: 1px solid var(--mk-line);
-		border-radius: 1.35rem;
-		background:
-			linear-gradient(160deg, rgba(184, 151, 78, 0.08), transparent 42%),
-			rgba(255, 255, 255, 0.45);
+		display: grid;
+		grid-template-columns: minmax(11rem, 0.38fr) 1fr;
+		gap: 1.5rem 2.5rem;
+		padding: 1.85rem 0;
+		border-bottom: 1px solid var(--mk-line);
+		align-items: start;
+	}
+
+	.app-meta {
 		display: flex;
-		flex-direction: column;
-		gap: 0.65rem;
-		transition:
-			transform 0.55s var(--mk-ease),
-			border-color 0.55s var(--mk-ease);
-	}
-
-	.app:hover {
-		transform: translateY(-4px);
-		border-color: rgba(184, 151, 78, 0.45);
-	}
-
-	.app:nth-child(2) {
-		margin-top: 1.75rem;
-	}
-
-	.app:nth-child(3) {
-		margin-top: 3.25rem;
-	}
-
-	.app-top {
-		display: flex;
-		justify-content: space-between;
+		flex-wrap: wrap;
 		align-items: center;
+		gap: 0.65rem 0.85rem;
 		color: var(--mk-brass-deep);
-		margin-bottom: 0.5rem;
 	}
 
 	.app-n {
@@ -148,27 +128,40 @@
 	}
 
 	.app-role {
-		font-size: 0.72rem;
+		font-size: 0.7rem;
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
 		color: var(--mk-smoke);
-		margin: 0;
+	}
+
+	.app :global(.app-icon) {
+		margin-left: auto;
 	}
 
 	.app h2 {
 		font-family: var(--font-mk-display);
-		font-size: 1.55rem;
+		font-size: clamp(1.45rem, 2.4vw, 1.85rem);
 		font-weight: 700;
 		letter-spacing: -0.03em;
-		margin: 0;
+		margin: 0 0 0.55rem;
+		grid-column: 2;
+		grid-row: 1;
 	}
 
-	.app p:last-child {
+	.app-meta {
+		grid-column: 1;
+		grid-row: 1 / span 2;
+		padding-top: 0.35rem;
+	}
+
+	.app p {
+		grid-column: 2;
 		margin: 0;
 		color: var(--mk-ink-soft);
 		line-height: 1.55;
-		font-size: 0.95rem;
-		opacity: 0.9;
+		font-size: 1rem;
+		max-width: 54ch;
+		opacity: 0.92;
 	}
 
 	.roles {
@@ -214,14 +207,21 @@
 		gap: 1.25rem;
 	}
 
-	@media (max-width: 960px) {
-		.apps {
+	@media (max-width: 800px) {
+		.app {
 			grid-template-columns: 1fr;
+			gap: 0.75rem;
 		}
 
-		.app:nth-child(2),
-		.app:nth-child(3) {
-			margin-top: 0;
+		.app-meta,
+		.app h2,
+		.app p {
+			grid-column: 1;
+			grid-row: auto;
+		}
+
+		.app :global(.app-icon) {
+			margin-left: 0;
 		}
 
 		.roles {

@@ -22,7 +22,11 @@ export async function fetchTables(supabase: SupabaseClient, restaurantId: string
 }
 
 export async function provisionTable(supabaseAdmin: SupabaseClient, input: TableInput): Promise<Table> {
-	const sanitized = sanitizeObject(input);
+	const sanitized: any = sanitizeObject(input);
+	
+	// The 'capacity' column does not exist in the actual database schema,
+	// so we must remove it from the payload to avoid schema cache errors.
+	delete sanitized.capacity;
 
 	const { data, error } = await supabaseAdmin
 		.from("tables")

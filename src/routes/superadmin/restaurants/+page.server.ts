@@ -99,11 +99,15 @@ export const actions: Actions = {
 			if (!userIds.includes(authUser.id)) {
 				userIds.push(authUser.id);
 				// Ensure they exist in owner_profiles and are approved
-				await getSupabaseAdmin().from('owner_profiles').upsert({ 
+				const { error: upsertError } = await getSupabaseAdmin().from('owner_profiles').upsert({ 
 					id: authUser.id, 
 					email: email, 
 					is_approved: true 
 				});
+				if (upsertError) {
+					console.error('Upsert Error 1:', upsertError);
+					return fail(500, { error: 'Failed to create owner profile (upsert 1): ' + upsertError.message });
+				}
 			}
 		}
 
@@ -121,11 +125,15 @@ export const actions: Actions = {
 			} else if (authData.user) {
 				userIds.push(authData.user.id);
 				console.log('Created auth user with ID:', authData.user.id);
-				await getSupabaseAdmin().from('owner_profiles').upsert({ 
+				const { error: upsertError2 } = await getSupabaseAdmin().from('owner_profiles').upsert({ 
 					id: authData.user.id, 
 					email: email, 
 					is_approved: true 
 				});
+				if (upsertError2) {
+					console.error('Upsert Error 2:', upsertError2);
+					return fail(500, { error: 'Failed to create owner profile (upsert 2): ' + upsertError2.message });
+				}
 			}
 		}
 

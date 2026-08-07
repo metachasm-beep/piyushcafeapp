@@ -1,0 +1,328 @@
+/* Marketing folds — Brass Service language (scoped under .mk) */
+@import '@fontsource/syne/400.css';
+@import '@fontsource/syne/600.css';
+@import '@fontsource/syne/700.css';
+@import '@fontsource/syne/800.css';
+@import '@fontsource/dm-sans/400.css';
+@import '@fontsource/dm-sans/500.css';
+@import '@fontsource/dm-sans/700.css';
+
+.mk {
+	--mk-ink: #12100e;
+	--mk-ink-soft: #2a2622;
+	--mk-stone: #e6e4e0;
+	--mk-paper: #f2f0ec;
+	--mk-brass: #b8974e;
+	--mk-brass-bright: #d4b56a;
+	--mk-brass-deep: #7a6230;
+	--mk-smoke: #8a857c;
+	--mk-line: rgba(18, 16, 14, 0.12);
+	--mk-line-light: rgba(242, 240, 236, 0.16);
+	--mk-ease: cubic-bezier(0.32, 0.72, 0, 1);
+	--font-mk-display: 'Syne', ui-sans-serif, system-ui, sans-serif;
+	--font-mk-body: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+
+	color: var(--mk-ink);
+	font-family: var(--font-mk-body);
+	background: var(--mk-paper);
+	min-height: 100dvh;
+	-webkit-font-smoothing: antialiased;
+}
+
+.mk * {
+	box-sizing: border-box;
+}
+
+.mk-display {
+	font-family: var(--font-mk-display);
+	letter-spacing: -0.03em;
+	line-height: 1.05;
+}
+
+.mk-grain {
+	pointer-events: none;
+	position: fixed;
+	inset: 0;
+	z-index: 40;
+	opacity: 0.035;
+	mix-blend-mode: multiply;
+	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.mk-nav {
+	position: fixed;
+	top: 1.25rem;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 50;
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.4rem;
+	border-radius: 9999px;
+	background: rgba(242, 240, 236, 0.78);
+	backdrop-filter: blur(18px);
+	-webkit-backdrop-filter: blur(18px);
+	border: 1px solid rgba(18, 16, 14, 0.08);
+	box-shadow: 0 12px 40px rgba(18, 16, 14, 0.08);
+	width: max-content;
+	max-width: calc(100vw - 1.5rem);
+}
+
+.mk-nav a {
+	font-size: 0.78rem;
+	font-weight: 500;
+	letter-spacing: 0.02em;
+	padding: 0.55rem 0.9rem;
+	border-radius: 9999px;
+	color: var(--mk-ink-soft);
+	text-decoration: none;
+	transition:
+		background 0.45s var(--mk-ease),
+		color 0.45s var(--mk-ease),
+		transform 0.45s var(--mk-ease);
+	white-space: nowrap;
+}
+
+.mk-nav a:hover {
+	background: rgba(18, 16, 14, 0.05);
+}
+
+.mk-nav a.active {
+	background: var(--mk-ink);
+	color: var(--mk-paper);
+}
+
+.mk-nav .mk-brand-link {
+	font-family: var(--font-mk-display);
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	color: var(--mk-ink);
+	padding-inline: 1rem;
+}
+
+.mk-nav .mk-cta {
+	background: var(--mk-brass);
+	color: var(--mk-ink);
+	font-weight: 700;
+}
+
+.mk-nav .mk-cta:hover {
+	background: var(--mk-brass-bright);
+	transform: translateY(-1px);
+}
+
+.mk-fold {
+	min-height: 100dvh;
+	position: relative;
+	overflow: hidden;
+}
+
+.mk-fold-inner {
+	width: min(1180px, calc(100% - 2.5rem));
+	margin-inline: auto;
+	padding-block: 7rem 4.5rem;
+}
+
+.mk-kicker {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.7rem;
+	font-weight: 700;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: var(--mk-brass-deep);
+	margin-bottom: 1.25rem;
+}
+
+.mk-kicker::before {
+	content: '';
+	width: 1.5rem;
+	height: 1px;
+	background: var(--mk-brass);
+}
+
+.mk-title {
+	font-family: var(--font-mk-display);
+	font-weight: 800;
+	letter-spacing: -0.035em;
+	line-height: 1.02;
+	font-size: clamp(2.4rem, 6vw, 4.6rem);
+	max-width: 14ch;
+}
+
+.mk-lede {
+	margin-top: 1.25rem;
+	font-size: clamp(1.02rem, 1.5vw, 1.2rem);
+	line-height: 1.55;
+	color: var(--mk-ink-soft);
+	max-width: 38ch;
+	opacity: 0.88;
+}
+
+.mk-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.2rem 0.2rem 0.2rem 1.25rem;
+	border-radius: 9999px;
+	background: var(--mk-ink);
+	color: var(--mk-paper);
+	font-weight: 600;
+	font-size: 0.92rem;
+	text-decoration: none;
+	transition:
+		transform 0.45s var(--mk-ease),
+		background 0.45s var(--mk-ease);
+}
+
+.mk-btn:hover {
+	transform: translateY(-2px) scale(1.01);
+	background: var(--mk-ink-soft);
+}
+
+.mk-btn:active {
+	transform: scale(0.98);
+}
+
+.mk-btn-icon {
+	display: grid;
+	place-items: center;
+	width: 2.4rem;
+	height: 2.4rem;
+	border-radius: 9999px;
+	background: var(--mk-brass);
+	color: var(--mk-ink);
+	transition: transform 0.45s var(--mk-ease);
+}
+
+.mk-btn:hover .mk-btn-icon {
+	transform: translate(2px, -1px) scale(1.05);
+}
+
+.mk-btn-ghost {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.85rem 1.2rem;
+	border-radius: 9999px;
+	border: 1px solid var(--mk-line);
+	color: var(--mk-ink);
+	font-weight: 600;
+	font-size: 0.92rem;
+	text-decoration: none;
+	background: transparent;
+	transition:
+		border-color 0.45s var(--mk-ease),
+		background 0.45s var(--mk-ease);
+}
+
+.mk-btn-ghost:hover {
+	border-color: var(--mk-brass);
+	background: rgba(184, 151, 78, 0.08);
+}
+
+.mk-reveal {
+	opacity: 0;
+	transform: translateY(2rem);
+	filter: blur(6px);
+	transition:
+		opacity 0.9s var(--mk-ease),
+		transform 0.9s var(--mk-ease),
+		filter 0.9s var(--mk-ease);
+}
+
+.mk-reveal.is-in {
+	opacity: 1;
+	transform: translateY(0);
+	filter: blur(0);
+}
+
+.mk-fold-dark {
+	background: var(--mk-ink);
+	color: var(--mk-paper);
+}
+
+.mk-fold-dark .mk-kicker {
+	color: var(--mk-brass-bright);
+}
+
+.mk-fold-dark .mk-lede {
+	color: rgba(242, 240, 236, 0.72);
+}
+
+.mk-fold-dark .mk-btn-ghost {
+	border-color: var(--mk-line-light);
+	color: var(--mk-paper);
+}
+
+.mk-fold-dark .mk-btn-ghost:hover {
+	border-color: var(--mk-brass);
+	background: rgba(184, 151, 78, 0.12);
+}
+
+.mk-fold-footer {
+	padding: 2.5rem 0 3rem;
+	border-top: 1px solid var(--mk-line);
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	justify-content: space-between;
+	align-items: center;
+	font-size: 0.82rem;
+	color: var(--mk-smoke);
+}
+
+.mk-fold-footer a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.mk-fold-footer a:hover {
+	color: var(--mk-brass-deep);
+}
+
+@media (max-width: 768px) {
+	.mk-nav {
+		top: auto;
+		bottom: 1rem;
+		gap: 0.15rem;
+		padding: 0.3rem;
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+
+	.mk-nav::-webkit-scrollbar {
+		display: none;
+	}
+
+	.mk-nav a {
+		font-size: 0.7rem;
+		padding: 0.5rem 0.7rem;
+	}
+
+	.mk-nav .mk-brand-link {
+		display: none;
+	}
+
+	.mk-fold-inner {
+		width: min(1180px, calc(100% - 1.5rem));
+		padding-block: 5.5rem 6.5rem;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mk-reveal {
+		opacity: 1;
+		transform: none;
+		filter: none;
+		transition: none;
+	}
+
+	.mk-btn,
+	.mk-btn-icon,
+	.mk-nav a {
+		transition: none;
+	}
+}

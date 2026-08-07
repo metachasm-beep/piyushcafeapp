@@ -82,8 +82,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 					await event.locals.supabase.auth.signOut();
 					event.locals.session = null;
 					event.locals.user = null;
-					if (path !== '/' && !path.startsWith('/auth/')) {
-						throw redirect(303, '/?error=unauthorized');
+					if (path !== '/login' && !path.startsWith('/auth/') && path !== '/') {
+						throw redirect(303, '/login?error=unauthorized');
 					}
 				} else {
 					event.locals.userRole = 'owner';
@@ -95,18 +95,18 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// Superadmin Guards
 	if (routeId.startsWith('/superadmin')) {
 		if (!user) {
-			throw redirect(303, '/');
+			throw redirect(303, '/login');
 		}
-		
+
 		if (!user.email || user.email.toLowerCase() !== SUPERADMIN_EMAIL) {
-			throw redirect(303, '/?error=unauthorized');
+			throw redirect(303, '/login?error=unauthorized');
 		}
 	}
 
 	// Owner / Staff Guards
 	if (routeId.startsWith('/owner')) {
 		if (!event.locals.user) {
-			throw redirect(303, '/');
+			throw redirect(303, '/login');
 		}
 
 		const role = event.locals.userRole;
@@ -126,7 +126,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 			// No restrictions for owners
 		} else {
 			// Unrecognized role
-			throw redirect(303, '/?error=unauthorized');
+			throw redirect(303, '/login?error=unauthorized');
 		}
 	}
 

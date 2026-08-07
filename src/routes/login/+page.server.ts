@@ -11,7 +11,18 @@ export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession 
 			throw redirect(303, '/superadmin');
 		}
 
-		// Check if they are an approved owner
+		const { data: staffData } = await supabase
+			.from('restaurant_staff')
+			.select('role')
+			.eq('user_id', user.id)
+			.single();
+
+		if (staffData) {
+			if (staffData.role === 'chef') throw redirect(303, '/owner/kitchen');
+			if (staffData.role === 'waiter') throw redirect(303, '/owner/waiter');
+			throw redirect(303, '/owner');
+		}
+
 		const { data: profile } = await supabase
 			.from('owner_profiles')
 			.select('is_approved')
@@ -21,9 +32,8 @@ export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession 
 		if (profile && profile.is_approved) {
 			throw redirect(303, '/owner');
 		} else {
-			// If they have a session but are not approved, sign them out
 			await supabase.auth.signOut();
-			throw redirect(303, '/?error=pending_approval');
+			throw redirect(303, '/login?error=pending_approval');
 		}
 	}
 

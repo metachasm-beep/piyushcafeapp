@@ -4,12 +4,12 @@
   import { cva, type VariantProps } from "class-variance-authority";
 
   const cardVariants = cva(
-    "bg-white rounded-[32px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
+    "bg-white/90 backdrop-blur-md rounded-xl border border-black/5 shadow-sm overflow-hidden",
     {
       variants: {
         variant: {
           default: "",
-          interactive: "cursor-pointer transition-transform duration-300 hover:scale-[1.02]",
+          interactive: "cursor-pointer transition-colors duration-200 hover:bg-white",
         },
       },
       defaultVariants: {

@@ -67,7 +67,12 @@
         toast.success(`Table added successfully`);
         await update(); // Invalidate and reload tables
       } else if (result.type === 'failure') {
-        toast.error(result.data?.error || 'Failed to add table');
+        if (result.data?.errors) {
+            const errs = Object.values(result.data.errors).flat().join(', ');
+            toast.error(errs || 'Validation failed');
+        } else {
+            toast.error(result.data?.error || 'Failed to add table');
+        }
       } else {
         toast.error('An error occurred');
       }

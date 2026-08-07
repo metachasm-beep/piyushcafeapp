@@ -53,7 +53,7 @@ export const MenuItemSchema = z.object({
 
 export const TableSchema = z.object({
 	table_number: z.coerce.number().int().positive("Table number must be a positive integer"),
-	display_name: z.string().min(1, "Display name is required").max(60),
+	display_name: z.string().max(60).optional().nullable(),
 	capacity: z.coerce.number().int().min(1).max(50).default(4),
 	restaurant_id: z.string().uuid("Invalid restaurant ID")
 });

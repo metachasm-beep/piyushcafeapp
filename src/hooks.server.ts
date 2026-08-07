@@ -43,7 +43,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
 	const routeId = event.route.id || '';
 
-	const SUPERADMIN_EMAIL = 'metachasm@gmail.com';
+	const SUPERADMIN_EMAILS = ['metachasm@gmail.com', 'nit.uniyal@gmail.com'];
 
 	// Superadmin Guards
 	if (routeId.startsWith('/superadmin')) {
@@ -51,7 +51,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 			throw redirect(303, '/');
 		}
 		
-		if (!user.email || user.email.toLowerCase() !== SUPERADMIN_EMAIL) {
+		if (!user.email || !SUPERADMIN_EMAILS.includes(user.email.toLowerCase())) {
 			throw redirect(303, '/?error=unauthorized');
 		}
 	}
@@ -63,7 +63,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 		
 		// Superadmin can access owner pages if they want
-		if (user.email && user.email.toLowerCase() !== SUPERADMIN_EMAIL) {
+		if (user.email && !SUPERADMIN_EMAILS.includes(user.email.toLowerCase())) {
 			// Real-time check to ensure they are still approved
 			const { data: profile } = await event.locals.supabase
 				.from('owner_profiles')

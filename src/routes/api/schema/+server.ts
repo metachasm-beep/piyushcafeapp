@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env as publicEnv } from '$env/dynamic/public';
+import { env } from '$env/dynamic/private';
 
 export const GET: RequestHandler = async () => {
 	const supabaseUrl = publicEnv.PUBLIC_SUPABASE_URL;

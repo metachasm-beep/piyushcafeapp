@@ -33,7 +33,7 @@
 
   async function generateQr(table: any) {
     selectedTable = table;
-    const url = `${$page.url.origin}/m/${table.restaurant_id}?t=${table.id}`;
+    const url = `${$page.url.origin}/table/${table.restaurant_id}/${table.id}`;
     try {
       qrDataUrl = await QRCode.toDataURL(url, {
         width: 300,

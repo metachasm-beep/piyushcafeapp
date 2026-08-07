@@ -3,26 +3,40 @@ import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
 	const code = url.searchParams.get('code');
-	const next = url.searchParams.get('next') ?? '/';
 
 	if (code) {
 		const { error } = await supabase.auth.exchangeCodeForSession(code);
 		if (!error) {
-			// Verify if the user is allowed to log into the system
 			const { data: { user } } = await supabase.auth.getUser();
-			const ALLOWED_EMAILS = ['metachasm@gmail.com', 'nit.uniyal@gmail.com'];
 			
-			if (!user || !user.email || !ALLOWED_EMAILS.includes(user.email.toLowerCase())) {
-				// Instantly destroy the session for unauthorized users
+			if (!user || !user.email) {
 				await supabase.auth.signOut();
-				throw redirect(303, '/superadmin/login?error=unauthorized');
+				throw redirect(303, '/?error=unauthorized');
 			}
 
-			throw redirect(303, `/${next.slice(1)}`);
+			// Superadmin explicit check
+			if (user.email.toLowerCase() === 'metachasm@gmail.com') {
+				throw redirect(303, '/superadmin');
+			}
+
+			// For everyone else, check if they are an approved owner
+			const { data: profile } = await supabase
+				.from('owner_profiles')
+				.select('is_approved')
+				.eq('id', user.id)
+				.single();
+
+			if (profile && profile.is_approved) {
+				throw redirect(303, '/owner');
+			} else {
+				// Not approved or not found in owner_profiles
+				await supabase.auth.signOut();
+				throw redirect(303, '/?error=pending_approval');
+			}
 		}
-		console.error("Auth callback error:", error.message);
+		console.error("Auth callback error:", error?.message);
 	}
 
 	// return the user to an error page with instructions
-	throw redirect(303, '/superadmin/login?error=auth_callback_failed');
+	throw redirect(303, '/?error=auth_callback_failed');
 };

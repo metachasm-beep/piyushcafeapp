@@ -43,33 +43,40 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
 	const routeId = event.route.id || '';
 
-	const ALLOWED_EMAILS = ['metachasm@gmail.com', 'nit.uniyal@gmail.com'];
+	const SUPERADMIN_EMAIL = 'metachasm@gmail.com';
 
 	// Superadmin Guards
-	if (routeId.startsWith('/superadmin') && !routeId.startsWith('/superadmin/login')) {
+	if (routeId.startsWith('/superadmin')) {
 		if (!user) {
-			throw redirect(303, '/superadmin/login');
+			throw redirect(303, '/');
 		}
 		
-		if (!user.email || !ALLOWED_EMAILS.includes(user.email.toLowerCase())) {
-			throw redirect(303, '/superadmin/login?error=unauthorized');
+		if (!user.email || user.email.toLowerCase() !== SUPERADMIN_EMAIL) {
+			throw redirect(303, '/?error=unauthorized');
 		}
 	}
 
 	// Owner Guards
-	if (routeId.startsWith('/owner') && !routeId.startsWith('/owner/login')) {
+	if (routeId.startsWith('/owner')) {
 		if (!user) {
-			throw redirect(303, '/owner/login');
+			throw redirect(303, '/');
 		}
 		
-		if (!user.email || !ALLOWED_EMAILS.includes(user.email.toLowerCase())) {
-			throw redirect(303, '/owner/login?error=unauthorized');
+		// Superadmin can access owner pages if they want
+		if (user.email && user.email.toLowerCase() !== SUPERADMIN_EMAIL) {
+			// Real-time check to ensure they are still approved
+			const { data: profile } = await event.locals.supabase
+				.from('owner_profiles')
+				.select('is_approved')
+				.eq('id', user.id)
+				.single();
+			
+			if (!profile || !profile.is_approved) {
+				await event.locals.supabase.auth.signOut();
+				throw redirect(303, '/?error=unauthorized');
+			}
 		}
 	}
-
-	// Table Guards
-	// Table apps (`/table/*`) use anonymous or customer sessions. We do not block them here, 
-	// but we ensure the Supabase client used in endpoints respects RLS.
 
 	// 3. Resolve request
 	const response = await resolve(event, {

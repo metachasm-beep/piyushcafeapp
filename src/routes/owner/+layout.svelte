@@ -111,7 +111,7 @@
             <p class="text-xs text-[var(--color-text-secondary)] truncate">{$adminUser?.email || 'admin@example.com'}</p>
           </div>
         </div>
-        <form action="/auth/logout?next=/owner/login" method="POST">
+        <form action="/auth/logout?next=/" method="POST">
           <button 
             type="submit"
             class="btn-ghost w-full flex items-center justify-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-950/30"

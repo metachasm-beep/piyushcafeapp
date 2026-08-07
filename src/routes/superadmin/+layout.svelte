@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { LayoutDashboard, Store, UtensilsCrossed, QrCode, LogOut, Menu, X } from 'lucide-svelte';
+  import { LayoutDashboard, Store, UtensilsCrossed, QrCode, LogOut, Menu, X, ShieldAlert } from 'lucide-svelte';
   import { goto } from '$app/navigation';
   import { adminUser } from '$lib/stores/admin';
   import { tooltip } from '$lib/actions/tooltip';
@@ -10,6 +10,7 @@
 
   const links = [
     { href: '/superadmin', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/superadmin/approvals', label: 'Approvals', icon: ShieldAlert },
     { href: '/superadmin/restaurants', label: 'Restaurants', icon: Store },
     { href: '/superadmin/menu', label: 'Menu Manager', icon: UtensilsCrossed },
     { href: '/superadmin/tables', label: 'Tables & QR', icon: QrCode },
@@ -219,7 +220,7 @@
 
     <!-- Bottom: sign out -->
     <div class="p-4 border-t border-[#6366f1]/10">
-      <form action="/auth/logout?next=/superadmin/login" method="POST">
+      <form action="/auth/logout?next=/" method="POST">
         <button
           type="submit"
           class="w-full flex items-center gap-3 px-3 py-3 rounded-[12px] text-[14px] font-[500] text-[#9ca3af] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors"

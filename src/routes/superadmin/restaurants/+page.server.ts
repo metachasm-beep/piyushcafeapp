@@ -42,25 +42,55 @@ export const actions: Actions = {
 			return fail(400, { error: 'All fields are required' });
 		}
 
-		// 1. Create the user in Auth
-		const { data: authData, error: authError } = await getSupabaseAdmin().auth.admin.createUser({
-			email,
-			password,
-			email_confirm: true
-		});
+		let userId = null;
 
-		if (authError) {
-			console.error('Auth Error creating user:', authError);
-			return fail(500, { error: authError.message });
+		// 1. Try to find the user in owner_profiles
+		const { data: existingProfile } = await getSupabaseAdmin()
+			.from('owner_profiles')
+			.select('id')
+			.eq('email', email)
+			.single();
+
+		if (existingProfile && existingProfile.id) {
+			userId = existingProfile.id;
+			console.log('Found existing user in owner_profiles:', userId);
+			
+			// Auto-approve them since we are provisioning a node for them
+			await getSupabaseAdmin().from('owner_profiles').update({ is_approved: true }).eq('id', userId);
+		} else {
+			// Try to create the user in Auth
+			const { data: authData, error: authError } = await getSupabaseAdmin().auth.admin.createUser({
+				email,
+				password,
+				email_confirm: true
+			});
+
+			if (authError) {
+				if (authError.message.includes('already registered') || authError.message.includes('already exists')) {
+					// Fallback: fetch users to find ID
+					const { data: listData } = await getSupabaseAdmin().auth.admin.listUsers();
+					const found = listData?.users?.find(u => u.email === email);
+					if (found) {
+						userId = found.id;
+						console.log('Found existing auth user via listUsers:', userId);
+						await getSupabaseAdmin().from('owner_profiles').update({ is_approved: true }).eq('id', userId);
+					} else {
+						return fail(400, { error: 'User already registered but could not be located.' });
+					}
+				} else {
+					console.error('Auth Error creating user:', authError);
+					return fail(500, { error: authError.message });
+				}
+			} else {
+				userId = authData.user?.id;
+				console.log('Created auth user with ID:', userId);
+			}
 		}
 
-		const userId = authData.user?.id;
 		if (!userId) {
-			console.error('Failed to retrieve created user ID');
-			return fail(500, { error: 'Failed to retrieve created user ID' });
+			console.error('Failed to retrieve or create user ID');
+			return fail(500, { error: 'Failed to retrieve or create user ID' });
 		}
-
-		console.log('Created auth user with ID:', userId);
 
 		// 2. Insert into restaurants table linked to owner_id
 		const { data: restData, error: dbError } = await getSupabaseAdmin()

@@ -6,7 +6,7 @@
 </script>
 
 <div
-  class={cn("flex flex-col p-8 pb-4", className)}
+  class={cn("flex flex-col p-6 pb-3 border-b border-white/10", className)}
   {...rest}
 >
   {@render children?.()}

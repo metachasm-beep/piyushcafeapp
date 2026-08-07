@@ -17,65 +17,116 @@
 <style>
   :global(body) {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #F5F5F7; /* Apple aluminum grey */
-    color: #1D1D1F;
+    background-color: #000000;
+    color: #ffffff;
     -webkit-font-smoothing: antialiased;
     margin: 0;
     padding: 0;
   }
 
-  .oak-accent {
-    background-color: #C19A6B; /* Warm Oak Wood Tone */
+  /* visionOS inspired animated mesh background */
+  .spatial-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    background-color: #0f0c29;
+    background-image: 
+      radial-gradient(circle at 15% 50%, rgba(79, 70, 229, 0.4), transparent 50%),
+      radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.3), transparent 50%),
+      radial-gradient(circle at 50% 80%, rgba(14, 165, 233, 0.4), transparent 50%);
+    filter: blur(60px);
+    animation: pulseBg 15s ease-in-out infinite alternate;
+  }
+
+  @keyframes pulseBg {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(1.1); opacity: 1; }
+  }
+
+  /* Official Taste-Skill Liquid Glass Approximation (adapted for variable radii) */
+  :global(.liquid-glass) {
+    position: relative;
+    isolation: isolate;
+    border: 1px solid rgb(255 255 255 / .32);
+    background:
+      linear-gradient(135deg, rgb(255 255 255 / .20), rgb(255 255 255 / .02)),
+      rgb(255 255 255 / .08);
+    backdrop-filter: blur(24px) saturate(180%) contrast(1.05);
+    -webkit-backdrop-filter: blur(24px) saturate(180%) contrast(1.05);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / .48),
+      inset 0 -1px 0 rgb(255 255 255 / .12),
+      0 18px 60px rgb(0 0 0 / .30);
+  }
+
+  :global(.liquid-glass::before) {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background:
+      radial-gradient(circle at 20% 0%, rgb(255 255 255 / .35), transparent 34%),
+      linear-gradient(90deg, rgb(255 255 255 / .12), transparent 42%, rgb(255 255 255 / .08));
+    pointer-events: none;
+  }
+
+  :global(.liquid-glass::after) {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    border: 1px solid rgb(255 255 255 / .10);
+    pointer-events: none;
   }
 </style>
 
-<!-- Top Oak Accent Line representing retail tables -->
-<div class="h-2 w-full oak-accent fixed top-0 z-50"></div>
+<div class="spatial-bg"></div>
 
-<div class="flex h-screen w-screen overflow-hidden pt-2">
+<div class="flex h-screen w-screen overflow-hidden text-white/90">
   
   <!-- Mobile Overlay -->
   {#if mobileMenuOpen}
     <div 
-      class="fixed inset-0 bg-black/10 z-40 lg:hidden backdrop-blur-sm"
+      class="fixed inset-0 bg-black/40 z-40 lg:hidden backdrop-blur-md"
       onclick={() => mobileMenuOpen = false}
       aria-hidden="true"
     ></div>
   {/if}
 
-  <!-- Retail Sparse Sidebar -->
+  <!-- Spatial Sidebar -->
   <aside 
-    class="fixed lg:static inset-y-0 left-0 z-50 w-[280px] bg-[#F5F5F7] lg:bg-transparent flex flex-col pt-12 pb-8 px-8 transform transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] lg:translate-x-0 {mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}"
+    class="fixed lg:static inset-y-0 left-0 z-50 w-[280px] lg:m-4 lg:mr-2 rounded-3xl liquid-glass flex flex-col pt-10 pb-8 px-6 transform transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] lg:translate-x-0 {mobileMenuOpen ? 'translate-x-0' : '-translate-x-[120%]'}"
   >
-    <div class="flex items-center justify-between lg:hidden mb-12">
-      <h2 class="text-xl font-bold tracking-tight text-[#1D1D1F]">Menu</h2>
-      <button onclick={() => mobileMenuOpen = false} class="p-2 text-[#1D1D1F]/50 hover:text-[#1D1D1F]">
+    <div class="flex items-center justify-between lg:hidden mb-10">
+      <h2 class="text-xl font-bold tracking-tight text-white">Menu</h2>
+      <button onclick={() => mobileMenuOpen = false} class="p-2 text-white/50 hover:text-white transition-colors">
         <X size={24} />
       </button>
     </div>
 
-    <!-- Apple Retail Typography Logo -->
-    <div class="hidden lg:block mb-16">
-      <h1 class="text-2xl font-bold tracking-tight text-[#1D1D1F] flex items-center gap-3">
-        <div class="w-8 h-8 rounded-full oak-accent flex items-center justify-center">
+    <!-- Logo -->
+    <div class="hidden lg:block mb-12 px-2">
+      <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center border border-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]">
           <Store size={16} class="text-white" />
         </div>
         Golden Fork
       </h1>
     </div>
 
-    <nav class="flex-1 flex flex-col gap-6">
+    <!-- Navigation -->
+    <nav class="flex-1 flex flex-col gap-2">
       {#each links as link}
         {@const active = $page.url.pathname === link.href}
         <a
           href={link.href}
-          class="flex items-center gap-4 group"
+          class="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 {active ? 'bg-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)]' : 'hover:bg-white/10'}"
           onclick={() => mobileMenuOpen = false}
         >
-          <div class="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 {active ? 'bg-white shadow-sm' : 'bg-transparent group-hover:bg-white/50'}">
-            <link.icon size={20} strokeWidth={active ? 2.5 : 1.5} class="{active ? 'text-[#1D1D1F]' : 'text-[#1D1D1F]/40 group-hover:text-[#1D1D1F]/70'}" />
-          </div>
-          <span class="text-[17px] font-semibold tracking-tight transition-colors {active ? 'text-[#1D1D1F]' : 'text-[#1D1D1F]/40 group-hover:text-[#1D1D1F]/70'}">
+          <link.icon size={20} strokeWidth={active ? 2.5 : 2} class="text-white drop-shadow-md" />
+          <span class="text-[15px] font-medium tracking-wide {active ? 'text-white' : 'text-white/80'}">
             {link.label}
           </span>
         </a>
@@ -83,16 +134,14 @@
     </nav>
 
     <!-- Bottom Action -->
-    <div class="mt-auto pt-8">
+    <div class="mt-auto pt-6 border-t border-white/10">
       <form action="/auth/logout?next=/" method="POST">
         <button
           type="submit"
-          class="flex items-center gap-4 group w-full"
+          class="flex items-center gap-3 w-full px-4 py-3 rounded-2xl hover:bg-red-500/20 transition-all duration-300 group"
         >
-          <div class="w-10 h-10 rounded-full flex items-center justify-center bg-transparent group-hover:bg-red-50 transition-all duration-300">
-            <LogOut size={20} strokeWidth={1.5} class="text-[#1D1D1F]/40 group-hover:text-red-500" />
-          </div>
-          <span class="text-[17px] font-semibold tracking-tight text-[#1D1D1F]/40 group-hover:text-red-500 transition-colors">
+          <LogOut size={20} class="text-white/70 group-hover:text-red-400 transition-colors drop-shadow-md" />
+          <span class="text-[15px] font-medium tracking-wide text-white/70 group-hover:text-red-400 transition-colors">
             Sign Out
           </span>
         </button>
@@ -100,35 +149,34 @@
     </div>
   </aside>
 
-  <!-- Main Content Panel (Pure White Slabs) -->
-  <div class="flex-1 flex flex-col h-full overflow-hidden bg-white lg:rounded-tl-[40px] shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
+  <!-- Main Content Panel -->
+  <div class="flex-1 flex flex-col h-full overflow-hidden relative z-10 lg:py-4 lg:pr-4">
     
     <!-- Header -->
-    <header class="h-24 flex items-center justify-between px-8 lg:px-16 flex-none bg-white">
+    <header class="h-20 lg:h-auto lg:mb-6 flex items-center justify-between px-6 lg:px-8 py-4 lg:rounded-3xl liquid-glass lg:shadow-[0_8px_32px_rgba(0,0,0,0.2)] flex-none">
       <div class="flex items-center gap-4">
         <button 
-          class="p-2 -ml-2 rounded-full text-[#1D1D1F]/50 hover:bg-[#F5F5F7] lg:hidden transition-colors"
+          class="p-2 -ml-2 rounded-xl text-white/70 hover:bg-white/10 lg:hidden transition-colors"
           onclick={() => mobileMenuOpen = true}
         >
           <Menu size={24} />
         </button>
       </div>
       
-      <div class="flex items-center gap-6">
-        <div class="hidden md:flex items-center bg-[#F5F5F7] rounded-full px-4 py-2 w-64">
-          <Search size={18} class="text-[#1D1D1F]/40 mr-2" />
-          <input type="text" placeholder="Search..." class="bg-transparent border-none outline-none text-[15px] placeholder-[#1D1D1F]/40 w-full" />
+      <div class="flex items-center gap-4">
+        <div class="hidden md:flex items-center bg-white/10 border border-white/20 rounded-full px-4 py-2 w-64 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] focus-within:bg-white/20 transition-all">
+          <Search size={16} class="text-white/60 mr-2" />
+          <input type="text" placeholder="Search spatial..." class="bg-transparent border-none outline-none text-[14px] placeholder-white/40 w-full text-white" />
         </div>
-        <button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-[#F5F5F7] transition-colors text-[#1D1D1F]/70">
-          <Bell size={20} />
+        <button class="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
+          <Bell size={18} />
         </button>
-        <div class="w-10 h-10 rounded-full oak-accent shadow-sm"></div>
       </div>
     </header>
 
     <!-- Page Content -->
-    <main class="flex-1 overflow-y-auto px-8 lg:px-16 pb-16">
-      <div class="max-w-6xl mx-auto h-full">
+    <main class="flex-1 overflow-y-auto px-4 lg:px-0 pb-12 lg:pb-0">
+      <div class="max-w-6xl mx-auto h-full lg:pr-2">
         {@render children()}
       </div>
     </main>

@@ -4,12 +4,12 @@
   import { cva, type VariantProps } from "class-variance-authority";
 
   const cardVariants = cva(
-    "bg-[#F5F5F7] rounded-3xl overflow-hidden transition-all duration-300",
+    "liquid-glass rounded-3xl overflow-hidden transition-all duration-300",
     {
       variants: {
         variant: {
           default: "",
-          interactive: "cursor-pointer hover:bg-[#EBEBEF]",
+          interactive: "cursor-pointer hover:-translate-y-1 hover:shadow-[0_25px_65px_rgba(0,0,0,0.4)]",
         },
       },
       defaultVariants: {

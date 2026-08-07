@@ -7,7 +7,6 @@
 
   const links = [
     { href: '/superadmin', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/superadmin/approvals', label: 'Approvals', icon: Users },
     { href: '/superadmin/restaurants', label: 'Restaurants', icon: Store },
     { href: '/superadmin/tables', label: 'Tables', icon: LayoutDashboard },
     { href: '/superadmin/menu', label: 'Global Menu', icon: Settings },

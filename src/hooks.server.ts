@@ -75,16 +75,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 					.single();
 
 				if (!profile || !profile.is_approved) {
-					// Allow access to onboarding if they haven't provided a restaurant name
-					if (path === '/onboarding' && profile && !profile.restaurant_name) {
-						// Let them through to onboarding
-					} else {
-						await event.locals.supabase.auth.signOut();
-						event.locals.session = null;
-						event.locals.user = null;
-						if (path !== '/' && !path.startsWith('/auth/')) {
-							throw redirect(303, '/?error=unauthorized');
-						}
+					// User is not an approved owner, deny access
+					await event.locals.supabase.auth.signOut();
+					event.locals.session = null;
+					event.locals.user = null;
+					if (path !== '/' && !path.startsWith('/auth/')) {
+						throw redirect(303, '/?error=unauthorized');
 					}
 				} else {
 					event.locals.userRole = 'owner';

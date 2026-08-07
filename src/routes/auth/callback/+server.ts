@@ -48,9 +48,6 @@ export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
 			if (profile) {
 				if (profile.is_approved) {
 					throw redirect(303, '/owner');
-				} else if (!profile.restaurant_name) {
-					// If they are not approved AND haven't provided a restaurant name yet, send to onboarding
-					throw redirect(303, '/onboarding');
 				}
 			}
 

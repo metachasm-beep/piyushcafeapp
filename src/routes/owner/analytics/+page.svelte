@@ -50,125 +50,125 @@
 
 <div class="space-y-6">
   <header>
-    <h1 class="text-3xl font-display font-bold text-[var(--color-text-primary)]">Analytics & Reports</h1>
-    <p class="text-[var(--color-text-secondary)] mt-1">Track your restaurant's performance</p>
+    <h1 class="text-2xl font-bold tracking-tight text-zinc-950">Analytics & Reports</h1>
+    <p class="text-sm text-zinc-500 mt-1">Track your restaurant's performance</p>
   </header>
 
   <!-- Key Metrics -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-    <div class="glass p-5 rounded-2xl flex flex-col gap-2">
-      <div class="flex items-center gap-2 text-[var(--color-text-secondary)]">
+    <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm flex flex-col gap-2">
+      <div class="flex items-center gap-2 text-zinc-500">
         <DollarSign size={18} />
-        <span class="font-medium">Total Revenue</span>
+        <span class="text-sm font-medium">Total Revenue</span>
       </div>
-      <div class="text-3xl font-display font-bold text-[var(--color-text-primary)]">{formatCurrency(totalRevenue)}</div>
+      <div class="text-3xl font-bold text-zinc-950">{formatCurrency(totalRevenue)}</div>
     </div>
     
-    <div class="glass p-5 rounded-2xl flex flex-col gap-2">
-      <div class="flex items-center gap-2 text-[var(--color-text-secondary)]">
+    <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm flex flex-col gap-2">
+      <div class="flex items-center gap-2 text-zinc-500">
         <ShoppingBag size={18} />
-        <span class="font-medium">Total Orders</span>
+        <span class="text-sm font-medium">Total Orders</span>
       </div>
-      <div class="text-3xl font-display font-bold text-[var(--color-text-primary)]">{totalOrders}</div>
+      <div class="text-3xl font-bold text-zinc-950">{totalOrders}</div>
     </div>
     
-    <div class="glass p-5 rounded-2xl flex flex-col gap-2">
-      <div class="flex items-center gap-2 text-[var(--color-text-secondary)]">
+    <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm flex flex-col gap-2">
+      <div class="flex items-center gap-2 text-zinc-500">
         <ArrowUpRight size={18} />
-        <span class="font-medium">Average Order Value</span>
+        <span class="text-sm font-medium">Average Order Value</span>
       </div>
-      <div class="text-3xl font-display font-bold text-[var(--color-text-primary)]">{formatCurrency(averageOrderValue)}</div>
+      <div class="text-3xl font-bold text-zinc-950">{formatCurrency(averageOrderValue)}</div>
     </div>
 
-    <div class="glass p-5 rounded-2xl flex flex-col gap-2">
-      <div class="flex items-center gap-2 text-[var(--color-text-secondary)]">
+    <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm flex flex-col gap-2">
+      <div class="flex items-center gap-2 text-zinc-500">
         <Star size={18} />
-        <span class="font-medium">Average Rating</span>
+        <span class="text-sm font-medium">Average Rating</span>
       </div>
       <div class="flex items-baseline gap-2">
-        <span class="text-3xl font-display font-bold text-[var(--color-text-primary)]">{averageRating}</span>
-        <span class="text-sm text-[var(--color-text-secondary)]">/ 5.0 ({feedbackCount} reviews)</span>
+        <span class="text-3xl font-bold text-zinc-950">{averageRating}</span>
+        <span class="text-sm text-zinc-500">/ 5.0 ({feedbackCount} reviews)</span>
       </div>
     </div>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Best Selling Items -->
-    <div class="glass p-6 rounded-2xl">
-      <h3 class="font-display font-bold text-lg text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
-        <TrendingUp class="text-[var(--color-brand)]" size={20} /> Best Selling Items
+    <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+      <h3 class="font-semibold text-lg text-zinc-950 mb-4 flex items-center gap-2">
+        <TrendingUp class="text-green-600" size={20} /> Best Selling Items
       </h3>
       <div class="space-y-4">
         {#each itemSales() as item, i}
           <div class="flex items-center gap-4">
-            <div class="w-8 h-8 rounded-full bg-[var(--color-brand)]/20 text-[var(--color-brand)] flex items-center justify-center font-bold text-sm">
+            <div class="w-8 h-8 rounded-full bg-zinc-100 text-zinc-700 flex items-center justify-center font-bold text-sm">
               {i + 1}
             </div>
             <div class="flex-1">
-              <h4 class="font-medium text-[var(--color-text-primary)]">{item.name}</h4>
-              <p class="text-xs text-[var(--color-text-secondary)]">{item.qty} units sold</p>
+              <h4 class="font-medium text-sm text-zinc-900">{item.name}</h4>
+              <p class="text-xs text-zinc-500">{item.qty} units sold</p>
             </div>
-            <div class="font-bold text-[var(--color-text-primary)]">
+            <div class="font-bold text-sm text-zinc-950">
               {formatCurrency(item.rev)}
             </div>
           </div>
         {/each}
         {#if itemSales().length === 0}
-          <div class="text-[var(--color-text-secondary)] text-sm italic">No sales data available yet.</div>
+          <div class="text-zinc-500 text-sm italic">No sales data available yet.</div>
         {/if}
       </div>
     </div>
 
     <!-- Peak Hours -->
-    <div class="glass p-6 rounded-2xl">
-      <h3 class="font-display font-bold text-lg text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
-        <Clock class="text-[var(--color-brand)]" size={20} /> Peak Ordering Hours
+    <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+      <h3 class="font-semibold text-lg text-zinc-950 mb-4 flex items-center gap-2">
+        <Clock class="text-blue-600" size={20} /> Peak Ordering Hours
       </h3>
       <div class="space-y-4">
         {#each peakHours() as ph}
-          <div class="flex items-center justify-between p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]">
-            <div class="font-medium text-[var(--color-text-primary)]">
+          <div class="flex items-center justify-between p-3 rounded-lg border border-zinc-100 bg-zinc-50/50">
+            <div class="font-medium text-sm text-zinc-900">
               {ph.hour === 0 ? '12 AM' : ph.hour < 12 ? `${ph.hour} AM` : ph.hour === 12 ? '12 PM' : `${ph.hour - 12} PM`}
             </div>
-            <div class="text-sm font-bold bg-[var(--color-brand)]/10 text-[var(--color-brand)] px-3 py-1 rounded-full">
+            <div class="text-xs font-semibold bg-zinc-900 text-white px-2.5 py-1 rounded-full">
               {ph.count} orders
             </div>
           </div>
         {/each}
         {#if peakHours().length === 0}
-          <div class="text-[var(--color-text-secondary)] text-sm italic">No order data available yet.</div>
+          <div class="text-zinc-500 text-sm italic">No order data available yet.</div>
         {/if}
       </div>
     </div>
   </div>
   
   <!-- Recent Feedback -->
-  <div class="glass p-6 rounded-2xl mt-6">
-    <h3 class="font-display font-bold text-lg text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
-      <Star class="text-[var(--color-brand)]" size={20} /> Recent Feedback
+  <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm mt-6">
+    <h3 class="font-semibold text-lg text-zinc-950 mb-4 flex items-center gap-2">
+      <Star class="text-yellow-500" size={20} /> Recent Feedback
     </h3>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {#each [...data.feedback].sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 6) as review}
-        <div class="bg-[var(--color-surface)] p-4 rounded-xl border border-[var(--color-border)] flex flex-col gap-2">
+        <div class="bg-zinc-50 p-4 rounded-lg border border-zinc-100 flex flex-col gap-2">
           <div class="flex items-center justify-between">
             <div class="flex gap-1 text-yellow-400">
               {#each Array(5) as _, i}
-                <Star size={14} fill={i < review.rating ? 'currentColor' : 'none'} class={i >= review.rating ? 'text-[var(--color-border)]' : ''} />
+                <Star size={14} fill={i < review.rating ? 'currentColor' : 'none'} class={i >= review.rating ? 'text-zinc-200' : ''} />
               {/each}
             </div>
-            <span class="text-xs text-[var(--color-text-secondary)]">
+            <span class="text-xs text-zinc-400">
               {new Date(review.created_at).toLocaleDateString()}
             </span>
           </div>
           {#if review.comment}
-            <p class="text-sm text-[var(--color-text-primary)] italic">"{review.comment}"</p>
+            <p class="text-sm text-zinc-700 italic mt-1">"{review.comment}"</p>
           {:else}
-            <p class="text-sm text-[var(--color-text-secondary)] italic">No comment left.</p>
+            <p class="text-sm text-zinc-400 italic mt-1">No comment left.</p>
           {/if}
         </div>
       {/each}
       {#if data.feedback.length === 0}
-        <div class="text-[var(--color-text-secondary)] text-sm italic col-span-3">No feedback received yet.</div>
+        <div class="text-zinc-500 text-sm italic col-span-3">No feedback received yet.</div>
       {/if}
     </div>
   </div>

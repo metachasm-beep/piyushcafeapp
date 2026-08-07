@@ -170,32 +170,32 @@
 </svelte:head>
 
 {#if order}
-  <header class="fixed top-0 inset-x-0 z-40 bg-black/60 backdrop-blur-xl border-b border-white/5 px-4 py-4 flex items-center gap-4">
-    <button class="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-white active:scale-95" onclick={handleBack}>
+  <header class="fixed top-0 inset-x-0 z-40 bg-white/80 backdrop-blur-xl border-b border-zinc-200 px-4 py-4 flex items-center gap-4">
+    <button class="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-700 active:scale-95 transition-transform hover:bg-zinc-200" onclick={handleBack}>
       <ArrowLeft size={20} />
     </button>
     <div class="flex-1">
-      <h1 class="font-display text-lg font-bold text-white">Order Tracking</h1>
-      <p class="text-xs text-text-secondary">#{order.id.slice(0, 8).toUpperCase()}</p>
+      <h1 class="font-bold text-lg text-zinc-950">Order Tracking</h1>
+      <p class="text-xs font-medium text-zinc-500">#{order.id.slice(0, 8).toUpperCase()}</p>
     </div>
-    <div class="badge bg-brand/20 text-brand border-brand/30">{order.table_id}</div>
+    <div class="px-2.5 py-1 rounded-md bg-zinc-100 text-zinc-900 border border-zinc-200 text-sm font-bold shadow-sm">{order.table_id}</div>
   </header>
 
   <main class="pt-24 pb-32 px-4 space-y-6 animate-fade-in max-w-lg mx-auto">
     
     <!-- Status Tracker -->
-    <section class="glass p-6 rounded-3xl space-y-8">
+    <section class="bg-white border border-zinc-200 p-6 rounded-3xl space-y-8 shadow-sm">
       <div class="text-center space-y-2">
         <StatusBadge status={order.status} />
-        <h2 class="text-xl font-display font-bold text-white mt-2">
+        <h2 class="text-xl font-bold text-zinc-950 mt-2">
           {STAGES[currentStageIndex]?.msg || 'Order updated'}
         </h2>
       </div>
 
       <div class="relative pt-4">
         <!-- Connecting Line -->
-        <div class="absolute top-[28px] left-6 right-6 h-1 bg-surface-light rounded-full z-0 overflow-hidden">
-          <div class="h-full bg-brand transition-all duration-1000 ease-in-out" style="width: {(Math.min(currentStageIndex, 3) / 3) * 100}%"></div>
+        <div class="absolute top-[28px] left-6 right-6 h-1 bg-zinc-100 rounded-full z-0 overflow-hidden">
+          <div class="h-full bg-zinc-900 transition-all duration-1000 ease-in-out" style="width: {(Math.min(currentStageIndex, 3) / 3) * 100}%"></div>
         </div>
 
         <div class="relative z-10 flex justify-between">
@@ -203,13 +203,13 @@
             {@const isCompleted = i <= currentStageIndex}
             {@const isCurrent = i === currentStageIndex}
             <div class="flex flex-col items-center gap-2">
-              <div class="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 {isCompleted ? 'bg-brand text-white shadow-[0_0_15px_rgba(249,115,22,0.4)]' : 'bg-surface text-text-secondary border border-white/10'} {isCurrent ? 'scale-110' : ''} relative">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 {isCompleted ? 'bg-zinc-900 text-white shadow-md' : 'bg-white text-zinc-400 border border-zinc-200'} {isCurrent ? 'scale-110' : ''} relative">
                 {#if isCurrent}
-                  <span class="absolute inset-0 rounded-full border-2 border-brand animate-ping opacity-50"></span>
+                  <span class="absolute inset-0 rounded-full border-2 border-zinc-900 animate-ping opacity-50"></span>
                 {/if}
                 <stage.icon size={18} />
               </div>
-              <span class="text-[10px] font-medium {isCompleted ? 'text-white' : 'text-text-secondary'} text-center w-16">
+              <span class="text-[10px] font-bold {isCompleted ? 'text-zinc-900' : 'text-zinc-400'} text-center w-16">
                 {stage.label}
               </span>
             </div>
@@ -220,43 +220,43 @@
 
     <!-- Order Summary -->
     <section class="space-y-4">
-      <h3 class="font-display font-semibold text-lg text-white">Order Summary</h3>
-      <div class="glass rounded-2xl p-4 space-y-4">
+      <h3 class="font-bold text-lg text-zinc-950">Order Summary</h3>
+      <div class="bg-white border border-zinc-200 rounded-2xl p-5 space-y-4 shadow-sm">
         {#each (order.order_items ?? []) as item}
           <div class="flex gap-4 items-center">
-            <div class="w-14 h-14 rounded-lg bg-surface overflow-hidden flex-shrink-0">
+            <div class="w-14 h-14 rounded-lg bg-zinc-100 border border-zinc-200 overflow-hidden flex-shrink-0">
               <img src={item.menu_item.image_url} alt={item.menu_item.name} class="w-full h-full object-cover" />
             </div>
             <div class="flex-1">
-              <h4 class="font-medium text-white text-sm">{item.menu_item.name}</h4>
+              <h4 class="font-semibold text-zinc-900 text-sm">{item.menu_item.name}</h4>
               {#if item.variation_name}
-                <div class="text-[10px] text-text-secondary mt-0.5">{item.variation_name}</div>
+                <div class="text-[10px] font-medium text-zinc-500 mt-0.5">{item.variation_name}</div>
               {/if}
               {#if item.addons && Array.isArray(item.addons) && item.addons.length > 0}
-                <div class="text-[10px] text-text-secondary mt-0.5">+ {item.addons.map(a => a.name).join(', ')}</div>
+                <div class="text-[10px] font-medium text-zinc-500 mt-0.5">+ {item.addons.map(a => a.name).join(', ')}</div>
               {/if}
-              <p class="text-xs text-text-secondary mt-1">Qty: {item.quantity}</p>
+              <p class="text-xs font-semibold text-zinc-600 mt-1">Qty: {item.quantity}</p>
             </div>
-            <div class="text-brand font-semibold text-sm">
+            <div class="text-zinc-900 font-bold text-sm">
               {formatCurrency(item.unit_price * item.quantity)}
             </div>
           </div>
         {/each}
 
         {#if order.special_notes}
-          <div class="p-3 bg-surface/50 rounded-xl border border-white/5">
-            <p class="text-xs text-text-secondary"><span class="font-medium text-white">Notes:</span> {order.special_notes}</p>
+          <div class="p-3 bg-amber-50 rounded-xl border border-amber-200">
+            <p class="text-xs text-amber-700 font-medium"><span class="font-bold text-amber-900">Notes:</span> {order.special_notes}</p>
           </div>
         {/if}
 
-        <div class="pt-4 border-t border-white/5 space-y-2">
-          <div class="flex justify-between text-sm text-text-secondary">
+        <div class="pt-4 border-t border-zinc-100 space-y-2">
+          <div class="flex justify-between text-sm font-medium text-zinc-500">
             <span>Subtotal</span>
             <span>{formatCurrency(order.total_amount)}</span>
           </div>
-          <div class="flex justify-between text-lg font-bold text-white pt-2">
+          <div class="flex justify-between text-lg font-bold text-zinc-950 pt-2">
             <span>Total</span>
-            <span class="text-brand">{formatCurrency(order.total_amount)}</span>
+            <span>{formatCurrency(order.total_amount)}</span>
           </div>
         </div>
       </div>
@@ -264,15 +264,15 @@
   </main>
 
   <!-- Bottom Actions -->
-  <div class="fixed bottom-0 inset-x-0 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 z-40 max-w-lg mx-auto">
+  <div class="fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur-xl border-t border-zinc-200 p-4 z-40 max-w-lg mx-auto shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
     <div class="flex gap-3">
       <button 
-        class="w-14 rounded-xl glass-strong flex items-center justify-center text-white active:scale-95 transition-transform"
+        class="w-14 rounded-xl bg-white border border-zinc-200 flex items-center justify-center text-zinc-700 active:scale-95 transition-transform hover:bg-zinc-50 shadow-sm"
         onclick={handleCallWaiter}
       >
-        <Bell size={20} class={waiterCalled ? 'text-brand animate-pulse' : ''} />
+        <Bell size={20} class={waiterCalled ? 'text-amber-500 animate-pulse' : ''} />
       </button>
-      <button class="flex-1 bg-surface-light text-white font-medium rounded-xl border border-white/10 py-4 opacity-70 cursor-not-allowed flex justify-center items-center gap-2">
+      <button class="flex-1 bg-zinc-100 text-zinc-500 font-semibold rounded-xl border border-zinc-200 py-4 opacity-70 cursor-not-allowed flex justify-center items-center gap-2">
         <CheckCircle size={20} /> Order Confirmed
       </button>
     </div>
@@ -281,8 +281,8 @@
 
 {:else}
   <div class="h-screen flex items-center justify-center flex-col gap-4">
-    <div class="w-8 h-8 border-2 border-brand/20 border-t-brand rounded-full animate-spin"></div>
-    <p class="text-text-secondary">Loading your order...</p>
+    <div class="w-8 h-8 border-4 border-zinc-900 border-t-transparent rounded-full animate-spin"></div>
+    <p class="text-sm font-medium text-zinc-500">Loading your order...</p>
   </div>
 {/if}
 
@@ -291,26 +291,26 @@
   <div class="fixed inset-0 z-[60] flex items-center justify-center px-4" transition:fade={{ duration: 200 }}>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick={() => !feedbackSubmitting && (showFeedbackModal = false)}></div>
+    <div class="absolute inset-0 bg-zinc-950/40 backdrop-blur-sm" onclick={() => !feedbackSubmitting && (showFeedbackModal = false)}></div>
     
-    <div class="glass w-full max-w-sm rounded-3xl p-6 relative z-10 flex flex-col items-center text-center space-y-6">
-      <button class="absolute top-4 right-4 text-text-secondary hover:text-white" onclick={() => showFeedbackModal = false} disabled={feedbackSubmitting}>
+    <div class="bg-white border border-zinc-200 w-full max-w-sm rounded-3xl p-8 relative z-10 flex flex-col items-center text-center space-y-6 shadow-xl">
+      <button class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-900 transition-colors" onclick={() => showFeedbackModal = false} disabled={feedbackSubmitting}>
         <X size={20} />
       </button>
       
-      <div class="w-16 h-16 bg-brand/20 rounded-full flex items-center justify-center text-brand mb-2">
+      <div class="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-900 mb-2">
         <ThumbsUp size={32} />
       </div>
       
       <div>
-        <h3 class="font-display text-2xl font-bold text-white mb-2">How was your meal?</h3>
-        <p class="text-sm text-text-secondary">We'd love to hear your feedback to improve our service.</p>
+        <h3 class="text-2xl font-bold text-zinc-950 mb-2 tracking-tight">How was your meal?</h3>
+        <p class="text-sm font-medium text-zinc-500">We'd love to hear your feedback to improve our service.</p>
       </div>
 
       <div class="flex gap-2 justify-center w-full">
         {#each [1, 2, 3, 4, 5] as star}
           <button 
-            class="text-4xl transition-transform active:scale-90 {feedbackRating >= star ? 'text-yellow-400' : 'text-surface-light'}"
+            class="text-4xl transition-transform active:scale-90 {feedbackRating >= star ? 'text-amber-400' : 'text-zinc-200'}"
             onclick={() => feedbackRating = star}
           >
             <Star fill={feedbackRating >= star ? 'currentColor' : 'none'} strokeWidth={1.5} size={40} />
@@ -319,20 +319,20 @@
       </div>
 
       <textarea 
-        class="input-dark w-full resize-none h-24"
+        class="w-full px-3 py-2 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all resize-none h-24"
         placeholder="Any comments or suggestions? (Optional)"
         bind:value={feedbackComment}
       ></textarea>
 
       <button 
-        class="btn-brand w-full py-4 text-lg font-bold"
+        class="w-full flex justify-center items-center py-4 rounded-xl font-bold bg-zinc-900 text-white hover:bg-zinc-800 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-lg"
         onclick={submitFeedback}
         disabled={feedbackSubmitting}
       >
         {feedbackSubmitting ? 'Submitting...' : 'Submit Feedback'}
       </button>
       
-      <button class="text-sm text-text-secondary hover:text-white" onclick={() => showFeedbackModal = false}>
+      <button class="text-sm font-semibold text-zinc-500 hover:text-zinc-900 transition-colors" onclick={() => showFeedbackModal = false}>
         Maybe later
       </button>
     </div>

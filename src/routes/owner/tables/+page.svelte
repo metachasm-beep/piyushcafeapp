@@ -89,54 +89,56 @@
 
 <svelte:head><title>Tables & QR · Owner Portal</title></svelte:head>
 
-<div style="font-family:'Cabinet Grotesk',system-ui,sans-serif;color:var(--color-text-primary);">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+<div class="max-w-6xl mx-auto space-y-6 animate-fade-in pb-10">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
     <div>
-      <h1 style="font-size:24px;font-weight:800;letter-spacing:-0.02em;margin:0;">Tables & QR Codes</h1>
-      <p style="color:var(--color-text-secondary);font-size:14px;margin-top:4px;">{tables.length} tables configured — click to generate QR</p>
+      <h1 class="text-2xl font-bold tracking-tight text-zinc-950">Tables & QR Codes</h1>
+      <p class="text-sm text-zinc-500 mt-1">{tables.length} tables configured — click to generate QR</p>
     </div>
-    <button class="btn-primary" onclick={() => showAddModal = true}>
-      <span style="display:flex;align-items:center;gap:6px;"><Plus size={15} strokeWidth={2.5} /> Add Table</span>
+    <button class="px-4 py-2 bg-zinc-900 text-white rounded-lg font-medium hover:bg-zinc-800 transition-colors shadow-sm flex items-center gap-2 whitespace-nowrap" onclick={() => showAddModal = true}>
+      <Plus size={18} strokeWidth={2.5} /> Add Table
     </button>
   </div>
 
   {#if isLoading}
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {#each Array(6) as _}
-        <div class="glass-panel" style="height:180px;animation:pulse 1.5s infinite;background:var(--color-card);"></div>
+        <div class="h-44 bg-zinc-100 rounded-2xl animate-pulse"></div>
       {/each}
     </div>
   {:else if tables.length === 0}
-    <div class="glass-panel" style="padding:64px;text-align:center;">
-      <div style="font-size:36px;margin-bottom:12px;">🪑</div>
-      <div style="font-size:16px;font-weight:700;color:var(--color-text-secondary);">No tables configured</div>
-      <button class="btn-primary" style="margin-top:16px;" onclick={() => showAddModal = true}>Add First Table</button>
+    <div class="bg-white border border-zinc-200 rounded-2xl p-16 text-center shadow-sm">
+      <div class="text-4xl mb-3">🪑</div>
+      <div class="text-base font-bold text-zinc-500">No tables configured</div>
+      <button class="mt-4 px-4 py-2 bg-zinc-900 text-white rounded-lg font-medium hover:bg-zinc-800 transition-colors shadow-sm" onclick={() => showAddModal = true}>Add First Table</button>
     </div>
   {:else}
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {#each tables as table (table.id)}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div class="glass-panel" style="padding:24px;text-align:center;cursor:pointer;transition:transform 0.2s;" onclick={() => generateQr(table)} onmouseenter={(e) => e.currentTarget.style.transform='scale(1.02)'} onmouseleave={(e) => e.currentTarget.style.transform='scale(1)'}>
+        <div class="bg-white border border-zinc-200 rounded-2xl p-6 text-center cursor-pointer transition-transform hover:scale-[1.02] shadow-sm flex flex-col items-center" onclick={() => generateQr(table)}>
           <!-- Big number -->
-          <div style="font-size:52px;font-weight:900;color:var(--color-brand);line-height:1;letter-spacing:-0.05em;margin-bottom:8px;font-variant-numeric:tabular-nums;">{table.table_number}</div>
-          <div style="font-size:14px;font-weight:700;color:var(--color-text-primary);margin-bottom:4px;">{table.display_name || 'Table ' + table.table_number}</div>
-          <div style="display:flex;align-items:center;justify-content:center;gap:4px;font-size:12px;color:var(--color-text-secondary);margin-bottom:16px;">
-            <Users size={11} />
+          <div class="text-5xl font-black text-zinc-950 leading-none tracking-tight mb-2 font-mono">{table.table_number}</div>
+          <div class="text-sm font-bold text-zinc-800 mb-1">{table.display_name || 'Table ' + table.table_number}</div>
+          <div class="flex items-center justify-center gap-1.5 text-xs text-zinc-500 font-medium mb-4">
+            <Users size={12} />
             {table.capacity ?? 4} seats
           </div>
-          <div style="padding-top:16px;border-top:1px solid var(--color-border);">
+          <div class="pt-4 border-t border-zinc-100 w-full mb-3">
             {#if table.is_active}
-              <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:100px;background:rgba(34,197,94,0.1);color:#22c55e;font-size:11px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;">
-                <span style="width:5px;height:5px;border-radius:50%;background:#22c55e;display:inline-block;"></span>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold tracking-widest uppercase">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
                 Active
               </span>
             {:else}
-              <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:100px;background:rgba(239,68,68,0.1);color:#ef4444;font-size:11px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;">Inactive</span>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-red-600 text-[10px] font-bold tracking-widest uppercase">
+                Inactive
+              </span>
             {/if}
           </div>
-          <div style="margin-top:12px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;font-family:'Geist Mono',monospace;color:var(--color-brand);">
-            <QrIcon size={11} /> Tap to generate QR
+          <div class="mt-auto flex items-center justify-center gap-1.5 text-xs font-mono font-bold text-zinc-900 bg-zinc-100 px-3 py-1.5 rounded-lg w-full">
+            <QrIcon size={14} /> Tap for QR
           </div>
         </div>
       {/each}
@@ -148,21 +150,21 @@
 {#if showQrModal && selectedTable}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div style="position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;" onclick={(e) => { if (e.target === e.currentTarget) showQrModal = false; }}>
-    <div class="glass-panel" style="width:100%;max-width:360px;padding:36px;text-align:center;position:relative;background:var(--color-surface);" onclick={(e) => e.stopPropagation()}>
-      <button style="position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:8px;background:var(--color-border);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text-secondary);" onclick={() => showQrModal = false}><X size={14} /></button>
-      <div style="font-size:13px;font-family:'Geist Mono',monospace;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Table {selectedTable.table_number}</div>
-      <div style="font-size:20px;font-weight:900;color:var(--color-text-primary);letter-spacing:-0.03em;margin-bottom:20px;">{selectedTable.display_name || 'Table ' + selectedTable.table_number}</div>
+  <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-6" onclick={(e) => { if (e.target === e.currentTarget) showQrModal = false; }}>
+    <div class="bg-white border border-zinc-200 w-full max-w-sm p-8 rounded-2xl text-center relative shadow-xl" onclick={(e) => e.stopPropagation()}>
+      <button class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-zinc-50 hover:bg-zinc-100 flex items-center justify-center text-zinc-500 transition-colors" onclick={() => showQrModal = false}><X size={16} /></button>
+      <div class="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-1 font-semibold">Table {selectedTable.table_number}</div>
+      <div class="text-xl font-black text-zinc-950 tracking-tight mb-6">{selectedTable.display_name || 'Table ' + selectedTable.table_number}</div>
       {#if qrDataUrl}
-        <div style="padding:16px;border-radius:16px;background:white;display:inline-block;box-shadow:0 4px 20px rgba(0,0,0,0.2);margin-bottom:20px;">
-          <img src={qrDataUrl} alt="QR Code" style="width:200px;height:200px;display:block;" />
+        <div class="p-4 rounded-xl bg-white border border-zinc-200 shadow-sm inline-block mb-6">
+          <img src={qrDataUrl} alt="QR Code" class="w-48 h-48 block" />
         </div>
       {/if}
-      <div style="display:flex;gap:10px;">
-        <button onclick={downloadQr} class="btn-primary" style="flex:1;">
-          <span style="display:flex;align-items:center;justify-content:center;gap:6px;"><Download size={14} /> Download</span>
+      <div class="flex gap-3">
+        <button onclick={downloadQr} class="flex-1 py-2.5 px-4 rounded-lg font-medium bg-zinc-900 text-white hover:bg-zinc-800 transition-colors shadow-sm flex justify-center items-center gap-2 text-sm">
+          <Download size={16} /> Download
         </button>
-        <button onclick={() => window.print()} style="flex:1;padding:10px;border-radius:12px;background:transparent;border:1px solid var(--color-border);color:var(--color-brand);font-size:14px;font-weight:600;cursor:pointer;font-family:'Cabinet Grotesk',system-ui,sans-serif;">Print</button>
+        <button onclick={() => window.print()} class="flex-1 py-2.5 px-4 rounded-lg font-medium text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-50 transition-colors text-sm">Print</button>
       </div>
     </div>
   </div>
@@ -172,26 +174,26 @@
 {#if showAddModal}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div style="position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;" onclick={(e) => { if (e.target === e.currentTarget) showAddModal = false; }}>
-    <div class="glass-panel" style="width:100%;max-width:420px;padding:36px;position:relative;background:var(--color-surface);" onclick={(e) => e.stopPropagation()}>
-      <button style="position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:8px;background:var(--color-border);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text-secondary);" onclick={() => showAddModal = false}><X size={14} /></button>
-      <h2 style="font-size:20px;font-weight:900;color:var(--color-text-primary);letter-spacing:-0.03em;margin-bottom:24px;">Add New Table</h2>
-      <form onsubmit={addTable} style="display:flex;flex-direction:column;gap:16px;">
+  <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-6" onclick={(e) => { if (e.target === e.currentTarget) showAddModal = false; }}>
+    <div class="bg-white border border-zinc-200 w-full max-w-md p-8 rounded-2xl relative shadow-xl" onclick={(e) => e.stopPropagation()}>
+      <button class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-zinc-50 hover:bg-zinc-100 flex items-center justify-center text-zinc-500 transition-colors" onclick={() => showAddModal = false}><X size={16} /></button>
+      <h2 class="text-xl font-bold text-zinc-950 tracking-tight mb-6">Add New Table</h2>
+      <form onsubmit={addTable} class="flex flex-col gap-4">
         <div>
-          <label style="display:block;font-size:13px;font-weight:600;color:var(--color-text-secondary);margin-bottom:6px;font-family:'Cabinet Grotesk',system-ui,sans-serif;" for="table_number">Table Number</label>
-          <input style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);font-size:14px;font-family:'Cabinet Grotesk',system-ui,sans-serif;outline:none;" id="table_number" name="table_number" type="number" required min="1" placeholder="7" />
+          <label class="block text-sm font-medium text-zinc-700 mb-1.5" for="table_number">Table Number</label>
+          <input class="w-full px-3 py-2 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all" id="table_number" name="table_number" type="number" required min="1" placeholder="7" />
         </div>
         <div>
-          <label style="display:block;font-size:13px;font-weight:600;color:var(--color-text-secondary);margin-bottom:6px;font-family:'Cabinet Grotesk',system-ui,sans-serif;" for="display_name">Display Name</label>
-          <input style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);font-size:14px;font-family:'Cabinet Grotesk',system-ui,sans-serif;outline:none;" id="display_name" name="display_name" required placeholder="Window Seat" />
+          <label class="block text-sm font-medium text-zinc-700 mb-1.5" for="display_name">Display Name</label>
+          <input class="w-full px-3 py-2 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all" id="display_name" name="display_name" required placeholder="Window Seat" />
         </div>
         <div>
-          <label style="display:block;font-size:13px;font-weight:600;color:var(--color-text-secondary);margin-bottom:6px;font-family:'Cabinet Grotesk',system-ui,sans-serif;" for="capacity">Capacity</label>
-          <input style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);font-size:14px;font-family:'Cabinet Grotesk',system-ui,sans-serif;outline:none;" id="capacity" name="capacity" type="number" min="1" max="50" value="4" />
+          <label class="block text-sm font-medium text-zinc-700 mb-1.5" for="capacity">Capacity</label>
+          <input class="w-full px-3 py-2 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all" id="capacity" name="capacity" type="number" min="1" max="50" value="4" />
         </div>
-        <div style="display:flex;gap:10px;margin-top:8px;">
-          <button type="button" onclick={() => showAddModal = false} style="flex:1;padding:10px;border-radius:12px;background:transparent;border:1px solid var(--color-border);color:var(--color-text-secondary);font-size:14px;font-weight:600;cursor:pointer;font-family:'Cabinet Grotesk',system-ui,sans-serif;">Cancel</button>
-          <button type="submit" disabled={isSaving} class="btn-primary" style="flex:2;">{isSaving ? 'Adding...' : 'Add Table'}</button>
+        <div class="flex gap-3 mt-2">
+          <button type="button" onclick={() => showAddModal = false} class="flex-1 py-2.5 px-4 rounded-lg font-medium text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-50 transition-colors text-sm">Cancel</button>
+          <button type="submit" disabled={isSaving} class="flex-[2] py-2.5 px-4 rounded-lg font-medium bg-zinc-900 text-white hover:bg-zinc-800 transition-colors shadow-sm text-sm">{isSaving ? 'Adding...' : 'Add Table'}</button>
         </div>
       </form>
     </div>

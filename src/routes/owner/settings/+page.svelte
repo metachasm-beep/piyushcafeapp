@@ -77,15 +77,15 @@
 
 <div class="max-w-4xl mx-auto space-y-8 animate-fade-in pb-10">
   <div>
-    <h2 class="text-2xl font-bold font-display flex items-center gap-2">
-      <Store class="text-[var(--color-brand)]" /> Restaurant Settings
+    <h2 class="text-2xl font-bold tracking-tight text-zinc-950 flex items-center gap-2">
+      <Store class="text-zinc-900" /> Restaurant Settings
     </h2>
-    <p class="text-[var(--color-text-secondary)] mt-1">Manage your public profile and business details.</p>
+    <p class="text-sm text-zinc-500 mt-1">Manage your public profile and business details.</p>
   </div>
 
-  <div class="bg-[var(--color-card)] border border-[var(--color-border)] rounded-2xl p-6 md:p-8">
-    <h3 class="text-lg font-bold mb-4 font-display">Business Logo</h3>
-    <p class="text-sm text-[var(--color-text-secondary)] mb-6">
+  <div class="bg-white border border-zinc-200 rounded-2xl p-6 md:p-8 shadow-sm">
+    <h3 class="text-lg font-bold mb-2 text-zinc-950">Business Logo</h3>
+    <p class="text-sm text-zinc-500 mb-6">
       Upload a high-quality logo. This will be displayed on your Staff Portal and the Customer Table App.
     </p>
 
@@ -93,13 +93,13 @@
       
       <!-- Current/Preview Logo -->
       <div class="flex-shrink-0 flex flex-col items-center gap-4">
-        <div class="w-32 h-32 md:w-48 md:h-48 rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-bg)] flex items-center justify-center overflow-hidden relative shadow-lg">
+        <div class="w-32 h-32 md:w-48 md:h-48 rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center overflow-hidden relative shadow-sm hover:bg-zinc-100 transition-colors">
           {#if imagePreview}
             <img src={imagePreview} alt="Preview" class="w-full h-full object-cover" />
           {:else if restaurant?.logo_url}
             <img src={restaurant.logo_url} alt={restaurant.name} class="w-full h-full object-cover" />
           {:else}
-            <ImageIcon size={48} class="text-[var(--color-text-secondary)] opacity-50" />
+            <ImageIcon size={48} class="text-zinc-300" />
           {/if}
           <input 
             type="file" 
@@ -110,17 +110,17 @@
           />
         </div>
         {#if imageFile}
-          <span class="text-xs font-bold text-[var(--color-brand)]">New image selected</span>
+          <span class="text-xs font-bold text-emerald-600">New image selected</span>
         {:else if restaurant?.logo_url}
-          <span class="text-xs text-[var(--color-text-secondary)]">Current logo</span>
+          <span class="text-xs text-zinc-500 font-medium">Current logo</span>
         {/if}
       </div>
 
       <!-- Actions -->
       <div class="flex-1 space-y-4 w-full">
-        <div class="p-4 bg-[var(--color-bg)] rounded-xl border border-[var(--color-border)] space-y-2">
-          <p class="text-sm font-bold">Requirements:</p>
-          <ul class="text-sm text-[var(--color-text-secondary)] list-disc list-inside space-y-1">
+        <div class="p-4 bg-zinc-50 rounded-xl border border-zinc-200 space-y-2">
+          <p class="text-sm font-semibold text-zinc-900">Requirements:</p>
+          <ul class="text-sm text-zinc-500 list-disc list-inside space-y-1">
             <li>Recommended resolution: 500x500px</li>
             <li>Aspect Ratio: 1:1 (Square)</li>
             <li>Max file size: 1MB</li>
@@ -131,13 +131,13 @@
         <button 
           type="submit" 
           disabled={isUploading || !imageFile}
-          class="btn-primary w-full flex justify-center items-center gap-2 py-3"
+          class="w-full flex justify-center items-center gap-2 py-2.5 px-4 rounded-lg font-medium bg-zinc-900 text-white hover:bg-zinc-800 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm"
         >
           {#if isUploading}
-            <div class="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
+            <div class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
             Uploading...
           {:else}
-            <Upload size={18} />
+            <Upload size={16} />
             Save Logo
           {/if}
         </button>

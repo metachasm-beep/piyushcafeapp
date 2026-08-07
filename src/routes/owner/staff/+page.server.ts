@@ -40,7 +40,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		return { staff: [] };
 	}
 
-	const { data: staff, error: dbError } = await locals.supabase
+	const supabaseAdmin = getSupabaseAdmin();
+
+	const { data: staff, error: dbError } = await supabaseAdmin
 		.from('restaurant_staff')
 		.select('*')
 		.eq('restaurant_id', restaurantId)
@@ -52,7 +54,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	// Enrich with emails from auth.users via admin client
-	const supabaseAdmin = getSupabaseAdmin();
 	const { data: authUsers, error: authUsersError } = await supabaseAdmin.auth.admin.listUsers();
 	
 	let enrichedStaff = staff ?? [];

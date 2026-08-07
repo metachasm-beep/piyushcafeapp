@@ -11,22 +11,26 @@
   import CardContent from '$lib/components/ui/card-content.svelte';
   
   let { data } = $props();
-  let restaurants = $state(data.restaurants || []);
-  let tables = $state(data.tables || []);
-  
+  import { enhance } from '$app/forms';
+
   let selectedRestaurantId = $state('');
   let filteredTables = $derived(
     selectedRestaurantId 
-      ? tables.filter(t => t.restaurant_id === selectedRestaurantId)
+      ? tables.filter((t: any) => t.restaurant_id === selectedRestaurantId)
       : tables
   );
 
   let showAddModal = $state(false);
   let showQrModal = $state(false);
+  
   let selectedTable = $state<any>(null);
   let qrDataUrl = $state('');
   let isLoading = $state(false);
   let isSaving = $state(false);
+
+  // Sync data props to reactive variables
+  let restaurants = $derived(data.restaurants || []);
+  let tables = $derived(data.tables || []);
 
   async function generateQr(table: any) {
     selectedTable = table;
@@ -54,40 +58,20 @@
     document.body.removeChild(a);
   }
 
-  async function addTable(e: Event) {
-    e.preventDefault();
-    if (!selectedRestaurantId) {
-      toast.error('Please select a restaurant first');
-      return;
-    }
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-    
+  function handleAddTable() {
     isSaving = true;
-    try {
-      const res = await fetch('?/addTable', {
-        method: 'POST',
-        body: formData
-      });
-      
-      const result = await res.json();
-      if (result.type === 'success') {
-        const data = JSON.parse(result.data);
-        const newTable = data[0];
-        if (newTable) {
-          tables = [...tables, newTable];
-          showAddModal = false;
-          toast.success(`Table ${newTable.table_number} added`);
-        }
-      } else {
-        toast.error('Failed to add table');
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error('An error occurred');
-    } finally {
+    return async ({ result, update }: any) => {
       isSaving = false;
-    }
+      if (result.type === 'success') {
+        showAddModal = false;
+        toast.success(`Table added successfully`);
+        await update(); // Invalidate and reload tables
+      } else if (result.type === 'failure') {
+        toast.error(result.data?.error || 'Failed to add table');
+      } else {
+        toast.error('An error occurred');
+      }
+    };
   }
 </script>
 
@@ -249,7 +233,7 @@
         </button>
       </div>
 
-      <form onsubmit={addTable} class="p-6 space-y-4">
+      <form method="POST" action="?/provision" use:enhance={handleAddTable} class="p-6 space-y-4">
         <input type="hidden" name="restaurant_id" value={selectedRestaurantId} />
         
         <div class="space-y-2">

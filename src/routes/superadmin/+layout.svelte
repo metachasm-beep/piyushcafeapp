@@ -94,7 +94,7 @@
     <!-- Navigation -->
     <nav class="flex-1 overflow-y-auto px-4 flex flex-col gap-2">
       {#each links as link}
-        {@const active = page.url.pathname === link.href}
+        {@const active = $page.url.pathname === link.href}
         <a
           href={link.href}
           class="group flex items-center gap-3 px-4 py-3.5 rounded-[20px] text-[15px] font-medium transition-all duration-300 ease-out"

@@ -16,7 +16,13 @@ const getSupabaseAdmin = () => {
 export const load: PageServerLoad = async () => {
 	const { data: restaurants, error } = await getSupabaseAdmin()
 		.from('restaurants')
-		.select('*')
+		.select(`
+			*,
+			restaurant_staff (
+				user_id,
+				role
+			)
+		`)
 		.order('created_at', { ascending: false });
 
 	if (error) {
@@ -26,8 +32,17 @@ export const load: PageServerLoad = async () => {
 		};
 	}
 
+	// Transform data to inject owner_id from restaurant_staff
+	const transformedRestaurants = (restaurants || []).map(r => {
+		const ownerStaff = r.restaurant_staff?.find((s: any) => s.role === 'owner');
+		return {
+			...r,
+			owner_id: ownerStaff?.user_id || null
+		};
+	});
+
 	return {
-		restaurants: restaurants || []
+		restaurants: transformedRestaurants
 	};
 };
 
@@ -123,13 +138,13 @@ export const actions: Actions = {
 		const randomSuffix = Math.random().toString(36).substring(2, 6);
 		const slug = `${baseSlug}-${randomSuffix}`;
 
-		// 2. Insert into restaurants table.
+		// 2. Insert into restaurants table. We omit owner_id because ownership is linked 
+		// via restaurant_staff and owner_id has a broken legacy foreign key constraint.
 		const { data: restData, error: dbError } = await getSupabaseAdmin()
 			.from('restaurants')
 			.insert({
 				name: restaurant_name,
-				slug: slug,
-				owner_id: userId
+				slug: slug
 			})
 			.select('id')
 			.single();

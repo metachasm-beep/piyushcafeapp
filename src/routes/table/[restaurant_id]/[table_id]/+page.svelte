@@ -177,6 +177,32 @@
     if (idx >= 0) { selectedAddons = selectedAddons.filter(a => a.id !== addon.id); }
     else { selectedAddons = [...selectedAddons, addon]; }
   }
+
+  // Action for magnetic buttons (Suggestion #8)
+  function magnetic(node: HTMLElement) {
+    let bound = node.getBoundingClientRect();
+    
+    function onMouseMove(e: MouseEvent) {
+      const x = e.clientX - bound.left - bound.width / 2;
+      const y = e.clientY - bound.top - bound.height / 2;
+      // only trigger within 50px of the button
+      if (Math.abs(x) < 80 && Math.abs(y) < 80) {
+        gsap.to(node, { x: x * 0.4, y: y * 0.4, duration: 1, ease: 'elastic.out(1, 0.3)' });
+      } else {
+        gsap.to(node, { x: 0, y: 0, duration: 1, ease: 'elastic.out(1, 0.3)' });
+      }
+    }
+    function onScroll() { bound = node.getBoundingClientRect(); gsap.to(node, { x: 0, y: 0, duration: 0.5 }); }
+    
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('scroll', onScroll);
+    return {
+      destroy() {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('scroll', onScroll);
+      }
+    };
+  }
 </script>
 
 <svelte:head>
@@ -199,9 +225,6 @@
 <header class="fixed top-0 left-0 right-0 z-40 bg-white/60 backdrop-blur-2xl border-b border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-all">
   <div class="px-4 py-3 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      {#if restaurant.logo_url}
-        <img src={restaurant.logo_url} alt={restaurant.name} class="w-9 h-9 rounded-lg object-cover shadow-sm" />
-      {/if}
       <div>
         <h1 class="font-bold text-lg tracking-tight text-zinc-950 leading-tight">{restaurant.name}</h1>
         <p class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Menu</p>
@@ -245,38 +268,51 @@
 
 <main class="pt-6 pb-32 px-4 space-y-8 max-w-2xl mx-auto relative z-10">
   
-  <!-- Featured Section -->
+  <!-- Featured Section (Suggestion #1 Bento Grid) -->
   {#if featuredItems.length > 0 && activeCategory === 'all'}
-    <section class="space-y-3" style="perspective: 1000px;">
+    <section class="space-y-4" style="perspective: 1000px;">
       <h2 class="text-base font-semibold text-zinc-950 flex items-center gap-2">✨ Featured</h2>
-      <div class="flex overflow-x-auto hide-scrollbar gap-4 pb-6 pt-2 px-1" style="transform: rotateX(5deg) rotateY(-2deg); transform-style: preserve-3d;">
-        {#each featuredItems as item}
-          <div class="featured-card flex-none w-[240px] rounded-2xl bg-white/90 backdrop-blur-sm overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.08)] group hover:shadow-[0_30px_60px_rgba(0,0,0,0.12)] transition-all duration-500 ease-out hover:-translate-y-2 border border-white/50">
-            <div class="w-full h-32 bg-zinc-100 overflow-hidden relative">
-              <img src={item.image_url} alt={item.name} class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
-              <div class="absolute top-2 left-2 flex gap-1">
-                {#each item.dietary_tags as tag}<DietaryBadge {tag} />{/each}
+      <!-- CSS Grid Bento Box -->
+      <div class="grid grid-cols-2 gap-4 pb-2 pt-2 px-1">
+        {#each featuredItems.slice(0, 5) as item, i}
+          <div class="featured-card {i === 0 ? 'col-span-2' : 'col-span-1'} rounded-3xl bg-white/90 backdrop-blur-sm overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.08)] group hover:shadow-[0_30px_60px_rgba(0,0,0,0.12)] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 border border-white/50 flex flex-col">
+            <div class="w-full {i === 0 ? 'h-48' : 'h-32'} bg-zinc-100 overflow-hidden relative">
+              <!-- Suggestion #4 and #9: Skeleton and Fallbacks -->
+              {#if item.image_url}
+                <div class="absolute inset-0 bg-gradient-to-r from-zinc-200 via-zinc-100 to-zinc-200 animate-pulse -z-10"></div>
+                <img src={item.image_url} alt={item.name} class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 z-0" loading="lazy" />
+              {:else}
+                <div class="w-full h-full bg-zinc-900 text-white flex items-center justify-center font-serif text-5xl opacity-90 relative overflow-hidden">
+                  <span class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')]"></span>
+                  {item.name.substring(0, 1)}
+                </div>
+              {/if}
+              <!-- Suggestion #10: Snap scroll pills -->
+              <div class="absolute top-3 left-3 flex gap-1.5 overflow-x-auto snap-x hide-scrollbar max-w-[calc(100%-24px)]">
+                {#each item.dietary_tags as tag}<div class="snap-start shrink-0"><DietaryBadge {tag} /></div>{/each}
               </div>
             </div>
-            <div class="p-4">
-              <h3 class="font-bold text-sm text-zinc-950 leading-tight mb-1">{item.name}</h3>
-              <p class="text-[11px] text-zinc-500 line-clamp-2 mb-3">{item.description}</p>
-              <div class="flex items-center justify-between">
-                <span class="font-bold text-[15px] text-zinc-900">{formatCurrency(item.price)}</span>
+            <div class="p-4 flex-1 flex flex-col">
+              <h3 class="font-bold text-[15px] text-zinc-950 leading-tight mb-1">{item.name}</h3>
+              <p class="text-[11px] text-zinc-500 line-clamp-2 mb-3 flex-1">{item.description}</p>
+              <div class="flex items-center justify-between mt-auto">
+                <span class="font-bold text-[16px] text-zinc-900">{formatCurrency(item.price)}</span>
                 {#if getTotalQuantity(item.id) > 0}
+                  <!-- Suggestion #5: Blue accent -->
                   <div class="flex items-center gap-1.5 bg-zinc-100 rounded-full p-0.5 border border-zinc-200/50 shadow-inner">
                     {#if allVariations.filter(v => v.menu_item_id === item.id).length === 0 && allAddons.filter(a => a.menu_item_id === item.id).length === 0}
-                      <button class="w-7 h-7 rounded-full bg-white border border-zinc-200/50 shadow-sm flex items-center justify-center transition-all duration-300 ease-out active:scale-90 hover:bg-zinc-50" onclick={() => cart.setQuantity(cart.generateCartKey(item.id), getTotalQuantity(item.id) - 1)}><Minus size={12} /></button>
+                      <!-- Suggestion #3: Spring physics -->
+                      <button class="w-8 h-8 rounded-full bg-white border border-zinc-200/50 shadow-sm flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:bg-zinc-50" onclick={() => cart.setQuantity(cart.generateCartKey(item.id), getTotalQuantity(item.id) - 1)}><Minus size={14} /></button>
                       <span class="w-4 text-center font-semibold text-xs">{getTotalQuantity(item.id)}</span>
-                      <button class="w-7 h-7 rounded-full bg-zinc-900 text-white shadow-md flex items-center justify-center transition-all duration-300 ease-out active:scale-90 hover:bg-zinc-700" onclick={() => handleMenuAdd(item)}><Plus size={12} /></button>
+                      <button class="w-8 h-8 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:bg-blue-700" onclick={() => handleMenuAdd(item)}><Plus size={14} /></button>
                     {:else}
                       <span class="w-4 text-center font-semibold text-xs pl-1">{getTotalQuantity(item.id)}</span>
-                      <button class="w-7 h-7 rounded-full bg-zinc-900 text-white shadow-md flex items-center justify-center transition-all duration-300 ease-out active:scale-90 hover:bg-zinc-700" onclick={() => handleMenuAdd(item)}><Plus size={12} /></button>
+                      <button class="w-8 h-8 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:bg-blue-700" onclick={() => handleMenuAdd(item)}><Plus size={14} /></button>
                     {/if}
                   </div>
                 {:else}
-                  <button class="w-8 h-8 rounded-full bg-zinc-900 text-white shadow-md flex items-center justify-center transition-all duration-300 ease-out active:scale-90 hover:bg-zinc-700 hover:shadow-lg hover:-translate-y-0.5" onclick={() => handleMenuAdd(item)}>
-                    <Plus size={16} />
+                  <button class="w-9 h-9 rounded-full bg-zinc-900 text-white shadow-md flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:bg-blue-600 hover:shadow-lg hover:-translate-y-0.5" onclick={() => handleMenuAdd(item)}>
+                    <Plus size={18} />
                   </button>
                 {/if}
               </div>
@@ -290,58 +326,82 @@
   <!-- Menu Grid Grouped by Category -->
   {#each categories as category}
     {@const items = itemsByCategory().get(category.id) || []}
-    {#if items.length > 0 && (activeCategory === 'all' || activeCategory === category.id)}
-      <section id="category-{category.id}" class="space-y-3 scroll-mt-32">
+    {#if (activeCategory === 'all' || activeCategory === category.id)}
+      <section id="category-{category.id}" class="space-y-4 scroll-mt-32">
         <h2 class="text-base font-semibold text-zinc-950 flex items-center gap-2 border-b border-zinc-100 pb-2">
           {category.icon_emoji} {category.name}
         </h2>
-        <div class="space-y-4">
-          {#each items as item}
-            <div class="menu-card rounded-2xl bg-white/90 backdrop-blur-sm p-3.5 flex gap-3.5 relative overflow-hidden shadow-[0_12px_24px_rgba(0,0,0,0.04)] border border-white/60 transition-all duration-300 ease-out hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 {item.is_available ? '' : 'opacity-60'}">
-              {#if !item.is_available}
-                <div class="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-[2px]">
-                  <span class="bg-zinc-900 text-white px-3 py-1.5 rounded-lg text-xs font-semibold tracking-widest shadow-md">OUT OF STOCK</span>
-                </div>
-              {/if}
-              <div class="w-24 h-24 shrink-0 rounded-xl bg-zinc-100 overflow-hidden shadow-inner">
-                <img src={item.image_url} alt={item.name} class="w-full h-full object-cover transition-transform duration-700 hover:scale-110" loading="lazy" />
-              </div>
-              <div class="flex flex-col flex-1 min-w-0">
-                <div class="flex gap-1 mb-1.5 flex-wrap">
-                  {#each item.dietary_tags as tag}<DietaryBadge {tag} />{/each}
-                </div>
-                <h3 class="font-bold text-[15px] text-zinc-950 leading-tight mb-1">{item.name}</h3>
-                <p class="text-xs text-zinc-500 line-clamp-2 mb-auto leading-relaxed">{item.description}</p>
-                <div class="mt-3 flex items-center justify-between">
-                  <div>
-                    <span class="font-bold text-[15px] text-zinc-900">{formatCurrency(item.price)}</span>
-                    {#if item.preparation_time}
-                      <span class="text-[10px] text-zinc-400 ml-1.5 font-medium">⏱ {item.preparation_time}m</span>
-                    {/if}
+        
+        {#if items.length === 0}
+          <!-- Suggestion #2: Kinetic Empty State -->
+          <div class="py-12 flex flex-col items-center justify-center text-center">
+            <div class="relative h-12 overflow-hidden mb-2">
+              <span class="block text-4xl font-black text-zinc-200 uppercase tracking-tighter" style="animation: scrollUp 4s cubic-bezier(0.83, 0, 0.17, 1) infinite;">EMPTY</span>
+              <span class="block text-4xl font-black text-zinc-200 uppercase tracking-tighter absolute top-full left-0 right-0" style="animation: scrollUp2 4s cubic-bezier(0.83, 0, 0.17, 1) infinite;">EMPTY</span>
+            </div>
+            <p class="text-sm text-zinc-400 font-medium">No items available here right now.</p>
+            <style>
+              @keyframes scrollUp { 0%, 40% { transform: translateY(0); } 50%, 90% { transform: translateY(-100%); } 100% { transform: translateY(-100%); } }
+              @keyframes scrollUp2 { 0%, 40% { transform: translateY(0); } 50%, 90% { transform: translateY(-100%); } 100% { transform: translateY(-100%); } }
+            </style>
+          </div>
+        {:else}
+          <div class="space-y-4">
+            {#each items as item}
+              <div class="menu-card rounded-3xl bg-white/90 backdrop-blur-sm p-4 flex gap-4 relative overflow-hidden shadow-[0_12px_24px_rgba(0,0,0,0.04)] border border-white/60 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 {item.is_available ? '' : 'opacity-60'}">
+                {#if !item.is_available}
+                  <div class="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-[2px]">
+                    <span class="bg-zinc-900 text-white px-3 py-1.5 rounded-lg text-xs font-semibold tracking-widest shadow-md">OUT OF STOCK</span>
                   </div>
-                  {#if item.is_available}
-                    {#if getTotalQuantity(item.id) > 0}
-                      <div class="flex items-center gap-1.5 bg-zinc-100 rounded-full p-0.5 border border-zinc-200/50 shadow-inner z-20">
-                        {#if allVariations.filter(v => v.menu_item_id === item.id).length === 0 && allAddons.filter(a => a.menu_item_id === item.id).length === 0}
-                          <button class="w-7 h-7 rounded-full bg-white border border-zinc-200/50 shadow-sm flex items-center justify-center transition-all duration-300 ease-out active:scale-90 hover:bg-zinc-50" onclick={() => cart.setQuantity(cart.generateCartKey(item.id), getTotalQuantity(item.id) - 1)}><Minus size={12} /></button>
-                          <span class="w-4 text-center font-semibold text-xs">{getTotalQuantity(item.id)}</span>
-                          <button class="w-7 h-7 rounded-full bg-zinc-900 text-white shadow-md flex items-center justify-center transition-all duration-300 ease-out active:scale-90 hover:bg-zinc-700" onclick={() => handleMenuAdd(item)}><Plus size={12} /></button>
-                        {:else}
-                          <span class="w-4 text-center font-semibold text-xs pl-1">{getTotalQuantity(item.id)}</span>
-                          <button class="w-7 h-7 rounded-full bg-zinc-900 text-white shadow-md flex items-center justify-center transition-all duration-300 ease-out active:scale-90 hover:bg-zinc-700" onclick={() => handleMenuAdd(item)}><Plus size={12} /></button>
-                        {/if}
-                      </div>
-                    {:else}
-                      <button class="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center shadow-md z-20 transition-all duration-300 ease-out active:scale-90 hover:-translate-y-0.5 hover:shadow-lg hover:bg-zinc-700" onclick={() => handleMenuAdd(item)}>
-                        <Plus size={15} />
-                      </button>
-                    {/if}
+                {/if}
+                <div class="w-28 h-28 shrink-0 rounded-2xl bg-zinc-100 overflow-hidden shadow-inner relative">
+                  {#if item.image_url}
+                    <div class="absolute inset-0 bg-gradient-to-r from-zinc-200 via-zinc-100 to-zinc-200 animate-pulse -z-10"></div>
+                    <img src={item.image_url} alt={item.name} class="w-full h-full object-cover transition-transform duration-700 hover:scale-110 z-0" loading="lazy" />
+                  {:else}
+                    <div class="w-full h-full bg-zinc-900 text-white flex items-center justify-center font-serif text-3xl opacity-90 relative overflow-hidden">
+                      <span class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')]"></span>
+                      {item.name.substring(0, 1)}
+                    </div>
                   {/if}
                 </div>
+                <div class="flex flex-col flex-1 min-w-0">
+                  <div class="flex gap-1.5 mb-2 overflow-x-auto snap-x hide-scrollbar max-w-full">
+                    {#each item.dietary_tags as tag}<div class="snap-start shrink-0"><DietaryBadge {tag} /></div>{/each}
+                  </div>
+                  <h3 class="font-bold text-[16px] text-zinc-950 leading-tight mb-1">{item.name}</h3>
+                  <p class="text-xs text-zinc-500 line-clamp-2 mb-auto leading-relaxed">{item.description}</p>
+                  <div class="mt-3 flex items-center justify-between">
+                    <div>
+                      <span class="font-bold text-[16px] text-zinc-900">{formatCurrency(item.price)}</span>
+                      {#if item.preparation_time}
+                        <span class="text-[10px] text-zinc-400 ml-1.5 font-medium">⏱ {item.preparation_time}m</span>
+                      {/if}
+                    </div>
+                    {#if item.is_available}
+                      {#if getTotalQuantity(item.id) > 0}
+                        <div class="flex items-center gap-1.5 bg-zinc-100 rounded-full p-0.5 border border-zinc-200/50 shadow-inner z-20">
+                          {#if allVariations.filter(v => v.menu_item_id === item.id).length === 0 && allAddons.filter(a => a.menu_item_id === item.id).length === 0}
+                            <button class="w-8 h-8 rounded-full bg-white border border-zinc-200/50 shadow-sm flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:bg-zinc-50" onclick={() => cart.setQuantity(cart.generateCartKey(item.id), getTotalQuantity(item.id) - 1)}><Minus size={14} /></button>
+                            <span class="w-4 text-center font-semibold text-xs">{getTotalQuantity(item.id)}</span>
+                            <button class="w-8 h-8 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:bg-blue-700" onclick={() => handleMenuAdd(item)}><Plus size={14} /></button>
+                          {:else}
+                            <span class="w-4 text-center font-semibold text-xs pl-1">{getTotalQuantity(item.id)}</span>
+                            <button class="w-8 h-8 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:bg-blue-700" onclick={() => handleMenuAdd(item)}><Plus size={14} /></button>
+                          {/if}
+                        </div>
+                      {:else}
+                        <button class="w-9 h-9 rounded-full bg-zinc-900 text-white flex items-center justify-center shadow-md z-20 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:-translate-y-0.5 hover:shadow-lg hover:bg-blue-600" onclick={() => handleMenuAdd(item)}>
+                          <Plus size={18} />
+                        </button>
+                      {/if}
+                    {/if}
+                  </div>
+                </div>
               </div>
-            </div>
-          {/each}
-        </div>
+            {/each}
+          </div>
+        {/if}
       </section>
     {/if}
   {/each}
@@ -349,24 +409,26 @@
 
 <!-- Floating Buttons -->
 <div class="fixed right-4 flex flex-col gap-4 z-40" style="bottom: max(24px, env(safe-area-inset-bottom, 24px)); perspective: 800px;">
-  <!-- Call Waiter -->
+  <!-- Call Waiter (Suggestion #8 Magnetic) -->
   <button 
-    class="w-12 h-12 rounded-full bg-white/90 backdrop-blur-md border border-white/50 shadow-[0_8px_24px_rgba(0,0,0,0.08)] flex items-center justify-center text-zinc-700 transition-all duration-300 ease-out active:scale-90 hover:-translate-y-1 {waiterCalled ? 'text-orange-500 border-orange-300/50 shadow-orange-500/20' : ''} {waiterCooldown && !waiterCalled ? 'opacity-50' : ''}"
+    use:magnetic
+    class="w-14 h-14 rounded-full bg-white/90 backdrop-blur-md border border-white/50 shadow-[0_8px_24px_rgba(0,0,0,0.08)] flex items-center justify-center text-zinc-700 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-1 {waiterCalled ? 'text-blue-500 border-blue-300/50 shadow-blue-500/20' : ''} {waiterCooldown && !waiterCalled ? 'opacity-50' : ''}"
     onclick={handleCallWaiter}
     title="Call Waiter"
   >
-    <Bell size={20} class={waiterCalled ? 'animate-bounce' : ''} />
+    <Bell size={24} class={waiterCalled ? 'animate-bounce' : ''} />
   </button>
 
-  <!-- Cart FAB -->
+  <!-- Cart FAB (Suggestion #8 Magnetic) -->
   {#if $cartCount > 0 && !isCartOpen}
     <div transition:fly={{ y: 30, duration: 400, opacity: 0 }} style="animation: breathe 3s ease-in-out infinite alternate;">
       <button 
-        class="w-14 h-14 rounded-full bg-zinc-900/90 backdrop-blur-xl border border-zinc-700/50 shadow-[0_20px_40px_rgba(24,24,27,0.3)] flex items-center justify-center text-white transition-all duration-300 ease-out active:scale-90 hover:bg-zinc-800 hover:shadow-[0_25px_50px_rgba(24,24,27,0.4)]"
+        use:magnetic
+        class="w-16 h-16 rounded-full bg-zinc-900/90 backdrop-blur-xl border border-zinc-700/50 shadow-[0_20px_40px_rgba(24,24,27,0.3)] flex items-center justify-center text-white transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-blue-600 hover:shadow-[0_25px_50px_rgba(37,99,235,0.4)]"
         onclick={() => isCartOpen = true}
       >
-        <ShoppingCart size={22} />
-        <span class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-md">
+        <ShoppingCart size={24} />
+        <span class="absolute -top-1 -right-1 bg-blue-600 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-md border-2 border-white">
           {$cartCount}
         </span>
       </button>
@@ -412,38 +474,47 @@
       </div>
 
       <div class="flex-1 overflow-y-auto p-6 space-y-4">
-        {#each $cart as item}
-          <div class="flex items-center gap-3">
-            <div class="w-14 h-14 rounded-lg bg-zinc-100 overflow-hidden shrink-0">
-              <img src={item.menu_item.image_url} alt={item.menu_item.name} class="w-full h-full object-cover" />
+        {#each $cart as item, i}
+          <!-- Suggestion #6: Granular Staggered Cascade -->
+          <div class="flex items-center gap-4" in:fly={{ y: 30, duration: 500, delay: i * 75, easing: (t) => --t * t * t + 1 }}>
+            <div class="w-16 h-16 rounded-xl bg-zinc-100 overflow-hidden shrink-0 shadow-inner relative">
+              {#if item.menu_item.image_url}
+                <div class="absolute inset-0 bg-gradient-to-r from-zinc-200 via-zinc-100 to-zinc-200 animate-pulse -z-10"></div>
+                <img src={item.menu_item.image_url} alt={item.menu_item.name} class="w-full h-full object-cover z-0" />
+              {:else}
+                <div class="w-full h-full bg-zinc-900 text-white flex items-center justify-center font-serif text-2xl opacity-90 relative overflow-hidden">
+                  <span class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')]"></span>
+                  {item.menu_item.name.substring(0, 1)}
+                </div>
+              {/if}
             </div>
             <div class="flex-1 min-w-0">
-              <h4 class="font-medium text-sm text-zinc-900 truncate">{item.menu_item.name}</h4>
+              <h4 class="font-bold text-[15px] text-zinc-950 truncate">{item.menu_item.name}</h4>
               {#if item.variation}
-                <span class="text-xs text-zinc-400">{item.variation.name} (+{formatCurrency(item.variation.extra_price)})</span>
+                <span class="text-[11px] text-zinc-500 block leading-tight">{item.variation.name} (+{formatCurrency(item.variation.extra_price)})</span>
               {/if}
               {#if item.addons.length > 0}
-                <span class="text-xs text-zinc-400">{item.addons.map(a => a.name).join(', ')}</span>
+                <span class="text-[11px] text-zinc-500 block leading-tight">{item.addons.map(a => a.name).join(', ')}</span>
               {/if}
-              <span class="block font-semibold text-sm text-zinc-900">
+              <span class="block font-bold text-[15px] text-zinc-900 mt-1">
                 {formatCurrency(item.menu_item.price + (item.variation?.extra_price || 0) + item.addons.reduce((sum, a) => sum + a.extra_price, 0))}
               </span>
             </div>
-            <div class="flex items-center gap-1.5 bg-zinc-100 rounded-full p-0.5 border border-zinc-200">
-              <button class="w-7 h-7 rounded-full bg-white border border-zinc-200 flex items-center justify-center active:scale-95" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity - 1)}><Minus size={13} /></button>
-              <span class="w-4 text-center font-semibold text-sm">{item.quantity}</span>
-              <button class="w-7 h-7 rounded-full bg-zinc-900 text-white flex items-center justify-center active:scale-95" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity + 1)}><Plus size={13} /></button>
+            <div class="flex items-center gap-1.5 bg-zinc-100 rounded-full p-1 border border-zinc-200 shadow-inner shrink-0">
+              <button class="w-7 h-7 rounded-full bg-white border border-zinc-200 flex items-center justify-center transition-transform ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-300 active:scale-75 shadow-sm" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity - 1)}><Minus size={13} /></button>
+              <span class="w-4 text-center font-bold text-sm">{item.quantity}</span>
+              <button class="w-7 h-7 rounded-full bg-zinc-900 text-white flex items-center justify-center transition-transform ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-300 active:scale-75 shadow-md" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity + 1)}><Plus size={13} /></button>
             </div>
           </div>
         {/each}
 
-        <div class="space-y-1.5 pt-2">
-          <label for="instructions" class="text-sm font-medium text-zinc-700">📝 Special Instructions</label>
+        <div class="space-y-2 pt-4">
+          <label for="instructions" class="text-xs font-bold text-zinc-700 uppercase tracking-widest">Special Instructions</label>
+          <!-- Suggestion #7: Intelligent Form Styling -->
           <textarea 
             id="instructions" 
             bind:value={specialInstructions}
-            placeholder="Any allergies or special requests?"
-            class="flex w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 h-20 resize-none"
+            class="flex w-full rounded-xl border-0 bg-zinc-50 px-4 py-3 text-[15px] text-zinc-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:bg-white transition-all h-24 resize-none"
           ></textarea>
         </div>
       </div>
@@ -599,21 +670,31 @@
       </div>
 
       <div class="min-h-[100px] flex flex-col justify-center">
+        <!-- Suggestion #7: Intelligent Form Styling -->
         {#if paymentMethod === 'upi'}
           <div class="space-y-2">
-            <label class="text-sm font-medium text-zinc-700" for="upi-input">UPI ID</label>
-            <input id="upi-input" type="text" class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950" value="goldenfork@upi" />
+            <label class="text-xs font-bold text-zinc-700 uppercase tracking-widest" for="upi-input">UPI ID</label>
+            <input id="upi-input" type="text" class="flex h-12 w-full rounded-xl border-0 bg-zinc-50 px-4 text-[15px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:bg-white transition-all text-zinc-950" value="goldenfork@upi" />
           </div>
         {:else if paymentMethod === 'card'}
-          <div class="space-y-2">
-            <input type="text" class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950" placeholder="Card Number" value="**** **** **** 4242" />
-            <div class="flex gap-2">
-              <input type="text" class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950" placeholder="MM/YY" value="12/26" />
-              <input type="text" class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950" placeholder="CVV" value="***" />
+          <div class="space-y-3">
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-zinc-700 uppercase tracking-widest" for="card-input">Card Number</label>
+              <input id="card-input" type="text" class="flex h-12 w-full rounded-xl border-0 bg-zinc-50 px-4 text-[15px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:bg-white transition-all text-zinc-950" value="**** **** **** 4242" />
+            </div>
+            <div class="flex gap-3">
+              <div class="space-y-1.5 flex-1">
+                <label class="text-xs font-bold text-zinc-700 uppercase tracking-widest" for="expiry-input">Expiry</label>
+                <input id="expiry-input" type="text" class="flex h-12 w-full rounded-xl border-0 bg-zinc-50 px-4 text-[15px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:bg-white transition-all text-zinc-950" value="12/26" />
+              </div>
+              <div class="space-y-1.5 flex-1">
+                <label class="text-xs font-bold text-zinc-700 uppercase tracking-widest" for="cvv-input">CVV</label>
+                <input id="cvv-input" type="text" class="flex h-12 w-full rounded-xl border-0 bg-zinc-50 px-4 text-[15px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:bg-white transition-all text-zinc-950" value="***" />
+              </div>
             </div>
           </div>
         {:else}
-          <div class="text-center text-sm text-zinc-400 py-4">
+          <div class="text-center text-sm font-medium text-zinc-500 py-4 bg-zinc-50 rounded-xl">
             Our waiter will come to your table to collect cash.
           </div>
         {/if}

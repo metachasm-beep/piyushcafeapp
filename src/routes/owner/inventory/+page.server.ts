@@ -140,6 +140,12 @@ export const actions: Actions = {
 			imageUrl = publicUrl;
 		}
 
+		const dietaryVal = formData.get('dietary')?.toString();
+		const dietary_tags = [];
+		if (dietaryVal === 'veg' || dietaryVal === 'non_veg') {
+			dietary_tags.push(dietaryVal);
+		}
+
 		// 2. Insert Menu Item
 		const newItem = {
 			id: crypto.randomUUID(),
@@ -150,7 +156,7 @@ export const actions: Actions = {
 			price: Number(formData.get('price')),
 			image_url: imageUrl,
 			is_available: true,
-			dietary_tags: []
+			dietary_tags: dietary_tags
 		};
 		
 		const { data: itemResp, error: dbError } = await supabaseAdmin.from('menu_items').insert(newItem).select().single();

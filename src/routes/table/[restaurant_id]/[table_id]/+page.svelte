@@ -216,6 +216,26 @@
   }
 </script>
 
+{#snippet dietaryIcon(tags)}
+  {#if tags?.includes('veg')}
+    <span class="inline-flex items-center" title="Vegetarian">
+      <svg class="w-[15px] h-[15px] ml-1.5 -mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0.5" y="0.5" width="15" height="15" rx="2" stroke="#10B981" stroke-width="1.5"/>
+        <circle cx="8" cy="8" r="4" fill="#10B981"/>
+      </svg>
+    </span>
+  {/if}
+  {#if tags?.includes('non_veg')}
+    <span class="inline-flex items-center" title="Non-Vegetarian">
+      <svg class="w-[15px] h-[15px] ml-1.5 -mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0.5" y="0.5" width="15" height="15" rx="2" stroke="#B91C1C" stroke-width="1.5"/>
+        <polygon points="8,4.5 12,11.5 4,11.5" fill="#B91C1C"/>
+      </svg>
+    </span>
+  {/if}
+{/snippet}
+
+
 <svelte:head>
   <title>{restaurant.name} - Menu</title>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -335,7 +355,7 @@
               </div>
             </div>
             <div class="p-4 flex-1 flex flex-col">
-              <h3 class="font-bold text-[15px] text-zinc-950 leading-tight mb-1">{item.name}</h3>
+              <h3 class="font-bold text-[15px] text-zinc-950 leading-tight mb-1" class="flex items-center">{item.name} {@render dietaryIcon(item.dietary_tags)}</h3>
               <p class="text-[11px] text-zinc-500 line-clamp-2 mb-3 flex-1">{item.description}</p>
               <div class="flex items-center justify-between mt-auto">
                 <span class="font-bold text-[16px] text-zinc-900">{formatCurrency(item.price)}</span>
@@ -411,7 +431,7 @@
                   <div class="flex gap-1.5 mb-2 overflow-x-auto snap-x hide-scrollbar max-w-full">
                     {#each item.dietary_tags as tag}<div class="snap-start shrink-0"><DietaryBadge {tag} /></div>{/each}
                   </div>
-                  <h3 class="font-bold text-[16px] text-zinc-950 leading-tight mb-1">{item.name}</h3>
+                  <h3 class="font-bold text-[16px] text-zinc-950 leading-tight mb-1" class="flex items-center">{item.name} {@render dietaryIcon(item.dietary_tags)}</h3>
                   <p class="text-xs text-zinc-500 line-clamp-2 mb-auto leading-relaxed">{item.description}</p>
                   <div class="mt-3 flex items-center justify-between">
                     <div>
@@ -531,7 +551,7 @@
               {/if}
             </div>
             <div class="flex-1 min-w-0">
-              <h4 class="font-bold text-[15px] text-zinc-950 truncate">{item.menu_item.name}</h4>
+              <h4 class="font-bold text-[15px] text-zinc-950 truncate" class="flex items-center">{item.menu_item.name} {@render dietaryIcon(item.menu_item.dietary_tags)}</h4>
               {#if item.variation}
                 <span class="text-[11px] text-zinc-500 block leading-tight">{item.variation.name} (+{formatCurrency(item.variation.extra_price)})</span>
               {/if}

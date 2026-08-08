@@ -166,6 +166,26 @@
   );
 </script>
 
+{#snippet dietaryIcon(tags)}
+  {#if tags?.includes('veg')}
+    <span class="inline-flex items-center" title="Vegetarian">
+      <svg class="w-[15px] h-[15px] ml-1.5 -mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0.5" y="0.5" width="15" height="15" rx="2" stroke="#10B981" stroke-width="1.5"/>
+        <circle cx="8" cy="8" r="4" fill="#10B981"/>
+      </svg>
+    </span>
+  {/if}
+  {#if tags?.includes('non_veg')}
+    <span class="inline-flex items-center" title="Non-Vegetarian">
+      <svg class="w-[15px] h-[15px] ml-1.5 -mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0.5" y="0.5" width="15" height="15" rx="2" stroke="#B91C1C" stroke-width="1.5"/>
+        <polygon points="8,4.5 12,11.5 4,11.5" fill="#B91C1C"/>
+      </svg>
+    </span>
+  {/if}
+{/snippet}
+
+
 <svelte:head>
   <title>Track Order - Restaurant PWA</title>
 </svelte:head>
@@ -229,7 +249,7 @@
               <img src={item.menu_item.image_url} alt={item.menu_item.name} class="w-full h-full object-cover" />
             </div>
             <div class="flex-1">
-              <h4 class="font-semibold text-zinc-900 text-sm">{item.menu_item.name}</h4>
+              <h4 class="font-semibold text-zinc-900 text-sm" class="flex items-center">{item.menu_item.name} {@render dietaryIcon(item.menu_item.dietary_tags)}</h4>
               {#if item.variation_name}
                 <div class="text-[10px] font-medium text-zinc-500 mt-0.5">{item.variation_name}</div>
               {/if}

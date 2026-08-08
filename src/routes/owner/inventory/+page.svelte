@@ -336,6 +336,34 @@
           {/if}
         </div>
 
+        <div class="space-y-3 mb-6">
+          <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Dietary Preference</label>
+          <div class="flex gap-6">
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input type="radio" name="dietary" value="" checked class="w-4 h-4 text-zinc-900 border-zinc-300 focus:ring-zinc-900" />
+              <span class="text-sm font-bold text-zinc-700 group-hover:text-zinc-900">Unspecified</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input type="radio" name="dietary" value="veg" class="w-4 h-4 text-emerald-600 border-zinc-300 focus:ring-emerald-600" />
+              <span class="text-sm font-bold text-emerald-700 group-hover:text-emerald-800 flex items-center gap-1.5">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="0.5" y="0.5" width="15" height="15" rx="3.5" stroke="#10B981" stroke-width="1"/>
+                  <circle cx="8" cy="8" r="4" fill="#10B981"/>
+                </svg> Veg
+              </span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input type="radio" name="dietary" value="non_veg" class="w-4 h-4 text-red-700 border-zinc-300 focus:ring-red-700" />
+              <span class="text-sm font-bold text-red-700 group-hover:text-red-800 flex items-center gap-1.5">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="0.5" y="0.5" width="15" height="15" rx="3.5" stroke="#B91C1C" stroke-width="1"/>
+                  <polygon points="8,4 12,11 4,11" fill="#B91C1C"/>
+                </svg> Non-Veg
+              </span>
+            </label>
+          </div>
+        </div>
+
         <div class="space-y-2 mb-8">
           <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest" for="description">Description</label>
           <textarea id="description" name="description" rows="2" placeholder="Briefly describe the item..." class="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-medium text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:bg-white transition-all shadow-inner resize-none"></textarea>

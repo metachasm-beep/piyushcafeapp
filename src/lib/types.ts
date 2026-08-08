@@ -51,7 +51,7 @@ export type MenuCategory = {
   is_active: boolean;
 };
 
-export type DietaryTag = 'veg' | 'vegan' | 'gluten_free' | 'contains_nuts' | 'dairy_free' | 'spicy';
+export type DietaryTag = 'veg' | 'non_veg' | 'vegan' | 'gluten_free' | 'contains_nuts' | 'dairy_free' | 'spicy';
 
 export type MenuItem = {
   id: string;

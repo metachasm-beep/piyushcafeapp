@@ -13,6 +13,25 @@ const getSupabaseAdmin = () => {
 	return createClient(supabaseUrl, supabaseKey);
 };
 
+export const load = async ({ locals }) => {
+	const { session, userRole, restaurantId } = locals;
+	if (!session || userRole !== 'owner' || !restaurantId) {
+		return { categories: [], items: [] };
+	}
+
+	const supabaseAdmin = getSupabaseAdmin();
+	
+	const [catResponse, itemResponse] = await Promise.all([
+		supabaseAdmin.from('menu_categories').select('*').eq('restaurant_id', restaurantId).order('sort_order'),
+		supabaseAdmin.from('menu_items').select('*').eq('restaurant_id', restaurantId).order('sort_order')
+	]);
+
+	return {
+		categories: catResponse.data || [],
+		items: itemResponse.data || []
+	};
+};
+
 export const actions: Actions = {
 	addCategory: async ({ request, locals }) => {
 		const { session, userRole, restaurantId } = locals;
@@ -101,7 +120,8 @@ export const actions: Actions = {
 		
 		const { data: itemResp, error: dbError } = await supabaseAdmin.from('menu_items').insert(newItem).select().single();
 		if (dbError) {
-			return fail(500, { error: 'Failed to insert menu item' });
+			console.error('Insert menu item error:', dbError);
+			return fail(500, { error: 'Failed to insert menu item: ' + dbError.message });
 		}
 		
 		// 3. Insert Variations & Addons

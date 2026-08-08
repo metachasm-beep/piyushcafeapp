@@ -9,9 +9,9 @@
   let { data } = $props();
   let restaurant = $derived(data.restaurant);
 
-  let items = $state<MenuItem[]>([]);
-  let categories = $state<MenuCategory[]>([]);
-  let isLoading = $state(true);
+  let items = $state<MenuItem[]>(data.items as MenuItem[] || []);
+  let categories = $state<MenuCategory[]>(data.categories as MenuCategory[] || []);
+  let isLoading = $state(false);
   let searchQuery = $state('');
   let selectedCategory = $state<string | null>(null);
   
@@ -54,7 +54,10 @@
 
     const response = await fetch('?/addCategory', {
       method: 'POST',
-      body: formData
+      body: formData,
+      headers: {
+        'x-sveltekit-action': 'true'
+      }
     });
     
     const result = deserialize(await response.text()) as any;
@@ -72,27 +75,6 @@
     isAddingCategory = false;
     newCategoryName = '';
   }
-
-  async function loadInventory() {
-    isLoading = true;
-    try {
-      if (!supabase || !restaurant?.id) return;
-      
-      const { data: catData } = await supabase.from('menu_categories').select('*').eq('restaurant_id', restaurant.id).order('sort_order');
-      const { data: itemData } = await supabase.from('menu_items').select('*').eq('restaurant_id', restaurant.id).order('sort_order');
-      
-      if (catData) categories = catData;
-      if (itemData) items = itemData;
-    } catch (err: any) {
-      toast.error('Failed to load inventory');
-    } finally {
-      isLoading = false;
-    }
-  }
-
-  $effect(() => {
-    loadInventory();
-  });
 
   async function toggleAvailability(item: MenuItem) {
     const newValue = !item.is_available;

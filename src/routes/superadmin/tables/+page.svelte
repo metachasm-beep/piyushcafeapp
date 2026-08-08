@@ -12,7 +12,10 @@
   let { data } = $props();
   import { enhance } from '$app/forms';
 
-  let selectedRestaurantId = $state('');
+  // Sync data props to reactive variables
+  let restaurants = $derived(data.restaurants || []);
+  let tables = $derived(data.tables || []);
+
   let filteredTables = $derived(
     selectedRestaurantId 
       ? tables.filter((t: any) => t.restaurant_id === selectedRestaurantId)
@@ -27,9 +30,7 @@
   let isLoading = $state(false);
   let isSaving = $state(false);
 
-  // Sync data props to reactive variables
-  let restaurants = $derived(data.restaurants || []);
-  let tables = $derived(data.tables || []);
+  let selectedRestaurantId = $state('');
 
   async function generateQr(table: any) {
     selectedTable = table;

@@ -106,17 +106,17 @@
                 <div class="flex gap-2 mt-6">
                   <button
                     class="inline-flex flex-1 items-center justify-center rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 bg-zinc-100 text-zinc-900 hover:bg-zinc-200 h-8 px-3 gap-1.5"
-                    onclick={() => { editingRestaurant = r; showEditModal = true; }}
+                    onclick={(e) => { e.stopPropagation(); editingRestaurant = r; showEditModal = true; }}
                   >
                     <Settings2 size={14} /> Manage
                   </button>
                   <button
                     class="inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 border border-zinc-200 bg-white hover:bg-zinc-100 h-8 w-8"
-                    onclick={() => toast.info('Viewing node externally...')}
+                    onclick={(e) => { e.stopPropagation(); toast.info('Viewing node externally...'); }}
                   >
                     <ExternalLink size={14} class="text-zinc-900" />
                   </button>
-                  <form method="POST" action="?/deleteRestaurant" use:enhance={() => {
+                  <form method="POST" action="?/deleteRestaurant" onclick={(e) => e.stopPropagation()} use:enhance={() => {
                     if (!confirm('Are you sure you want to completely destroy this node and its owner? This cannot be undone.')) return ({ update }) => update({ reset: false });
                     return async ({ result, update }) => {
                       console.log('Delete result:', result);
@@ -124,7 +124,7 @@
                         toast.success('Node destroyed');
                         window.location.reload();
                       } else if (result.type === 'failure') {
-                        toast.error(result.data?.error || 'Failed to destroy node (failure)');
+                        toast.error((result.data?.error as string) || 'Failed to destroy node (failure)');
                       } else if (result.type === 'error') {
                         toast.error(result.error?.message || 'Server error occurred during deletion');
                       } else {
@@ -190,7 +190,7 @@
               showAddModal = false;
               window.location.reload();
             } else if (result.type === 'failure') {
-              toast.error(result.data?.error || 'Failed to provision node');
+              toast.error((result.data?.error as string) || 'Failed to provision node');
             } else if (result.type === 'error') {
               toast.error(result.error?.message || 'Server error occurred during creation');
             } else {
@@ -263,7 +263,7 @@
               editingRestaurant = null;
               window.location.reload();
             } else if (result.type === 'failure') {
-              toast.error(result.data?.error || 'Failed to update restaurant');
+              toast.error((result.data?.error as string) || 'Failed to update restaurant');
             } else if (result.type === 'error') {
               toast.error(result.error?.message || 'Server error occurred during update');
             } else {

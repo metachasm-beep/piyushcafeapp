@@ -51,7 +51,7 @@
 {#if isLoginPage}
   {@render children()}
 {:else}
-  <div class="flex min-h-screen w-full bg-zinc-50/50">
+  <div class="flex min-h-screen w-full bg-zinc-50">
 
     <!-- Mobile Overlay -->
     {#if mobileMenuOpen}
@@ -92,7 +92,7 @@
             {#each ownerLinks as link}
               <a
                 href={link.href}
-                class="flex items-center gap-3 rounded-md px-3 py-2 transition-all {isActive(link) ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-100/50 hover:text-zinc-900'}"
+                class="flex items-center gap-3 rounded-md px-3 py-2 transition-all {isActive(link) ? 'bg-zinc-950 text-white shadow-md' : 'text-zinc-500 hover:bg-zinc-100/80 hover:text-zinc-900'}"
                 onclick={() => mobileMenuOpen = false}
               >
                 <link.icon size={16} />
@@ -104,11 +104,10 @@
             {/each}
 
             <div class="mt-4 pt-4 border-t border-zinc-100">
-              <p class="px-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">Management</p>
               {#each managementLinks as link}
                 <a
                   href={link.href}
-                  class="flex items-center gap-3 rounded-md px-3 py-2 transition-all {isActive(link) ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-100/50 hover:text-zinc-900'}"
+                  class="flex items-center gap-3 rounded-md px-3 py-2 transition-all {isActive(link) ? 'bg-zinc-950 text-white shadow-md' : 'text-zinc-500 hover:bg-zinc-100/80 hover:text-zinc-900'}"
                   onclick={() => mobileMenuOpen = false}
                 >
                   <link.icon size={16} />
@@ -117,11 +116,11 @@
               {/each}
             </div>
           {:else if userRole === 'chef'}
-            <a href="/owner/kitchen" class="flex items-center gap-3 rounded-md px-3 py-2 transition-all {currentPath.startsWith('/owner/kitchen') ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-100/50 hover:text-zinc-900'}">
+            <a href="/owner/kitchen" class="flex items-center gap-3 rounded-md px-3 py-2 transition-all {currentPath.startsWith('/owner/kitchen') ? 'bg-zinc-950 text-white shadow-md' : 'text-zinc-500 hover:bg-zinc-100/80 hover:text-zinc-900'}">
               <ChefHat size={16} /> Kitchen Display
             </a>
           {:else if userRole === 'waiter'}
-            <a href="/owner/waiter" class="flex items-center gap-3 rounded-md px-3 py-2 transition-all {currentPath.startsWith('/owner/waiter') ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-100/50 hover:text-zinc-900'}">
+            <a href="/owner/waiter" class="flex items-center gap-3 rounded-md px-3 py-2 transition-all {currentPath.startsWith('/owner/waiter') ? 'bg-zinc-950 text-white shadow-md' : 'text-zinc-500 hover:bg-zinc-100/80 hover:text-zinc-900'}">
               <Users size={16} /> Waiter Dashboard
               {#if $pendingWaiterCount > 0}
                 <span class="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">{$pendingWaiterCount}</span>
@@ -168,9 +167,9 @@
 
         <div class="flex-1 flex items-center gap-3">
           {#if restaurant?.logo_url}
-            <img src={restaurant.logo_url} alt={restaurant.name} class="h-7 w-7 rounded border border-zinc-200 object-cover" />
+            <img src={restaurant.logo_url} alt={restaurant.name} class="h-8 w-8 rounded-md border border-zinc-200 object-cover shadow-sm" />
           {/if}
-          <span class="text-sm font-semibold text-zinc-900">{restaurant?.name || 'Staff Portal'}</span>
+          <span class="text-xl font-bold tracking-tight text-zinc-950">{restaurant?.name || 'Staff Portal'}</span>
         </div>
 
         {#if $pendingWaiterCount > 0}

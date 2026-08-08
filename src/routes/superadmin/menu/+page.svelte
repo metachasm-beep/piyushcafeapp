@@ -12,7 +12,7 @@
 
   let filteredItems = $derived(
     selectedCategory 
-      ? items.filter(item => item.category_id === selectedCategory)
+      ? items.filter((item: any) => item.category_id === selectedCategory)
       : items
   );
 
@@ -56,7 +56,7 @@
         const savedItem = payload[0];
         
         if (editingItem) {
-          items = items.map(i => i.id === savedItem.id ? savedItem : i);
+          items = items.map((i: any) => i.id === savedItem.id ? savedItem : i);
           toast.success('Item updated');
         } else {
           items = [...items, savedItem];
@@ -88,7 +88,7 @@
       
       const result = await res.json();
       if (result.type === 'success') {
-        items = items.filter(i => i.id !== id);
+        items = items.filter((i: any) => i.id !== id);
         toast.success('Item deleted');
       } else {
         toast.error('Failed to delete item');
@@ -112,7 +112,7 @@
       
       const result = await res.json();
       if (result.type === 'success') {
-        items = items.map(i => i.id === item.id ? { ...i, is_available: !item.is_available } : i);
+        items = items.map((i: any) => i.id === item.id ? { ...i, is_available: !item.is_available } : i);
         toast.success(item.is_available ? 'Marked unavailable' : 'Marked available');
       }
     } catch (err) {
@@ -153,7 +153,7 @@
         class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 {selectedCategory === null ? 'bg-white text-zinc-950 shadow-sm' : 'text-zinc-900 hover:text-zinc-900'}"
         onclick={() => selectedCategory = null}
       >All Items</button>
-      {#each categories as cat}
+      {#each categories as cat (cat.id)}
         <button
           class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 {selectedCategory === cat.id ? 'bg-white text-zinc-950 shadow-sm' : 'text-zinc-900 hover:text-zinc-900'}"
           onclick={() => selectedCategory = cat.id}
@@ -272,7 +272,7 @@
             <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="category_id">Category</label>
             <select class="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950" id="category_id" name="category_id">
               <option value="">None</option>
-              {#each categories as cat}
+              {#each categories as cat (cat.id)}
                 <option value={cat.id} selected={editingItem?.category_id === cat.id}>{cat.name}</option>
               {/each}
             </select>

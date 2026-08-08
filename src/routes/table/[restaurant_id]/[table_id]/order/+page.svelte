@@ -75,7 +75,7 @@
     fetchOrderData();
 
     // Subscribe to realtime changes on this specific order
-    const channel = supabase.channel(`order-${orderId}`)
+    const channel = supabase?.channel(`order-${orderId}`)
       .on('postgres_changes', { 
         event: 'UPDATE', 
         schema: 'public', 
@@ -87,7 +87,7 @@
       .subscribe();
 
     return () => { 
-      supabase.removeChannel(channel); 
+      supabase?.removeChannel(channel); 
     };
   });
 
@@ -101,6 +101,7 @@
         order_id: order.id,
         status: 'pending',
         message: 'Check on order',
+        assigned_waiter_id: null,
         acknowledged_at: null,
         resolved_at: null,
         created_at: new Date().toISOString()

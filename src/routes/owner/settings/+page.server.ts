@@ -27,9 +27,9 @@ export const actions: Actions = {
 		const wifiPassword = formData.get('wifi_password') as string | null;
 
 		const updatePayload: any = {};
-		// if (primaryColor) {
-		// 	updatePayload.primary_color = primaryColor;
-		// }
+		if (primaryColor) {
+			updatePayload.primary_color = primaryColor;
+		}
 		if (wifiPassword !== null) {
 			updatePayload.wifi_password = wifiPassword;
 		}

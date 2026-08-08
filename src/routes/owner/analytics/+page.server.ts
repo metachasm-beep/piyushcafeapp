@@ -3,12 +3,12 @@ import type { PageServerLoad } from './$types';
 import { supabase } from '$lib/supabase';
 
 export const load: PageServerLoad = async ({ locals }) => {
-  const user = locals.user;
-  if (!user || user.role !== 'owner') {
+  const { user, userRole, restaurantId } = locals;
+  
+  if (!user || userRole !== 'owner') {
     throw error(403, 'Unauthorized');
   }
 
-  const restaurantId = user.restaurantId;
   if (!restaurantId) {
     throw error(400, 'No restaurant ID');
   }

@@ -20,7 +20,6 @@
   const ownerLinks = [
     { href: '/owner', label: 'Dashboard', icon: LayoutDashboard, exact: true },
     { href: '/owner/kitchen', label: 'Kitchen Display', icon: ChefHat, exact: false },
-    { href: '/owner/waiter', label: 'Waiter Dashboard', icon: Users, exact: false },
     { href: '/owner/inventory', label: 'Inventory', icon: UtensilsCrossed, exact: false },
     { href: '/owner/tables', label: 'Tables & QR', icon: TableIcon, exact: false },
     { href: '/owner/staff', label: 'Staff', icon: Users, exact: false },

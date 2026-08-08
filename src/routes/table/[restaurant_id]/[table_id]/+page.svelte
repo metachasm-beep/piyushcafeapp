@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fade, fly } from 'svelte/transition';
-  import { ShoppingCart, Bell, Plus, Minus, X, Smartphone, CreditCard, Banknote } from 'lucide-svelte';
+  import { ShoppingCart, Bell, Plus, Minus, X, Smartphone, CreditCard, Banknote, Check } from 'lucide-svelte';
   import { toast } from 'svelte-sonner';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
@@ -465,6 +465,23 @@
     transition: backdrop-filter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .modal-backdrop.active { backdrop-filter: blur(24px); }
+
+  .btn-shine {
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-shine::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shine 3s infinite;
+  }
+  @keyframes shine {
+    0% { left: -100%; }
+    20% { left: 200%; }
+    100% { left: 200%; }
+  }
 </style>
 
 <div class={isDarkMode ? "dark-theme min-h-screen transition-colors duration-1000" : "min-h-screen transition-colors duration-1000"}>
@@ -699,10 +716,11 @@
           <span>Total</span><span>{formatCurrency($cartTotal * 1.1)}</span>
         </div>
         <button 
-          class="inline-flex w-full items-center justify-center rounded-xl bg-[var(--brand-primary)] text-white drop-shadow-md shadow-lg hover:brightness-90 h-12 px-4 text-base font-black transition-all mt-1"
+          class="btn-shine flex w-full items-center justify-center gap-3 rounded-[1rem] bg-[var(--brand-primary)] text-white drop-shadow-md shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:scale-[1.02] active:scale-95 h-14 px-6 text-lg font-black transition-all mt-2"
           onclick={placeOrder}
         >
-          Place Order
+          <ShoppingCart size={20} />
+          <span>Place Order</span>
         </button>
         <button 
           class="inline-flex w-full items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 h-9 px-4 text-sm font-medium transition-colors"
@@ -885,14 +903,16 @@
       </div>
 
       <button 
-        class="inline-flex w-full items-center justify-center rounded-xl bg-[var(--brand-primary)] text-white drop-shadow-md shadow-lg hover:brightness-90 h-14 px-4 text-base font-black transition-all disabled:opacity-50"
+        class="btn-shine flex w-full items-center justify-center gap-3 rounded-[1rem] bg-[var(--brand-primary)] text-white drop-shadow-md shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:scale-[1.02] active:scale-95 h-14 px-6 text-lg font-black transition-all disabled:opacity-50 disabled:scale-100"
         onclick={handlePayment}
         disabled={isProcessingPayment}
       >
         {#if isProcessingPayment}
-          <div class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+          <div class="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+          <span>Processing...</span>
         {:else}
-          {paymentMethod === 'cash' ? 'Place Order (Cash)' : 'Confirm Payment'}
+          <Check size={24} strokeWidth={3} />
+          <span>{paymentMethod === 'cash' ? 'Place Order (Cash)' : 'Confirm Payment'}</span>
         {/if}
       </button>
     </div>

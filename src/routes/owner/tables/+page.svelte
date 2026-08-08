@@ -7,8 +7,10 @@
   import { Plus, QrCode as QrIcon, Download, X, Users } from 'lucide-svelte';
   import type { Table } from '$lib/types';
 
+  let { data } = $props();
+  let restaurant = $derived(data.restaurant);
+
   let tables = $state<Table[]>([]);
-  let ownerRestaurantId = $state<string | null>(null);
   let isLoading = $state(true);
   
   let showAddModal = $state(false);
@@ -18,27 +20,21 @@
   let isSaving = $state(false);
 
   onMount(async () => {
-    if (!supabase) { 
+    if (!supabase || !restaurant) { 
       isLoading = false; 
       return; 
     }
     
-    // First, find out which restaurant this owner belongs to
-    const { data: staffData } = await supabase.from('restaurant_staff').select('restaurant_id').limit(1).single();
-    if (staffData) {
-      ownerRestaurantId = staffData.restaurant_id;
-    }
-
-    // Fetch all tables for this owner's restaurant (RLS guarantees they only see theirs)
-    const { data } = await supabase.from('tables').select('*').order('table_number');
-    tables = data ?? [];
+    // Fetch all tables for this owner's restaurant
+    const { data: tableData } = await supabase.from('tables').select('*').eq('restaurant_id', restaurant.id).order('table_number');
+    tables = tableData ?? [];
     isLoading = false;
   });
 
   async function generateQr(table: Table) {
     selectedTable = table;
     const appUrl = env.PUBLIC_APP_URL || window.location.origin;
-    const url = `${appUrl}/table/${ownerRestaurantId}/${table.id}`;
+    const url = `${appUrl}/table/${restaurant?.id}/${table.id}`;
     
     qrDataUrl = await QRCode.toDataURL(url, { width: 300, margin: 2, color: { dark: '#1e1b4b', light: '#ffffff' } });
     showQrModal = true;
@@ -54,7 +50,7 @@
 
   async function addTable(e: SubmitEvent) {
     e.preventDefault();
-    if (!ownerRestaurantId && supabase) {
+    if (!restaurant?.id && supabase) {
       toast.error('Could not determine your restaurant ID');
       return;
     }
@@ -66,7 +62,7 @@
       table_number: Number(fd.get('table_number')),
       display_name: fd.get('display_name') as string,
       capacity: Number(fd.get('capacity')),
-      restaurant_id: ownerRestaurantId,
+      restaurant_id: restaurant?.id,
       is_active: true,
     };
     

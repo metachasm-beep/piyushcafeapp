@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fade, fly } from 'svelte/transition';
-  import { ShoppingCart, Bell, Plus, Minus, X, Smartphone, CreditCard, Banknote, Check } from 'lucide-svelte';
+  import { ShoppingCart, Bell, Plus, Minus, X, Smartphone, CreditCard, Banknote, Check, Wifi, Clock, ChevronDown, ChevronUp } from 'lucide-svelte';
   import { toast } from 'svelte-sonner';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
@@ -80,6 +80,7 @@
   });
 
   let showSplash = $state(true);
+  let isDashboardOpen = $state(false);
   let activeCategory = $state('all');
   let isCartOpen = $state(false);
   let showCheckoutModal = $state(false);
@@ -485,33 +486,99 @@
 </style>
 
 <div class={isDarkMode ? "dark-theme min-h-screen transition-colors duration-1000" : "min-h-screen transition-colors duration-1000"}>
-<!-- Sticky Header Navigation -->
-<header class="fixed top-0 left-0 right-0 z-40 bg-white/60 backdrop-blur-2xl border-b border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-all">
-  <div class="px-4 py-3 flex items-center justify-between">
-    <div class="flex flex-col flex-1 min-w-0 justify-center">
-      <h1 class="font-black text-[22px] tracking-tighter text-zinc-950 leading-none truncate">{restaurant.name}</h1>
-      <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em] mt-1">Digital Menu</p>
-    </div>
-
-    <div class="flex items-center justify-end pl-2 gap-2.5">
-      {#if $session.activeOrderId}
-        <button 
-          class="inline-flex items-center gap-1.5 rounded-full border border-blue-400/50 bg-blue-500/10 backdrop-blur px-3 py-1 text-xs font-bold text-blue-600 dark:text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)] whitespace-nowrap animate-pulse"
-          onclick={() => goto(`/table/${restaurant.id}/${table.id}/order`)}
-        >
-          <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div> Live Order
-        </button>
-      {/if}
+<!-- Floating Transparent Notch -->
+<div class="fixed top-2 left-1/2 -translate-x-1/2 z-40 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] {isDashboardOpen ? 'opacity-0 translate-y-[-20px] pointer-events-none' : 'opacity-100 translate-y-0'}">
+  <button 
+    class="bg-black/40 backdrop-blur-md border border-white/10 text-white px-4 py-2 rounded-full flex flex-col items-center gap-1 shadow-2xl transition-all active:scale-95 group hover:bg-black/60"
+    onclick={() => isDashboardOpen = true}
+  >
+    <div class="w-8 h-1 bg-white/30 rounded-full mb-0.5 group-hover:bg-white/50 transition-colors"></div>
+    <div class="flex items-center gap-2">
       {#if restaurant.logo_url}
-        <img src={restaurant.logo_url} alt="Logo" class="h-8 w-8 object-contain rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.1)] bg-white border-2 border-white" />
+        <img src={restaurant.logo_url} alt="Logo" class="w-5 h-5 rounded-full object-cover bg-white" />
       {/if}
-      <span class="inline-flex items-center rounded-full border border-white/20 bg-[var(--brand-primary)] backdrop-blur px-3 py-1.5 text-xs font-black text-white drop-shadow-md shadow-[0_4px_12px_rgba(0,0,0,0.15)] whitespace-nowrap">
-        {table.display_name ?? `Table ${table.table_number}`}
-      </span>
+      <span class="font-bold text-xs uppercase tracking-widest">{table.display_name ?? `Table ${table.table_number}`}</span>
+      <ChevronDown size={14} class="opacity-50 group-hover:opacity-100 transition-opacity" />
+    </div>
+  </button>
+</div>
+
+<!-- Fold-Out Origami Dashboard -->
+{#if isDashboardOpen}
+  <div class="fixed inset-0 z-50 flex flex-col justify-start" transition:fade={{ duration: 300 }}>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick={() => isDashboardOpen = false}></div>
+    
+    <div 
+      class="bg-zinc-950/95 backdrop-blur-3xl w-full rounded-b-[2.5rem] shadow-[0_30px_60px_rgba(0,0,0,0.4)] relative flex flex-col overflow-hidden border-b border-white/10 pt-[env(safe-area-inset-top,20px)]"
+      transition:fly={{ y: '-100%', duration: 600, opacity: 1, easing: (t) => { const s = 1.70158; return --t * t * ((s + 1) * t + s) + 1; } }}
+      style="transform-origin: top center;"
+    >
+      <div class="p-6 space-y-6">
+        <!-- Header area -->
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-3">
+            {#if restaurant.logo_url}
+              <img src={restaurant.logo_url} alt="Logo" class="w-10 h-10 rounded-full bg-white border-2 border-white/20" />
+            {/if}
+            <div>
+              <h2 class="text-xl font-black text-white">{restaurant.name}</h2>
+              <p class="text-xs text-white/50 font-bold uppercase tracking-widest">{table.display_name ?? `Table ${table.table_number}`}</p>
+            </div>
+          </div>
+          <button class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors" onclick={() => isDashboardOpen = false}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <!-- Wi-Fi Card -->
+        <div class="bg-white/5 rounded-2xl p-4 border border-white/10 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-full bg-[var(--brand-primary)]/20 text-[var(--brand-primary)] flex items-center justify-center shrink-0">
+            <Wifi size={24} />
+          </div>
+          <div class="flex-1">
+            <h4 class="text-sm font-bold text-white mb-1">Guest Wi-Fi</h4>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span class="text-white/50 block">Network</span>
+                <span class="text-white font-mono bg-black/30 px-1.5 py-0.5 rounded">{restaurant.name} Guest</span>
+              </div>
+              <div>
+                <span class="text-white/50 block">Password</span>
+                <span class="text-white font-mono bg-black/30 px-1.5 py-0.5 rounded select-all">{restaurant.wifi_password || 'delicious'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions Grid -->
+        <div class="grid grid-cols-2 gap-3">
+          <button 
+            class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-colors active:scale-95"
+            onclick={() => { isDashboardOpen = false; handleCallWaiter(); }}
+          >
+            <Bell size={24} class="text-[var(--brand-primary)]" />
+            <span class="text-sm font-bold text-white">Call Waiter</span>
+          </button>
+          
+          <button 
+            class="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-colors active:scale-95"
+            onclick={() => { isDashboardOpen = false; if ($session.activeOrderId) goto(`/table/${restaurant.id}/${table.id}/order`); else isCartOpen = true; }}
+          >
+            <Clock size={24} class="text-[var(--brand-primary)]" />
+            <span class="text-sm font-bold text-white">{$session.activeOrderId ? 'Track Order' : 'View Cart'}</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Pull up indicator -->
+      <button class="w-full py-4 flex justify-center bg-white/5 hover:bg-white/10 transition-colors" onclick={() => isDashboardOpen = false}>
+        <ChevronUp size={24} class="text-white/50" />
+      </button>
     </div>
   </div>
-  
-  </header>
+{/if}
 
 <!-- Full-Screen 3D Carousel -->
 <div class="mesh-bg"></div>

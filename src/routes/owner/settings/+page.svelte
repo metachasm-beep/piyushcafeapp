@@ -172,17 +172,31 @@
           </ul>
         </div>
         
+        <!-- Wi-Fi Settings -->
+        <div class="space-y-3">
+          <label class="text-sm font-semibold text-zinc-900 block" for="wifi_password">Guest Wi-Fi Password</label>
+          <p class="text-xs text-zinc-500 mb-2">This will be displayed in the Customer Table App dashboard so guests can easily connect to your network.</p>
+          <input 
+            type="text" 
+            id="wifi_password"
+            name="wifi_password" 
+            value={restaurant?.wifi_password || ''}
+            placeholder="e.g. delicious"
+            class="flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent"
+          />
+        </div>
+        
         <button 
           type="submit" 
-          disabled={isUploading || !imageFile}
+          disabled={isUploading}
           class="w-full flex justify-center items-center gap-2 py-2.5 px-4 rounded-lg font-medium bg-zinc-900 text-white hover:bg-zinc-800 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm"
         >
           {#if isUploading}
             <div class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-            Uploading...
+            Saving...
           {:else}
             <Upload size={16} />
-            Save Logo
+            Save Settings
           {/if}
         </button>
       </div>

@@ -47,6 +47,7 @@ CREATE TABLE restaurants (
   logo_url          TEXT,
   primary_color     TEXT NOT NULL DEFAULT '#F97316',
   secondary_color   TEXT NOT NULL DEFAULT '#1E293B',
+  wifi_password     TEXT,
   upi_id            TEXT,
   razorpay_key_id   TEXT,
   stripe_account_id TEXT,

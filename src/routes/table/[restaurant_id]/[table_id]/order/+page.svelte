@@ -270,7 +270,7 @@
       <div class="relative pt-4">
         <!-- Connecting Line -->
         <div class="absolute top-[28px] left-6 right-6 h-1 bg-zinc-100 rounded-full z-0 overflow-hidden">
-          <div class="h-full bg-[var(--brand-primary)] transition-all duration-1000 ease-in-out" style="width: {(Math.min(currentStageIndex, 3) / 3) * 100}%"></div>
+          <div class="h-full bg-blue-600 transition-all duration-1000 ease-in-out" style="width: {(Math.min(currentStageIndex, 3) / 3) * 100}%"></div>
         </div>
 
         <div class="relative z-10 flex justify-between">
@@ -278,7 +278,7 @@
             {@const isCompleted = i <= currentStageIndex}
             {@const isCurrent = i === currentStageIndex}
             <div class="flex flex-col items-center gap-2">
-              <div class="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 {isCompleted ? 'bg-[var(--brand-primary)] text-white shadow-md' : 'bg-white text-zinc-400 border border-zinc-200'} {isCurrent ? 'scale-110 icon-float' : ''} relative">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 {isCompleted ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-zinc-400 border border-zinc-200'} {isCurrent ? 'scale-110 icon-float' : ''} relative">
                 {#if isCurrent}
                   <span class="absolute inset-0 rounded-full border-2 border-zinc-900 animate-ping opacity-50"></span>
                 {/if}
@@ -351,7 +351,7 @@
         class="w-14 rounded-xl bg-white border border-zinc-200 flex items-center justify-center text-zinc-700 active:scale-95 transition-transform hover:bg-zinc-50 shadow-sm"
         onclick={handleCallWaiter}
       >
-        <Bell size={20} class={waiterCalled ? 'text-[var(--brand-primary)] icon-ring' : ''} />
+        <Bell size={20} class={waiterCalled ? 'text-blue-600 icon-ring' : ''} />
       </button>
       <button class="flex-1 bg-zinc-100 text-zinc-500 font-semibold rounded-xl border border-zinc-200 py-4 opacity-70 cursor-not-allowed flex justify-center items-center gap-2">
         <CheckCircle size={20} /> Order Confirmed
@@ -408,7 +408,7 @@
       ></textarea>
 
       <button 
-        class="w-full flex justify-center items-center py-4 rounded-xl font-bold bg-[var(--brand-primary)] text-white hover:bg-zinc-800 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+        class="w-full flex justify-center items-center py-4 rounded-xl font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-lg"
         onclick={submitFeedback}
         disabled={feedbackSubmitting}
       >

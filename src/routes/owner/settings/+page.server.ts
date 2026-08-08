@@ -24,10 +24,14 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const imageFile = formData.get('logo') as File | null;
 		const primaryColor = formData.get('primary_color') as string | null;
+		const wifiPassword = formData.get('wifi_password') as string | null;
 
 		const updatePayload: any = {};
 		if (primaryColor) {
 			updatePayload.primary_color = primaryColor;
+		}
+		if (wifiPassword !== null) {
+			updatePayload.wifi_password = wifiPassword;
 		}
 
 		const supabaseAdmin = getSupabaseAdmin();

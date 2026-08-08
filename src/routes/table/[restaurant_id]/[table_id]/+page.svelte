@@ -4,8 +4,7 @@
   import { toast } from 'svelte-sonner';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
-  import gsap from 'gsap';
-  import ScrollTrigger from 'gsap/dist/ScrollTrigger';
+  import { browser } from '$app/environment';
   
   import { session } from '$lib/stores/session';
   import { cart, cartCount, cartTotal } from '$lib/stores/cart';
@@ -24,8 +23,10 @@
 
   $effect(() => { session.init(restaurant, table); });
 
-  onMount(() => {
-    if (typeof window !== 'undefined') {
+  onMount(async () => {
+    if (browser) {
+      const gsap = (await import('gsap')).default;
+      const ScrollTrigger = (await import('gsap/ScrollTrigger')).default;
       gsap.registerPlugin(ScrollTrigger);
 
       const mm = gsap.matchMedia();

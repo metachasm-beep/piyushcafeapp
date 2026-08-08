@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fade, fly } from 'svelte/transition';
-  import { ShoppingCart, Bell, Plus, Minus, X, Smartphone, CreditCard, Banknote, Check, Wifi, Clock, ChevronDown, ChevronUp } from 'lucide-svelte';
+  import { ShoppingCart, Bell, Plus, Minus, X, Smartphone, CreditCard, Banknote, Check, Wifi, Clock, ChevronDown, ChevronUp, Trash2 } from 'lucide-svelte';
   import { toast } from 'svelte-sonner';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
@@ -22,6 +22,95 @@
       if (type === 'heavy') navigator.vibrate(50);
       if (type === 'success') navigator.vibrate([30, 50, 30]);
     }
+  }
+
+  function swipeDownToClose(node: HTMLElement) {
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+    function handleTouchStart(e: TouchEvent) {
+      if (node.scrollTop > 0) return;
+      startY = e.touches[0].clientY;
+      currentY = 0;
+      isDragging = true;
+      node.style.transition = 'none';
+    }
+    function handleTouchMove(e: TouchEvent) {
+      if (!isDragging) return;
+      const deltaY = e.touches[0].clientY - startY;
+      if (deltaY > 0) { 
+        currentY = deltaY;
+        node.style.transform = `translateY(${currentY}px)`;
+        if (currentY > 20) e.preventDefault();
+      }
+    }
+    function handleTouchEnd() {
+      if (!isDragging) return;
+      isDragging = false;
+      node.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+      if (currentY > 150) {
+        node.style.transform = `translateY(100vh)`;
+        setTimeout(() => {
+          activeItem = null;
+          node.style.transform = '';
+        }, 300);
+      } else {
+        node.style.transform = `translateY(0)`;
+        setTimeout(() => {
+          node.style.transition = '';
+          node.style.transform = '';
+        }, 400);
+      }
+    }
+    node.addEventListener('touchstart', handleTouchStart, { passive: true });
+    node.addEventListener('touchmove', handleTouchMove, { passive: false });
+    node.addEventListener('touchend', handleTouchEnd);
+    return {
+      destroy() {
+        node.removeEventListener('touchstart', handleTouchStart);
+        node.removeEventListener('touchmove', handleTouchMove);
+        node.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }
+
+  function swipeToDelete(node: HTMLElement, ondelete: () => void) {
+    let startX = 0;
+    let currentX = 0;
+    function handleTouchStart(e: TouchEvent) {
+      startX = e.touches[0].clientX;
+      currentX = 0;
+      node.style.transition = 'none';
+    }
+    function handleTouchMove(e: TouchEvent) {
+      const deltaX = e.touches[0].clientX - startX;
+      if (deltaX < 0) { 
+        currentX = deltaX;
+        node.style.transform = `translateX(${Math.max(currentX, -80)}px)`;
+      }
+    }
+    function handleTouchEnd() {
+      node.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+      if (currentX < -60) {
+        node.style.transform = `translateX(-100%)`;
+        setTimeout(() => {
+          ondelete();
+          node.style.transform = '';
+        }, 300);
+      } else {
+        node.style.transform = `translateX(0)`;
+      }
+    }
+    node.addEventListener('touchstart', handleTouchStart, { passive: true });
+    node.addEventListener('touchmove', handleTouchMove, { passive: true });
+    node.addEventListener('touchend', handleTouchEnd);
+    return {
+      destroy() {
+        node.removeEventListener('touchstart', handleTouchStart);
+        node.removeEventListener('touchmove', handleTouchMove);
+        node.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
   }
 
   let { data }: { data: PageData } = $props();
@@ -86,6 +175,13 @@
   let showCheckoutModal = $state(false);
   let paymentMethod = $state<'upi'|'card'|'cash'>('upi');
   let isProcessingPayment = $state(false);
+  
+  // Advanced UI State
+  let modalScrollY = $state(0);
+  let cardFocus = $state<'front' | 'back'>('front');
+  let cardDetails = $state({ number: '', expiry: '', cvv: '' });
+  let paymentStatus = $state<'idle' | 'processing' | 'success'>('idle');
+
   let specialInstructions = $state('');
   let waiterCalled = $state(false);
   let waiterCooldown = $state(false);
@@ -202,7 +298,7 @@
   }
 
   async function handlePayment() {
-    isProcessingPayment = true;
+    paymentStatus = 'processing';
     try {
       const items = $cart.map(c => ({
         menu_item_id: c.menu_item.id,
@@ -221,31 +317,36 @@
       session.setActiveOrder(orderId);
       cart.clear();
       showCheckoutModal = false;
-      if (paymentMethod === 'cash') {
-        toast.success('Order placed! 🎉 Waiter will collect cash.');
-        triggerHaptic('success');
-        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-        goto(`/table/${restaurant.id}/${table.id}/order`);
-      } else {
-        toast.info('Initializing payment...');
-        const rzpRes = await fetch('/api/razorpay/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: orderId, receipt: `rcpt_${orderId}`, notes: { internal_order_id: orderId } }) });
-        if (!rzpRes.ok) throw new Error('Failed to initialize payment gateway.');
-        const rzpData = await rzpRes.json();
-        const options = {
-          key: rzpData.key || 'dummy_key', amount: rzpData.amount, currency: rzpData.currency,
-          name: restaurant.name, description: `Order ${orderId}`, order_id: rzpData.id,
-          handler: function (response: any) { toast.success('Payment successful! 🎉'); isProcessingPayment = false; goto(`/table/${restaurant.id}/${table.id}/order`); },
-          prefill: { name: 'Customer', email: 'customer@example.com', contact: '9999999999' },
-          theme: { color: '#09090b' }
-        };
-        const rzp = new (window as any).Razorpay(options);
-        rzp.on('payment.failed', function (response: any) { toast.error(response.error.description || 'Payment failed'); isProcessingPayment = false; });
-        rzp.open();
-      }
+      
+      paymentStatus = 'success';
+      triggerHaptic('success');
+      confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#10B981', '#34D399', '#059669', '#ffffff'] });
+
+      setTimeout(async () => {
+        if (paymentMethod === 'cash') {
+          toast.success('Order placed! 🎉 Waiter will collect cash.');
+          goto(`/table/${restaurant.id}/${table.id}/order`);
+        } else {
+          toast.info('Initializing payment...');
+          const rzpRes = await fetch('/api/razorpay/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: orderId, receipt: `rcpt_${orderId}`, notes: { internal_order_id: orderId } }) });
+          if (!rzpRes.ok) throw new Error('Failed to initialize payment gateway.');
+          const rzpData = await rzpRes.json();
+          const options = {
+            key: rzpData.key || 'dummy_key', amount: rzpData.amount, currency: rzpData.currency,
+            name: restaurant.name, description: `Order ${orderId}`, order_id: rzpData.id,
+            handler: function (response: any) { toast.success('Payment successful! 🎉'); paymentStatus = 'idle'; goto(`/table/${restaurant.id}/${table.id}/order`); },
+            prefill: { name: 'Customer', email: 'customer@example.com', contact: '9999999999' },
+            theme: { color: '#09090b' }
+          };
+          const rzp = new (window as any).Razorpay(options);
+          rzp.on('payment.failed', function (response: any) { toast.error(response.error.description || 'Payment failed'); paymentStatus = 'idle'; });
+          rzp.open();
+        }
+      }, 1000); // Give time for morph animation
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to place order. Please try again.';
       toast.error(msg);
-      isProcessingPayment = false;
+      paymentStatus = 'idle';
     }
   }
   
@@ -383,7 +484,115 @@
 
 <svelte:head>
   <title>{restaurant.name} - Menu</title>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js">
+  // Advanced UI State
+  let modalScrollY = $state(0);
+  let cardFocus = $state<'front' | 'back'>('front');
+  let cardDetails = $state({ number: '', expiry: '', cvv: '' });
+  let paymentStatus = $state<'idle' | 'processing' | 'success'>('idle');
+
+  // Advanced UI Actions
+  function swipeDownToClose(node: HTMLElement) {
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+
+    function handleTouchStart(e: TouchEvent) {
+      if (node.scrollTop > 0) return; // Only if at top
+      startY = e.touches[0].clientY;
+      currentY = 0;
+      isDragging = true;
+      node.style.transition = 'none';
+    }
+
+    function handleTouchMove(e: TouchEvent) {
+      if (!isDragging) return;
+      const deltaY = e.touches[0].clientY - startY;
+      if (deltaY > 0) { 
+        currentY = deltaY;
+        node.style.transform = `translateY(${currentY}px)`;
+        if (currentY > 20) { // Slight buffer before preventing default scroll
+          e.preventDefault();
+        }
+      }
+    }
+
+    function handleTouchEnd() {
+      if (!isDragging) return;
+      isDragging = false;
+      node.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+      if (currentY > 150) {
+        node.style.transform = `translateY(100vh)`;
+        setTimeout(() => {
+          activeItem = null;
+          node.style.transform = '';
+        }, 300);
+      } else {
+        node.style.transform = `translateY(0)`;
+        setTimeout(() => {
+          node.style.transition = '';
+          node.style.transform = '';
+        }, 400);
+      }
+    }
+
+    node.addEventListener('touchstart', handleTouchStart, { passive: true });
+    node.addEventListener('touchmove', handleTouchMove, { passive: false });
+    node.addEventListener('touchend', handleTouchEnd);
+
+    return {
+      destroy() {
+        node.removeEventListener('touchstart', handleTouchStart);
+        node.removeEventListener('touchmove', handleTouchMove);
+        node.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }
+
+  function swipeToDelete(node: HTMLElement, ondelete: () => void) {
+    let startX = 0;
+    let currentX = 0;
+
+    function handleTouchStart(e: TouchEvent) {
+      startX = e.touches[0].clientX;
+      currentX = 0;
+      node.style.transition = 'none';
+    }
+
+    function handleTouchMove(e: TouchEvent) {
+      const deltaX = e.touches[0].clientX - startX;
+      if (deltaX < 0) { 
+        currentX = deltaX;
+        node.style.transform = `translateX(${Math.max(currentX, -80)}px)`;
+      }
+    }
+
+    function handleTouchEnd() {
+      node.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+      if (currentX < -60) {
+        node.style.transform = `translateX(-100%)`;
+        setTimeout(() => {
+          ondelete();
+          node.style.transform = '';
+        }, 300);
+      } else {
+        node.style.transform = `translateX(0)`;
+      }
+    }
+
+    node.addEventListener('touchstart', handleTouchStart, { passive: true });
+    node.addEventListener('touchmove', handleTouchMove, { passive: true });
+    node.addEventListener('touchend', handleTouchEnd);
+
+    return {
+      destroy() {
+        node.removeEventListener('touchstart', handleTouchStart);
+        node.removeEventListener('touchmove', handleTouchMove);
+        node.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }
+</script>
 </svelte:head>
 
 <!-- Splash Screen -->
@@ -719,8 +928,15 @@
 
       <div class="flex-1 overflow-y-auto p-6 space-y-6">
         {#each $cart as item, i}
-          <div class="flex items-start gap-4" in:fly={{ y: 30, duration: 500, delay: i * 75, easing: (t) => --t * t * t + 1 }}>
-            <div class="w-20 h-20 rounded-[1.25rem] bg-zinc-100 dark:bg-zinc-800 overflow-hidden shrink-0 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.05)] relative">
+          <div class="relative rounded-[1.25rem] bg-red-500 overflow-hidden shadow-[inset_0_0_0_1px_rgba(0,0,0,0.05)]" in:fly={{ y: 30, duration: 500, delay: i * 75, easing: (t) => --t * t * t + 1 }}>
+            <div class="absolute inset-y-0 right-0 w-20 flex items-center justify-center text-white">
+              <Trash2 size={24} />
+            </div>
+            <div 
+              class="flex items-start gap-4 p-4 -m-4 bg-white dark:bg-zinc-950 relative z-10 w-full rounded-[1.25rem] transition-transform"
+              use:swipeToDelete={() => cart.removeItem(cart.generateCartKey(item.menu_item.id, item.variation, item.addons))}
+            >
+              <div class="w-20 h-20 rounded-[1.25rem] bg-zinc-100 dark:bg-zinc-800 overflow-hidden shrink-0 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.05)] relative">
               {#if item.menu_item.image_url}
                 <div class="absolute inset-0 bg-gradient-to-r from-zinc-200 via-zinc-100 to-zinc-200 animate-pulse -z-10"></div>
                 <img src={item.menu_item.image_url} alt={item.menu_item.name} class="w-full h-full object-cover z-0" />
@@ -757,6 +973,7 @@
                 </div>
               </div>
             </div>
+            </div>
           </div>
         {/each}
 
@@ -773,7 +990,10 @@
         </div>
       </div>
 
-      <div class="p-6 border-t border-zinc-100 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-xl">
+      <div 
+        class="p-6 border-t border-zinc-100 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-xl"
+        in:fly={{ y: 100, duration: 600, delay: 300, easing: (t) => --t * t * t + 1 }}
+      >
         <div class="space-y-3 mb-6">
           <div class="flex items-center text-sm font-medium text-zinc-500">
             <span>Subtotal</span>
@@ -812,7 +1032,16 @@
     <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick={() => activeItem = null}></div>
     
     <div class="bg-white/95 dark:bg-zinc-950/95 backdrop-blur-3xl w-full max-w-md rounded-[2.5rem] relative z-10 flex flex-col overflow-hidden shadow-[0_40px_80px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.3)] border border-white/20 dark:border-white/10 max-h-[90vh]">
-      <div class="relative h-64 bg-zinc-950 overflow-hidden">
+      
+      <!-- Sticky Header -->
+      <div 
+        class="absolute top-0 left-0 right-0 h-16 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-200/50 dark:border-zinc-800/50 z-30 flex items-center justify-between px-6 transition-opacity duration-300 pointer-events-none {modalScrollY > 150 ? 'opacity-100' : 'opacity-0'}"
+      >
+        <span class="font-black tracking-tight text-zinc-950 dark:text-white truncate max-w-[200px]">{activeItem.name}</span>
+        <span class="font-bold text-[var(--brand-primary)]">${formatCurrency(activeItem.price)}</span>
+      </div>
+
+      <div class="relative h-64 bg-zinc-950 overflow-hidden" use:swipeDownToClose>
         <img src={activeItem.image_url} alt={activeItem.name} class="w-full h-full object-cover opacity-80" />
         <div class="absolute inset-0 bg-gradient-to-t from-white/95 dark:from-zinc-950/95 via-white/40 dark:via-zinc-950/40 to-transparent"></div>
         
@@ -832,7 +1061,7 @@
         </button>
       </div>
       
-      <div class="p-6 overflow-y-auto flex-1 space-y-8 relative -mt-12">
+      <div class="p-6 overflow-y-auto flex-1 space-y-8 relative -mt-12" onscroll={(e) => modalScrollY = (e.target as HTMLElement).scrollTop}>
         <div class="text-center">
           <h3 class="text-3xl font-black tracking-tight text-zinc-950 dark:text-white mb-2 leading-none">{activeItem.name}</h3>
           <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-[32ch] mx-auto">{activeItem.description}</p>
@@ -869,9 +1098,17 @@
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div 
                   class="flex items-center justify-between p-4 rounded-[1.25rem] border-2 cursor-pointer transition-all active:scale-[0.98] {selectedAddons.find(sa => sa.id === a.id) ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5 shadow-[inset_0_0_0_1px_var(--brand-primary)]' : 'border-zinc-200/60 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50'}"
-                  onclick={() => toggleAddon(a)}
+                  onclick={() => {
+                    if (navigator.vibrate) navigator.vibrate(20);
+                    toggleAddon(a);
+                  }}
                 >
-                  <span class="font-bold tracking-tight text-sm text-zinc-900 dark:text-zinc-100">{a.name}</span>
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-6 rounded-full relative transition-colors duration-300 {selectedAddons.find(sa => sa.id === a.id) ? 'bg-[var(--brand-primary)]' : 'bg-zinc-200 dark:bg-zinc-700'}">
+                      <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 shadow-sm transition-transform duration-300 ease-out {selectedAddons.find(sa => sa.id === a.id) ? 'translate-x-[18px]' : 'translate-x-0.5'}"></div>
+                    </div>
+                    <span class="font-bold tracking-tight text-sm text-zinc-900 dark:text-zinc-100">{a.name}</span>
+                  </div>
                   <span class="text-sm font-black tracking-tighter text-[var(--brand-primary)]">+${formatCurrency(a.extra_price)}</span>
                 </div>
               {/each}
@@ -958,18 +1195,53 @@
             <label class="absolute left-5 top-4 text-[13px] font-bold uppercase tracking-wider text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:scale-[0.8] peer-focus:text-[var(--brand-primary)] peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:scale-[0.8] origin-left pointer-events-none" for="upi-input">UPI ID</label>
           </div>
         {:else if paymentMethod === 'card'}
+          <!-- 3D Card Scene -->
+          <div class="relative w-full h-48 mb-6 perspective-[1000px]">
+            <div 
+              class="w-full h-full relative transition-transform duration-700 [transform-style:preserve-3d]"
+              style={cardFocus === 'back' ? 'transform: rotateY(180deg);' : ''}
+            >
+              <!-- Front of Card -->
+              <div class="absolute inset-0 bg-gradient-to-tr from-zinc-900 to-zinc-800 rounded-2xl p-6 flex flex-col justify-between text-white shadow-xl [backface-visibility:hidden] border border-white/10">
+                <div class="flex justify-between items-start">
+                  <div class="w-10 h-8 bg-zinc-300/20 rounded-md"></div>
+                  <div class="font-black italic text-lg tracking-tighter opacity-80">CARD</div>
+                </div>
+                <div>
+                  <div class="font-mono text-xl tracking-widest mb-2 opacity-90">
+                    {cardDetails.number || '**** **** **** ****'}
+                  </div>
+                  <div class="flex justify-between text-sm uppercase opacity-70 font-bold tracking-widest">
+                    <span>Cardholder</span>
+                    <span>{cardDetails.expiry || 'MM/YY'}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Back of Card -->
+              <div class="absolute inset-0 bg-gradient-to-bl from-zinc-800 to-zinc-900 rounded-2xl flex flex-col justify-center text-white shadow-xl [backface-visibility:hidden] [transform:rotateY(180deg)] border border-white/10">
+                <div class="w-full h-10 bg-black absolute top-6"></div>
+                <div class="px-6 mt-16 text-right">
+                  <div class="bg-white text-zinc-900 font-mono text-lg px-3 py-1 rounded inline-block h-8 min-w-[3rem] text-center shadow-inner">
+                    {cardDetails.cvv || '***'}
+                  </div>
+                  <div class="text-[10px] opacity-50 uppercase tracking-widest mt-1 font-bold">CVV</div>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="rounded-[1.25rem] border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] overflow-hidden divide-y divide-zinc-200 dark:divide-zinc-800">
             <div class="relative w-full">
-              <input id="card-input" type="text" placeholder=" " class="peer flex h-14 w-full border-0 bg-transparent px-5 pt-5 pb-1 text-[15px] font-bold focus-visible:outline-none focus-visible:ring-0 transition-all text-zinc-900 dark:text-white font-mono" value="**** **** **** 4242" />
+              <input id="card-input" type="text" placeholder=" " bind:value={cardDetails.number} onfocus={() => cardFocus = 'front'} class="peer flex h-14 w-full border-0 bg-transparent px-5 pt-5 pb-1 text-[15px] font-bold focus-visible:outline-none focus-visible:ring-0 transition-all text-zinc-900 dark:text-white font-mono" />
               <label class="absolute left-5 top-4 text-[13px] font-bold uppercase tracking-wider text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:scale-[0.8] peer-focus:text-[var(--brand-primary)] peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:scale-[0.8] origin-left pointer-events-none" for="card-input">Card Number</label>
             </div>
             <div class="flex divide-x divide-zinc-200 dark:divide-zinc-800">
               <div class="relative flex-1">
-                <input id="expiry-input" type="text" placeholder=" " class="peer flex h-14 w-full border-0 bg-transparent px-5 pt-5 pb-1 text-[15px] font-bold focus-visible:outline-none focus-visible:ring-0 transition-all text-zinc-900 dark:text-white font-mono" value="12/26" />
+                <input id="expiry-input" type="text" placeholder=" " bind:value={cardDetails.expiry} onfocus={() => cardFocus = 'front'} class="peer flex h-14 w-full border-0 bg-transparent px-5 pt-5 pb-1 text-[15px] font-bold focus-visible:outline-none focus-visible:ring-0 transition-all text-zinc-900 dark:text-white font-mono" />
                 <label class="absolute left-5 top-4 text-[13px] font-bold uppercase tracking-wider text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:scale-[0.8] peer-focus:text-[var(--brand-primary)] peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:scale-[0.8] origin-left pointer-events-none" for="expiry-input">Expiry</label>
               </div>
               <div class="relative flex-1">
-                <input id="cvv-input" type="text" placeholder=" " class="peer flex h-14 w-full border-0 bg-transparent px-5 pt-5 pb-1 text-[15px] font-bold focus-visible:outline-none focus-visible:ring-0 transition-all text-zinc-900 dark:text-white font-mono" value="***" />
+                <input id="cvv-input" type="text" placeholder=" " bind:value={cardDetails.cvv} onfocus={() => cardFocus = 'back'} onblur={() => cardFocus = 'front'} class="peer flex h-14 w-full border-0 bg-transparent px-5 pt-5 pb-1 text-[15px] font-bold focus-visible:outline-none focus-visible:ring-0 transition-all text-zinc-900 dark:text-white font-mono" />
                 <label class="absolute left-5 top-4 text-[13px] font-bold uppercase tracking-wider text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:scale-[0.8] peer-focus:text-[var(--brand-primary)] peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:scale-[0.8] origin-left pointer-events-none" for="cvv-input">CVV</label>
               </div>
             </div>
@@ -981,19 +1253,24 @@
         {/if}
       </div>
 
-      <button 
-        class="flex w-full items-center justify-center gap-3 rounded-[1.25rem] bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-[0_8px_20px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.2)] hover:-translate-y-0.5 active:scale-[0.98] h-16 px-6 transition-all disabled:opacity-50 disabled:hover:-translate-y-0 disabled:active:scale-100"
-        onclick={handlePayment}
-        disabled={isProcessingPayment}
-      >
-        {#if isProcessingPayment}
-          <div class="w-5 h-5 border-[3px] border-white/30 dark:border-zinc-950/30 border-t-white dark:border-t-zinc-950 rounded-full animate-spin"></div>
-          <span class="font-black text-lg tracking-tight">Processing...</span>
-        {:else}
-          <Check size={20} strokeWidth={3} />
-          <span class="font-black text-lg tracking-tight">{paymentMethod === 'cash' ? 'Confirm Order' : 'Pay & Confirm'}</span>
-        {/if}
-      </button>
+      <div class="flex justify-center mt-2 pb-2">
+        <button 
+          class="flex items-center justify-center gap-3 rounded-[1.25rem] text-white dark:text-zinc-950 shadow-[0_8px_20px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.2)] hover:-translate-y-0.5 active:scale-[0.98] h-16 transition-all duration-500 ease-out disabled:opacity-50 disabled:hover:-translate-y-0 disabled:active:scale-100
+            {paymentStatus === 'success' ? 'bg-green-500 w-16 !rounded-full shadow-[0_0_40px_rgba(34,197,94,0.6)]' : 'bg-zinc-950 dark:bg-white w-full px-6'}"
+          onclick={handlePayment}
+          disabled={paymentStatus !== 'idle'}
+        >
+          {#if paymentStatus === 'processing'}
+            <div class="w-5 h-5 border-[3px] border-white/30 dark:border-zinc-950/30 border-t-white dark:border-t-zinc-950 rounded-full animate-spin"></div>
+            <span class="font-black text-lg tracking-tight">Processing...</span>
+          {:else if paymentStatus === 'success'}
+            <div class="text-white drop-shadow-md scale-150 transition-transform duration-500 delay-100"><Check size={28} strokeWidth={3.5} /></div>
+          {:else}
+            <Check size={20} strokeWidth={3} />
+            <span class="font-black text-lg tracking-tight">{paymentMethod === 'cash' ? 'Confirm Order' : 'Pay & Confirm'}</span>
+          {/if}
+        </button>
+      </div>
     </div>
   </div>
 {/if}

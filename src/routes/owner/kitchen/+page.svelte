@@ -2,6 +2,7 @@
   import { adminOrders, ordersByStatus, waiterRequests, pendingWaiterCount } from '$lib/stores/admin';
   import { timeAgo } from '$lib/utils';
   import { toast } from 'svelte-sonner';
+  import { deserialize } from '$app/forms';
   import { AlertTriangle, Clock, ChefHat, Check, ArrowRight } from 'lucide-svelte';
 
   let { data } = $props();
@@ -15,14 +16,37 @@
     { id: 'served', title: 'Served', color: 'zinc', bg: 'bg-zinc-600' }
   ] as const;
 
-  function moveOrder(orderId: string, currentStatus: string) {
+  async function moveOrder(orderId: string, currentStatus: string) {
     let nextStatus: 'preparing' | 'ready' | 'served' | 'cancelled' = 'preparing';
     if (currentStatus === 'pending') nextStatus = 'preparing';
     else if (currentStatus === 'preparing') nextStatus = 'ready';
     else if (currentStatus === 'ready') nextStatus = 'served';
     
+    // Optimistic update for instant UI response
     adminOrders.updateStatus(orderId, nextStatus);
-    toast.success(`Order progressed to ${nextStatus.toUpperCase()}`);
+    
+    const formData = new FormData();
+    formData.append('order_id', orderId);
+    formData.append('status', nextStatus);
+
+    try {
+      const response = await fetch('?/updateOrderStatus', {
+        method: 'POST',
+        body: formData,
+        headers: { 'x-sveltekit-action': 'true' }
+      });
+      
+      const result = deserialize(await response.text()) as any;
+      if (result.type === 'success' && result.data?.success) {
+        toast.success(`Order progressed to ${nextStatus.toUpperCase()}`);
+      } else {
+        toast.error(result.data?.message || 'Failed to update order status');
+        adminOrders.updateStatus(orderId, currentStatus as any);
+      }
+    } catch (e) {
+      toast.error('Network error');
+      adminOrders.updateStatus(orderId, currentStatus as any);
+    }
   }
 
   // Effect to simulate auto-refresh by just triggering reactivity on timeAgo

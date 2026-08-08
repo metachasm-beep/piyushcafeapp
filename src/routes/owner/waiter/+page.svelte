@@ -1,13 +1,17 @@
 <script lang="ts">
 	import { Users, Clock, CheckCircle2, AlertCircle, RefreshCw, UtensilsCrossed } from 'lucide-svelte';
 	import { enhance } from '$app/forms';
+	import { adminOrders, waiterRequests } from '$lib/stores/admin';
 
 	let { data } = $props();
 	
 	let staff = $derived(data.staff);
 	let isAvailable = $derived(staff?.is_available);
-	let orders = $derived(data.assignedOrders || []);
-	let requests = $derived(data.assignedRequests || []);
+	
+	// Real-time derived stores instead of static data
+	let orders = $derived($adminOrders.filter(o => o.assigned_waiter_id === staff?.id && o.status !== 'paid' && o.status !== 'cancelled').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+	let requests = $derived($waiterRequests.filter(r => r.assigned_waiter_id === staff?.id && r.status === 'pending').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+	
 	let isToggling = $state(false);
 	let resolvingId = $state<string | null>(null);
 

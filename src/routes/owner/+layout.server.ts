@@ -91,9 +91,26 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		.eq('restaurant_id', validRestaurantId)
 		.order('table_number', { ascending: true });
 
+	const { data: initialOrders } = await supabaseAdmin
+		.from('orders')
+		.select('*, table:tables(*), order_items(*, menu_item:menu_items(*))')
+		.eq('restaurant_id', validRestaurantId)
+		.neq('status', 'paid')
+		.neq('status', 'cancelled')
+		.order('created_at', { ascending: false });
+
+	const { data: initialRequests } = await supabaseAdmin
+		.from('waiter_requests')
+		.select('*, table:tables(*)')
+		.eq('restaurant_id', validRestaurantId)
+		.eq('status', 'pending')
+		.order('created_at', { ascending: false });
+
 	return {
 		restaurant,
 		tables: tables ?? [],
+		initialOrders: initialOrders ?? [],
+		initialRequests: initialRequests ?? [],
 		userRole: locals.userRole ?? 'owner',
 		userEmail: user.email ?? '',
 		userName: user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'Owner'

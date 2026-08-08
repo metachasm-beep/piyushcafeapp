@@ -1,6 +1,8 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { pendingWaiterCount } from '$lib/stores/admin';
+  import { browser } from '$app/environment';
+  import { supabase } from '$lib/supabase';
+  import { pendingWaiterCount, adminOrders, waiterRequests } from '$lib/stores/admin';
   import { LayoutDashboard, ChefHat, UtensilsCrossed, LogOut, Menu, Bell, Settings, Table as TableIcon, Users, TrendingUp, Banknote, Command, X } from 'lucide-svelte';
   import type { LayoutData } from './$types';
 
@@ -35,6 +37,56 @@
     if (link.exact) return currentPath === link.href;
     return currentPath.startsWith(link.href);
   }
+
+  // Initialize Stores
+  $effect(() => {
+    if (browser && data?.initialOrders) {
+      adminOrders.setOrders(data.initialOrders);
+    }
+    if (browser && data?.initialRequests) {
+      waiterRequests.setAll(data.initialRequests);
+    }
+  });
+
+  // Setup Realtime Sync
+  $effect(() => {
+    if (!browser || !data?.restaurant?.id || !supabase) return;
+
+    const channel = supabase.channel(`owner-realtime-${data.restaurant.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `restaurant_id=eq.${data.restaurant.id}` }, async (payload) => {
+        if (payload.eventType === 'UPDATE') {
+          adminOrders.updateStatus(payload.new.id, payload.new.status);
+        } else if (payload.eventType === 'INSERT') {
+          const { data: newOrder } = await supabase
+            .from('orders')
+            .select('*, table:tables(*), order_items(*, menu_item:menu_items(*))')
+            .eq('id', payload.new.id)
+            .single();
+          if (newOrder) adminOrders.upsertOrder(newOrder);
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'waiter_requests', filter: `restaurant_id=eq.${data.restaurant.id}` }, async (payload) => {
+        if (payload.eventType === 'UPDATE') {
+          if (payload.new.status === 'resolved') {
+            waiterRequests.resolve(payload.new.id);
+          } else if (payload.new.status === 'acknowledged') {
+            waiterRequests.acknowledge(payload.new.id);
+          }
+        } else if (payload.eventType === 'INSERT') {
+          const { data: newReq } = await supabase
+            .from('waiter_requests')
+            .select('*, table:tables(*)')
+            .eq('id', payload.new.id)
+            .single();
+          if (newReq) waiterRequests.add(newReq as any);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  });
 </script>
 
 <style>

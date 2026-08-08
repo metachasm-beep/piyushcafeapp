@@ -697,103 +697,107 @@
   <div class="fixed inset-0 z-50 flex flex-col justify-end" transition:fade={{ duration: 300 }}>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="absolute inset-0 bg-[var(--brand-primary)]/60 backdrop-blur-sm" onclick={() => isCartOpen = false}></div>
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick={() => isCartOpen = false}></div>
     
     <div 
-      class="bg-white/95 backdrop-blur-2xl w-full max-h-[85vh] rounded-t-3xl shadow-[0_-20px_40px_rgba(0,0,0,0.15)] relative flex flex-col overflow-hidden border-t border-white/40"
-      transition:fly={{ y: '100%', duration: 400, opacity: 1 }}
-      style="transform-origin: bottom center; animation: swingIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;"
+      class="bg-white/80 dark:bg-zinc-950/80 backdrop-blur-[40px] w-full max-h-[85vh] rounded-t-[2.5rem] shadow-[0_-20px_60px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] relative flex flex-col overflow-hidden border-t border-white/40 dark:border-white/10"
+      transition:fly={{ y: '100%', duration: 400, opacity: 1, easing: (t) => --t * t * t + 1 }}
     >
-      <style>
-        @keyframes swingIn {
-          0% { transform: perspective(1000px) rotateX(25deg) translateY(20px); opacity: 0; }
-          100% { transform: perspective(1000px) rotateX(0deg) translateY(0); opacity: 1; }
-        }
-      </style>
-      <button type="button" aria-label="Close cart" class="w-full flex justify-center py-3" onclick={() => isCartOpen = false}>
-        <div class="w-12 h-1.5 bg-zinc-300 rounded-full"></div>
+      <button type="button" aria-label="Close cart" class="w-full flex justify-center py-4 active:scale-95 transition-transform" onclick={() => isCartOpen = false}>
+        <div class="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full"></div>
       </button>
       
-      <div class="px-6 pb-4 flex items-center justify-between border-b border-zinc-200/50">
-        <h2 class="text-xl font-bold text-zinc-950 flex items-center gap-2">
-          Your Order <span class="inline-flex items-center justify-center rounded-full bg-[var(--brand-primary)] text-white text-xs font-bold w-6 h-6 shadow-sm">{$cartCount}</span>
+      <div class="px-6 pb-4 flex items-center justify-between border-b border-zinc-200/50 dark:border-zinc-800/50">
+        <h2 class="text-2xl font-black tracking-tight text-zinc-950 dark:text-white flex items-center gap-3">
+          Your Order 
+          <span class="inline-flex items-center justify-center rounded-full bg-[var(--brand-primary)] text-white text-[13px] font-bold w-7 h-7 shadow-[0_2px_10px_var(--brand-primary)]">{ $cartCount }</span>
         </h2>
-        <button class="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-500 hover:text-zinc-900 transition-colors" onclick={() => isCartOpen = false}>
+        <button class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 hover:text-zinc-900 transition-colors active:scale-90" onclick={() => isCartOpen = false}>
           <X size={16} />
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-6 space-y-4">
+      <div class="flex-1 overflow-y-auto p-6 space-y-6">
         {#each $cart as item, i}
-          <!-- Suggestion #6: Granular Staggered Cascade -->
-          <div class="flex items-center gap-4" in:fly={{ y: 30, duration: 500, delay: i * 75, easing: (t) => --t * t * t + 1 }}>
-            <div class="w-16 h-16 rounded-xl bg-zinc-100 overflow-hidden shrink-0 shadow-inner relative">
+          <div class="flex items-start gap-4" in:fly={{ y: 30, duration: 500, delay: i * 75, easing: (t) => --t * t * t + 1 }}>
+            <div class="w-20 h-20 rounded-[1.25rem] bg-zinc-100 dark:bg-zinc-800 overflow-hidden shrink-0 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.05)] relative">
               {#if item.menu_item.image_url}
                 <div class="absolute inset-0 bg-gradient-to-r from-zinc-200 via-zinc-100 to-zinc-200 animate-pulse -z-10"></div>
                 <img src={item.menu_item.image_url} alt={item.menu_item.name} class="w-full h-full object-cover z-0" />
               {:else}
-                <div class="w-full h-full bg-[var(--brand-primary)] text-white flex items-center justify-center font-serif text-2xl opacity-90 relative overflow-hidden">
-                  <span class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')]"></span>
+                <div class="w-full h-full bg-[var(--brand-primary)] text-white flex items-center justify-center font-bold text-3xl opacity-90">
                   {item.menu_item.name.substring(0, 1)}
                 </div>
               {/if}
             </div>
-            <div class="flex-1 min-w-0">
-              <h4 class="font-bold text-[15px] text-zinc-950 truncate flex items-center">{item.menu_item.name} {@render dietaryIcon(item.menu_item.dietary_tags)}</h4>
+            <div class="flex-1 min-w-0 pt-1">
+              <h4 class="font-black tracking-tight text-base text-zinc-950 dark:text-white truncate flex items-center">{item.menu_item.name} {@render dietaryIcon(item.menu_item.dietary_tags)}</h4>
               {#if item.variation}
-                <span class="text-[11px] text-zinc-500 block leading-tight">{item.variation.name} (+{formatCurrency(item.variation.extra_price)})</span>
+                <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400 block mt-0.5">{item.variation.name} (+{formatCurrency(item.variation.extra_price)})</span>
               {/if}
               {#if item.addons.length > 0}
-                <span class="text-[11px] text-zinc-500 block leading-tight">{item.addons.map(a => a.name).join(', ')}</span>
+                <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400 block mt-0.5">{item.addons.map(a => a.name).join(', ')}</span>
               {/if}
               {#if item.special_instructions}
-                <span class="text-[11px] text-zinc-500 block leading-tight italic">Note: {item.special_instructions}</span>
+                <span class="text-xs font-medium text-amber-600 dark:text-amber-400 block mt-1 bg-amber-50 dark:bg-amber-950/30 px-2 py-1 rounded-md inline-block">Note: {item.special_instructions}</span>
               {/if}
-              <span class="block font-bold text-[15px] text-zinc-900 mt-1">
-                {formatCurrency(item.menu_item.price + (item.variation?.extra_price || 0) + item.addons.reduce((sum, a) => sum + a.extra_price, 0))}
-              </span>
-            </div>
-            <div class="flex items-center gap-1.5 bg-zinc-100 rounded-full p-1 border border-zinc-200 shadow-inner shrink-0">
-              <button class="w-7 h-7 rounded-full bg-white border border-zinc-200 flex items-center justify-center transition-transform ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-300 active:scale-75 shadow-sm" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity - 1)}><Minus size={13} /></button>
-              <span class="w-4 text-center font-bold text-sm">{item.quantity}</span>
-              <button class="w-7 h-7 rounded-full bg-[var(--brand-primary)] text-white flex items-center justify-center transition-transform ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-300 active:scale-75 shadow-md" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity + 1)}><Plus size={13} /></button>
+              <div class="flex items-center justify-between mt-3">
+                <span class="font-black tracking-tighter text-lg text-zinc-950 dark:text-white">
+                  {formatCurrency(item.menu_item.price + (item.variation?.extra_price || 0) + item.addons.reduce((sum, a) => sum + a.extra_price, 0))}
+                </span>
+                
+                <div class="flex items-center gap-1 bg-zinc-100/80 dark:bg-zinc-800/80 backdrop-blur-md rounded-full p-1 border border-zinc-200/50 dark:border-zinc-700/50 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] shrink-0">
+                  <button class="w-8 h-8 rounded-full bg-white dark:bg-zinc-700 flex items-center justify-center transition-transform active:scale-75 shadow-sm" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity - 1)}>
+                    <Minus size={14} />
+                  </button>
+                  <span class="w-6 text-center font-bold text-sm text-zinc-900 dark:text-white">{item.quantity}</span>
+                  <button class="w-8 h-8 rounded-full bg-[var(--brand-primary)] text-white flex items-center justify-center transition-transform active:scale-75 shadow-md" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity + 1)}>
+                    <Plus size={14} />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         {/each}
 
-        <div class="space-y-2 pt-4">
-          <label for="instructions" class="text-xs font-bold text-zinc-700 uppercase tracking-widest">Special Instructions</label>
-          <!-- Suggestion #7: Intelligent Form Styling -->
-          <textarea 
-            id="instructions" 
-            bind:value={specialInstructions}
-            class="flex w-full rounded-xl border-0 bg-zinc-50 px-4 py-3 text-[15px] text-zinc-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:bg-white transition-all h-24 resize-none"
-          ></textarea>
+        <div class="pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
+          <label for="instructions" class="text-[11px] font-bold text-zinc-500 uppercase tracking-[0.15em]">Special Instructions</label>
+          <div class="relative w-full">
+            <textarea 
+              id="instructions" 
+              bind:value={specialInstructions}
+              placeholder="e.g. No onions, allergy to nuts"
+              class="flex w-full rounded-[1.25rem] border border-zinc-200/50 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-900/50 px-5 py-4 text-sm font-medium text-zinc-900 dark:text-zinc-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:border-transparent transition-all h-24 resize-none placeholder:text-zinc-400"
+            ></textarea>
+          </div>
         </div>
       </div>
 
-      <div class="p-6 border-t border-zinc-100 bg-zinc-50 space-y-3">
-        <div class="flex justify-between text-sm text-zinc-500">
-          <span>Subtotal</span><span>{formatCurrency($cartTotal)}</span>
+      <div class="p-6 border-t border-zinc-100 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-xl">
+        <div class="space-y-3 mb-6">
+          <div class="flex items-center text-sm font-medium text-zinc-500">
+            <span>Subtotal</span>
+            <div class="flex-1 border-b border-dashed border-zinc-300 dark:border-zinc-700 mx-3 opacity-50 relative top-1"></div>
+            <span class="text-zinc-900 dark:text-zinc-100 font-semibold">{formatCurrency($cartTotal)}</span>
+          </div>
+          <div class="flex items-center text-sm font-medium text-zinc-500">
+            <span>Taxes (10%)</span>
+            <div class="flex-1 border-b border-dashed border-zinc-300 dark:border-zinc-700 mx-3 opacity-50 relative top-1"></div>
+            <span class="text-zinc-900 dark:text-zinc-100 font-semibold">{formatCurrency($cartTotal * 0.1)}</span>
+          </div>
+          <div class="flex items-center text-xl font-black text-zinc-950 dark:text-white pt-2">
+            <span>Total</span>
+            <div class="flex-1"></div>
+            <span class="tracking-tighter">{formatCurrency($cartTotal * 1.1)}</span>
+          </div>
         </div>
-        <div class="flex justify-between text-sm text-zinc-500">
-          <span>Taxes (10%)</span><span>{formatCurrency($cartTotal * 0.1)}</span>
-        </div>
-        <div class="flex justify-between font-bold text-base text-zinc-950 pt-2 border-t border-zinc-200">
-          <span>Total</span><span>{formatCurrency($cartTotal * 1.1)}</span>
-        </div>
+        
         <button 
-          class="btn-shine flex w-full items-center justify-center gap-3 rounded-[1rem] bg-[var(--brand-primary)] text-white drop-shadow-md shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:scale-[1.02] active:scale-95 h-14 px-6 text-lg font-black transition-all mt-2"
+          class="flex w-full items-center justify-center gap-3 rounded-[1.25rem] bg-[var(--brand-primary)] text-white shadow-[0_8px_20px_rgba(var(--brand-primary-rgb),0.3),inset_0_1px_0_rgba(255,255,255,0.2)] active:scale-[0.98] hover:-translate-y-0.5 h-14 px-6 text-[17px] font-black tracking-tight transition-all"
           onclick={placeOrder}
         >
-          <ShoppingCart size={20} />
+          <ShoppingCart size={20} strokeWidth={2.5} />
           <span>Place Order</span>
-        </button>
-        <button 
-          class="inline-flex w-full items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 h-9 px-4 text-sm font-medium transition-colors"
-          onclick={handleCallWaiter}
-        >
-          <Bell size={14} /> Need assistance? Call Waiter
         </button>
       </div>
     </div>
@@ -802,51 +806,54 @@
 
 <!-- Item Configuration Modal (Visual Canvas) -->
 {#if activeItem}
-  <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center px-4 pb-4 sm:p-0" transition:fade={{ duration: 200 }}>
+  <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center px-4 pb-4 sm:p-0" transition:fade={{ duration: 250 }}>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="absolute inset-0 bg-black/40 modal-backdrop active" onclick={() => activeItem = null}></div>
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick={() => activeItem = null}></div>
     
-    <div class="bg-white w-full max-w-md rounded-[2rem] relative z-10 flex flex-col overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.4)] max-h-[90vh]">
+    <div class="bg-white/95 dark:bg-zinc-950/95 backdrop-blur-3xl w-full max-w-md rounded-[2.5rem] relative z-10 flex flex-col overflow-hidden shadow-[0_40px_80px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.3)] border border-white/20 dark:border-white/10 max-h-[90vh]">
       <div class="relative h-64 bg-zinc-950 overflow-hidden">
         <img src={activeItem.image_url} alt={activeItem.name} class="w-full h-full object-cover opacity-80" />
-        <div class="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent dark:from-zinc-900"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-white/95 dark:from-zinc-950/95 via-white/40 dark:via-zinc-950/40 to-transparent"></div>
         
         <!-- Floating Add-on Particles -->
         {#each selectedAddons as a (a.id)}
           <div 
-            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-1 bg-white/90 backdrop-blur text-xs font-bold rounded-full shadow-lg"
-            in:fly={{ y: 50, duration: 400, easing: (t) => { const s = 1.70158; return --t * t * ((s + 1) * t + s) + 1; } }}
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-1.5 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md text-xs font-bold rounded-full shadow-lg border border-white/20 dark:border-white/10 text-zinc-900 dark:text-zinc-100"
+            in:fly={{ y: 50, duration: 400, easing: (t) => --t * t * t + 1 }}
             out:fade={{ duration: 200 }}
           >
             + {a.name}
           </div>
         {/each}
 
-        <button class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-white/40 transition-colors" onclick={() => activeItem = null}>
+        <button class="absolute top-5 right-5 w-10 h-10 rounded-full bg-black/20 backdrop-blur-xl border border-white/10 text-white flex items-center justify-center hover:bg-black/40 transition-colors active:scale-90" onclick={() => activeItem = null}>
           <X size={20} />
         </button>
       </div>
       
-      <div class="p-6 overflow-y-auto flex-1 space-y-6 relative -mt-8 bg-white rounded-t-[2rem]">
-        <div>
-          <h3 class="text-2xl font-black text-zinc-950 mb-1">{activeItem.name}</h3>
-          <p class="text-sm text-zinc-500 leading-relaxed">{activeItem.description}</p>
+      <div class="p-6 overflow-y-auto flex-1 space-y-8 relative -mt-12">
+        <div class="text-center">
+          <h3 class="text-3xl font-black tracking-tight text-zinc-950 dark:text-white mb-2 leading-none">{activeItem.name}</h3>
+          <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-[32ch] mx-auto">{activeItem.description}</p>
         </div>
 
         {#if allVariations.filter(v => activeItem && v.menu_item_id === activeItem.id).length > 0}
-          <div class="space-y-3">
-            <h4 class="font-bold text-sm text-zinc-900 uppercase tracking-widest">Options <span class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full ml-2">Required</span></h4>
-            <div class="grid grid-cols-2 gap-2">
+          <div class="space-y-4">
+            <h4 class="font-bold text-[11px] text-zinc-500 uppercase tracking-[0.15em] flex items-center gap-2">
+              Size & Options 
+              <span class="text-[9px] bg-[var(--brand-primary)] text-white px-2 py-0.5 rounded-full tracking-widest">REQUIRED</span>
+            </h4>
+            <div class="grid grid-cols-2 gap-3">
               {#each allVariations.filter(v => activeItem && v.menu_item_id === activeItem.id) as v}
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div 
-                  class="flex flex-col items-center justify-center p-3 rounded-2xl border-2 cursor-pointer transition-all active:scale-95 {selectedVariation?.id === v.id ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' : 'border-zinc-100 hover:border-zinc-200'}"
+                  class="flex flex-col items-center justify-center p-4 rounded-[1.25rem] border-2 cursor-pointer transition-all active:scale-[0.97] {selectedVariation?.id === v.id ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5 shadow-[inset_0_0_0_1px_var(--brand-primary)]' : 'border-zinc-200/60 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50'}"
                   onclick={() => selectedVariation = v}
                 >
-                  <span class="font-bold text-sm text-zinc-900">{v.name}</span>
-                  <span class="text-xs text-zinc-500">{v.extra_price > 0 ? `+${formatCurrency(v.extra_price)}` : 'Free'}</span>
+                  <span class="font-black tracking-tight text-sm text-zinc-900 dark:text-zinc-100">{v.name}</span>
+                  <span class="text-[13px] font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">{v.extra_price > 0 ? `+${formatCurrency(v.extra_price)}` : 'Free'}</span>
                 </div>
               {/each}
             </div>
@@ -854,142 +861,137 @@
         {/if}
 
         {#if allAddons.filter(a => activeItem && a.menu_item_id === activeItem.id).length > 0}
-          <div class="space-y-3">
-            <h4 class="font-bold text-sm text-zinc-900 uppercase tracking-widest">Add-ons</h4>
-            <div class="space-y-2">
+          <div class="space-y-4">
+            <h4 class="font-bold text-[11px] text-zinc-500 uppercase tracking-[0.15em]">Enhance your order</h4>
+            <div class="space-y-2.5">
               {#each allAddons.filter(a => activeItem && a.menu_item_id === activeItem.id) as a}
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div 
-                  class="flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all active:scale-95 {selectedAddons.find(sa => sa.id === a.id) ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' : 'border-zinc-100 hover:border-zinc-200'}"
+                  class="flex items-center justify-between p-4 rounded-[1.25rem] border-2 cursor-pointer transition-all active:scale-[0.98] {selectedAddons.find(sa => sa.id === a.id) ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5 shadow-[inset_0_0_0_1px_var(--brand-primary)]' : 'border-zinc-200/60 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50'}"
                   onclick={() => toggleAddon(a)}
                 >
-                  <span class="font-bold text-sm text-zinc-900">{a.name}</span>
-                  <span class="text-sm font-semibold text-[var(--brand-primary)]">+${formatCurrency(a.extra_price)}</span>
+                  <span class="font-bold tracking-tight text-sm text-zinc-900 dark:text-zinc-100">{a.name}</span>
+                  <span class="text-sm font-black tracking-tighter text-[var(--brand-primary)]">+${formatCurrency(a.extra_price)}</span>
                 </div>
               {/each}
             </div>
           </div>
         {/if}
-
-        <div class="space-y-3">
-          <h4 class="font-bold text-sm text-zinc-900 uppercase tracking-widest">Special Instructions</h4>
-          <textarea 
-            bind:value={itemSpecialInstructions}
-            placeholder="e.g. No onions, extra spicy, etc."
-            class="flex w-full rounded-xl border-2 border-zinc-100 bg-white px-4 py-3 text-[15px] text-zinc-900 focus-visible:outline-none focus-visible:border-[var(--brand-primary)] focus-visible:bg-[var(--brand-primary)]/5 transition-all h-20 resize-none"
-          ></textarea>
-        </div>
-        
-        <div class="flex items-center justify-between pt-4 border-t border-zinc-100">
-          <span class="font-bold text-sm text-zinc-900 uppercase tracking-widest">Quantity</span>
-          <div class="flex items-center gap-4 bg-zinc-100 rounded-full p-1 border border-zinc-200 shadow-inner">
-            <button class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center active:scale-95" onclick={() => itemModalQty = Math.max(1, itemModalQty - 1)}><Minus size={16} /></button>
-            <span class="w-6 text-center font-black text-lg">{itemModalQty}</span>
-            <button class="w-10 h-10 rounded-full bg-zinc-900 text-white shadow-md flex items-center justify-center active:scale-95" onclick={() => itemModalQty++}><Plus size={16} /></button>
-          </div>
-        </div>
       </div>
       
-      <div class="p-6 bg-white border-t border-zinc-100">
+      <div class="p-6 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-xl border-t border-zinc-100 dark:border-zinc-800 space-y-4">
+        <div class="flex items-center justify-between px-2">
+          <span class="font-bold text-[11px] text-zinc-500 uppercase tracking-[0.15em]">Quantity</span>
+          <div class="flex items-center gap-5">
+            <button class="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white flex items-center justify-center active:scale-75 transition-transform" onclick={() => itemModalQty = Math.max(1, itemModalQty - 1)}><Minus size={16} strokeWidth={3} /></button>
+            <span class="w-6 text-center font-black text-2xl tracking-tighter text-zinc-950 dark:text-white">{itemModalQty}</span>
+            <button class="w-10 h-10 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center active:scale-75 transition-transform shadow-md" onclick={() => itemModalQty++}><Plus size={16} strokeWidth={3} /></button>
+          </div>
+        </div>
+        
         <button 
-          class="flex w-full items-center justify-between rounded-2xl bg-[var(--brand-primary)] text-white shadow-xl hover:opacity-90 h-14 px-6 text-lg font-black transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+          class="flex w-full items-center justify-between rounded-[1.25rem] bg-[var(--brand-primary)] text-white shadow-[0_8px_20px_rgba(var(--brand-primary-rgb),0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:-translate-y-0.5 active:scale-[0.98] h-14 px-6 transition-all disabled:opacity-50 disabled:active:scale-100 disabled:hover:-translate-y-0"
           onclick={confirmItemModal}
           disabled={allVariations.filter(v => activeItem && v.menu_item_id === activeItem.id).length > 0 && !selectedVariation}
         >
-          <span>Add to Cart</span>
-          <span>{formatCurrency((activeItem.price + (selectedVariation?.extra_price || 0) + selectedAddons.reduce((sum, a) => sum + a.extra_price, 0)) * itemModalQty)}</span>
+          <span class="font-black text-lg tracking-tight">Add to Cart</span>
+          <span class="font-black text-lg tracking-tighter bg-black/20 px-3 py-1 rounded-full">{formatCurrency((activeItem.price + (selectedVariation?.extra_price || 0) + selectedAddons.reduce((sum, a) => sum + a.extra_price, 0)) * itemModalQty)}</span>
         </button>
       </div>
     </div>
   </div>
 {/if}
 
-
 <!-- Checkout Modal -->
 {#if showCheckoutModal}
-  <div class="fixed inset-0 z-50 flex items-end justify-center sm:p-4">
+  <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div 
-      class="absolute inset-0 bg-zinc-950/40 backdrop-blur-md" 
+      class="absolute inset-0 bg-zinc-950/60 backdrop-blur-md" 
       transition:fade={{ duration: 300 }}
       onclick={() => !isProcessingPayment && (showCheckoutModal = false)}>
     </div>
     
     <div 
-      class="bg-white/95 backdrop-blur-2xl w-full max-w-md rounded-t-[2rem] sm:rounded-2xl p-6 relative z-10 shadow-2xl border-t sm:border border-white/40 flex flex-col gap-6 max-h-[90vh] overflow-y-auto"
-      transition:fly={{ y: 400, duration: 400 }}
+      class="bg-white/95 dark:bg-zinc-950/95 backdrop-blur-[40px] w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 relative z-10 shadow-[0_40px_100px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.3)] border-t sm:border border-white/40 dark:border-white/10 flex flex-col gap-8 max-h-[90vh] overflow-y-auto"
+      transition:fly={{ y: 400, duration: 400, easing: (t) => --t * t * t + 1 }}
     >
-      <!-- Drag handle for mobile -->
-      <div class="w-12 h-1.5 bg-zinc-200 rounded-full mx-auto sm:hidden -mt-2"></div>
+      <div class="w-12 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full mx-auto sm:hidden -mt-4 mb-2"></div>
       
       <div class="flex items-center justify-between">
-        <h2 class="text-xl font-bold tracking-tight text-zinc-900">Checkout</h2>
-        <button class="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-100 text-zinc-500 hover:bg-zinc-200 transition-colors" onclick={() => showCheckoutModal = false}>
-          <X size={18} />
+        <div>
+          <h2 class="text-3xl font-black tracking-tight text-zinc-950 dark:text-white leading-none">Checkout</h2>
+          <p class="text-sm font-medium text-zinc-500 mt-1">Complete your order to begin prep.</p>
+        </div>
+        <button class="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-900 transition-colors active:scale-90" onclick={() => showCheckoutModal = false}>
+          <X size={20} />
         </button>
       </div>
 
-      <div class="flex items-center justify-between pb-6 border-b border-zinc-100">
-        <span class="text-zinc-500 font-medium">Total to pay</span>
-        <span class="text-3xl font-bold tracking-tighter text-zinc-900">{formatCurrency($cartTotal * 1.1)}</span>
+      <div class="flex items-center justify-between pb-6 border-b border-zinc-100 dark:border-zinc-800">
+        <span class="text-zinc-500 dark:text-zinc-400 font-bold text-sm uppercase tracking-[0.15em]">Amount Due</span>
+        <span class="text-4xl font-black tracking-tighter text-zinc-950 dark:text-white drop-shadow-sm">{formatCurrency($cartTotal * 1.1)}</span>
       </div>
 
       <!-- Segmented Control for Payment Methods -->
-      <div class="flex p-1 bg-zinc-100 rounded-xl relative">
-        {#each [{ id: 'upi', icon: Smartphone, label: 'UPI' }, { id: 'card', icon: CreditCard, label: 'Card' }, { id: 'cash', icon: Banknote, label: 'Cash' }] as method}
-          <button 
-            class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all z-10 {paymentMethod === method.id ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}"
-            onclick={() => paymentMethod = method.id as any}
-          >
-            <method.icon size={16} />
-            {method.label}
-          </button>
-        {/each}
+      <div class="space-y-4">
+        <span class="text-[11px] font-bold text-zinc-500 uppercase tracking-[0.15em]">Payment Method</span>
+        <div class="flex p-1 bg-zinc-100 dark:bg-zinc-900/80 rounded-[1.25rem] relative shadow-inner">
+          {#each [{ id: 'upi', icon: Smartphone, label: 'UPI' }, { id: 'card', icon: CreditCard, label: 'Card' }, { id: 'cash', icon: Banknote, label: 'Cash' }] as method}
+            <button 
+              class="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black tracking-tight transition-all z-10 {paymentMethod === method.id ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-[0_2px_10px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.6)]' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}"
+              onclick={() => paymentMethod = method.id as any}
+            >
+              <method.icon size={16} strokeWidth={2.5} />
+              {method.label}
+            </button>
+          {/each}
+        </div>
       </div>
 
       <div class="min-h-[140px] flex flex-col justify-center">
         {#if paymentMethod === 'upi'}
-          <div class="relative">
-            <input id="upi-input" type="text" placeholder=" " class="peer flex h-14 w-full rounded-xl border border-zinc-200 bg-white px-4 pt-4 pb-2 text-[15px] shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 focus-visible:border-zinc-950 transition-all text-zinc-900" value="goldenfork@upi" />
-            <label class="absolute left-4 top-4 text-[15px] text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:text-[11px] peer-focus:text-zinc-900 peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:text-[11px] cursor-text" for="upi-input">UPI ID</label>
+          <div class="relative w-full">
+            <input id="upi-input" type="text" placeholder=" " class="peer flex h-14 w-full rounded-[1.25rem] border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 px-5 pt-5 pb-1 text-[15px] font-bold shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:border-transparent transition-all text-zinc-900 dark:text-white" value="goldenfork@upi" />
+            <label class="absolute left-5 top-4 text-[13px] font-bold uppercase tracking-wider text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:scale-[0.8] peer-focus:text-[var(--brand-primary)] peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:scale-[0.8] origin-left pointer-events-none" for="upi-input">UPI ID</label>
           </div>
         {:else if paymentMethod === 'card'}
-          <div class="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden divide-y divide-zinc-200">
-            <div class="relative">
-              <input id="card-input" type="text" placeholder=" " class="peer flex h-14 w-full border-0 bg-transparent px-4 pt-4 pb-2 text-[15px] focus-visible:outline-none focus-visible:ring-0 transition-all text-zinc-900" value="**** **** **** 4242" />
-              <label class="absolute left-4 top-4 text-[15px] text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:text-[11px] peer-focus:text-zinc-900 peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:text-[11px] cursor-text" for="card-input">Card Number</label>
+          <div class="rounded-[1.25rem] border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] overflow-hidden divide-y divide-zinc-200 dark:divide-zinc-800">
+            <div class="relative w-full">
+              <input id="card-input" type="text" placeholder=" " class="peer flex h-14 w-full border-0 bg-transparent px-5 pt-5 pb-1 text-[15px] font-bold focus-visible:outline-none focus-visible:ring-0 transition-all text-zinc-900 dark:text-white font-mono" value="**** **** **** 4242" />
+              <label class="absolute left-5 top-4 text-[13px] font-bold uppercase tracking-wider text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:scale-[0.8] peer-focus:text-[var(--brand-primary)] peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:scale-[0.8] origin-left pointer-events-none" for="card-input">Card Number</label>
             </div>
-            <div class="flex divide-x divide-zinc-200">
+            <div class="flex divide-x divide-zinc-200 dark:divide-zinc-800">
               <div class="relative flex-1">
-                <input id="expiry-input" type="text" placeholder=" " class="peer flex h-14 w-full border-0 bg-transparent px-4 pt-4 pb-2 text-[15px] focus-visible:outline-none focus-visible:ring-0 transition-all text-zinc-900" value="12/26" />
-                <label class="absolute left-4 top-4 text-[15px] text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:text-[11px] peer-focus:text-zinc-900 peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:text-[11px] cursor-text" for="expiry-input">Expiry</label>
+                <input id="expiry-input" type="text" placeholder=" " class="peer flex h-14 w-full border-0 bg-transparent px-5 pt-5 pb-1 text-[15px] font-bold focus-visible:outline-none focus-visible:ring-0 transition-all text-zinc-900 dark:text-white font-mono" value="12/26" />
+                <label class="absolute left-5 top-4 text-[13px] font-bold uppercase tracking-wider text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:scale-[0.8] peer-focus:text-[var(--brand-primary)] peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:scale-[0.8] origin-left pointer-events-none" for="expiry-input">Expiry</label>
               </div>
               <div class="relative flex-1">
-                <input id="cvv-input" type="text" placeholder=" " class="peer flex h-14 w-full border-0 bg-transparent px-4 pt-4 pb-2 text-[15px] focus-visible:outline-none focus-visible:ring-0 transition-all text-zinc-900" value="***" />
-                <label class="absolute left-4 top-4 text-[15px] text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:text-[11px] peer-focus:text-zinc-900 peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:text-[11px] cursor-text" for="cvv-input">CVV</label>
+                <input id="cvv-input" type="text" placeholder=" " class="peer flex h-14 w-full border-0 bg-transparent px-5 pt-5 pb-1 text-[15px] font-bold focus-visible:outline-none focus-visible:ring-0 transition-all text-zinc-900 dark:text-white font-mono" value="***" />
+                <label class="absolute left-5 top-4 text-[13px] font-bold uppercase tracking-wider text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:scale-[0.8] peer-focus:text-[var(--brand-primary)] peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:scale-[0.8] origin-left pointer-events-none" for="cvv-input">CVV</label>
               </div>
             </div>
           </div>
         {:else}
-          <div class="text-center text-[15px] text-zinc-500 py-8 bg-zinc-50/50 rounded-xl border border-zinc-100">
+          <div class="text-center text-[15px] font-medium text-zinc-500 dark:text-zinc-400 py-8 bg-zinc-100/50 dark:bg-zinc-900/50 rounded-[1.25rem] border border-zinc-200/50 dark:border-zinc-800/50 shadow-inner">
             Our waiter will come to your table to collect cash.
           </div>
         {/if}
       </div>
 
       <button 
-        class="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 text-white shadow-[0_4px_14px_rgba(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] hover:-translate-y-0.5 active:translate-y-0 h-14 px-6 text-[15px] font-semibold transition-all disabled:opacity-50 disabled:hover:-translate-y-0 disabled:shadow-none"
+        class="flex w-full items-center justify-center gap-3 rounded-[1.25rem] bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-[0_8px_20px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.2)] hover:-translate-y-0.5 active:scale-[0.98] h-16 px-6 transition-all disabled:opacity-50 disabled:hover:-translate-y-0 disabled:active:scale-100"
         onclick={handlePayment}
         disabled={isProcessingPayment}
       >
         {#if isProcessingPayment}
-          <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-          <span>Processing...</span>
+          <div class="w-5 h-5 border-[3px] border-white/30 dark:border-zinc-950/30 border-t-white dark:border-t-zinc-950 rounded-full animate-spin"></div>
+          <span class="font-black text-lg tracking-tight">Processing...</span>
         {:else}
-          <Check size={18} strokeWidth={2.5} />
-          <span>{paymentMethod === 'cash' ? 'Place Order (Cash)' : 'Confirm Payment'}</span>
+          <Check size={20} strokeWidth={3} />
+          <span class="font-black text-lg tracking-tight">{paymentMethod === 'cash' ? 'Confirm Order' : 'Pay & Confirm'}</span>
         {/if}
       </button>
     </div>

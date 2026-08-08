@@ -228,16 +228,25 @@
 
 <!-- Sticky Header Navigation -->
 <header class="fixed top-0 left-0 right-0 z-40 bg-white/60 backdrop-blur-2xl border-b border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-all">
-  <div class="px-4 py-3 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <div>
-        <h1 class="font-bold text-lg tracking-tight text-zinc-950 leading-tight">{restaurant.name}</h1>
+  <div class="px-4 py-3 flex items-center justify-between relative">
+    <div class="flex items-center flex-1 min-w-0">
+      <div class="truncate">
+        <h1 class="font-bold text-lg tracking-tight text-zinc-950 leading-tight truncate">{restaurant.name}</h1>
         <p class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Menu</p>
       </div>
     </div>
-    <span class="inline-flex items-center rounded-full border border-zinc-200/50 bg-[var(--brand-primary)]/90 backdrop-blur px-3 py-1 text-xs font-semibold text-zinc-50 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
-      {table.display_name ?? `Table ${table.table_number}`}
-    </span>
+    
+    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-10 pointer-events-none">
+      {#if restaurant.logo_url}
+        <img src={restaurant.logo_url} alt="Logo" class="h-10 w-10 object-contain rounded-full shadow-sm bg-white border border-zinc-100 p-0.5" />
+      {/if}
+    </div>
+
+    <div class="flex items-center justify-end flex-1 pl-2">
+      <span class="inline-flex items-center rounded-full border border-zinc-200/50 bg-[var(--brand-primary)]/90 backdrop-blur px-3 py-1 text-xs font-semibold text-zinc-50 shadow-[0_4px_12px_rgba(0,0,0,0.1)] whitespace-nowrap">
+        {table.display_name ?? `Table ${table.table_number}`}
+      </span>
+    </div>
   </div>
   
   <!-- Category Filter Bar -->

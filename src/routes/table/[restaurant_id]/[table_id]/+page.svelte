@@ -33,9 +33,27 @@
   let primaryColor = $derived(restaurant?.primary_color || '#09090b');
   let primaryRgb = $derived(hexToRgb(primaryColor));
 
-  $effect(() => { session.init(restaurant, table); });
+  $effect(() => { session.init(restaurant, table); 
+    return () => { if(observer) observer.disconnect(); };
+  });
 
+  
+  let observer: IntersectionObserver;
   onMount(async () => {
+    observer = new IntersectionObserver((entries) => {
+      let visibleCat = activeCategory;
+      entries.forEach(entry => {
+        if (entry.isIntersecting && entry.intersectionRatio > 0.1) {
+          visibleCat = entry.target.id.replace('category-', '');
+        }
+      });
+      activeCategory = visibleCat;
+    }, { rootMargin: '-20% 0px -60% 0px', threshold: [0.1, 0.5] });
+    
+    setTimeout(() => {
+      document.querySelectorAll('section[id^="category-"]').forEach(el => observer.observe(el));
+    }, 1000);
+
     if (browser) {
       const gsap = (await import('gsap')).default;
       const ScrollTrigger = (await import('gsap/ScrollTrigger')).default;
@@ -56,6 +74,10 @@
       });
     }
 
+    
+    const hour = new Date().getHours();
+    isDarkMode = (hour >= 18 || hour < 6); // 6 PM to 6 AM
+    
     // Splash screen timer
     setTimeout(() => {
       showSplash = false;
@@ -190,6 +212,46 @@
   }
 
   // Action for magnetic buttons (Suggestion #8)
+  
+  // Dark Mode Logic (Suggestion #3)
+  let isDarkMode = $state(false);
+
+  // Swipe Action (Suggestion #2)
+  function swipeOrder(node, { item }) {
+    let startX = 0;
+    let currentX = 0;
+    let isSwiping = false;
+
+    function handleTouchStart(e) { startX = e.touches[0].clientX; isSwiping = true; }
+    function handleTouchMove(e) {
+      if (!isSwiping) return;
+      currentX = e.touches[0].clientX - startX;
+      if (currentX > 0) { node.style.transform = `translateX(${currentX}px)`; }
+    }
+    function handleTouchEnd() {
+      if (!isSwiping) return;
+      isSwiping = false;
+      if (currentX > 100) { 
+        handleMenuAdd(item); 
+        if (navigator.vibrate) navigator.vibrate(50);
+      }
+      node.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+      node.style.transform = 'translateX(0)';
+      setTimeout(() => node.style.transition = '', 300);
+      currentX = 0;
+    }
+    node.addEventListener('touchstart', handleTouchStart, { passive: true });
+    node.addEventListener('touchmove', handleTouchMove, { passive: true });
+    node.addEventListener('touchend', handleTouchEnd);
+    return {
+      destroy() {
+        node.removeEventListener('touchstart', handleTouchStart);
+        node.removeEventListener('touchmove', handleTouchMove);
+        node.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }
+
   function magnetic(node: HTMLElement) {
     let bound = node.getBoundingClientRect();
     
@@ -280,8 +342,18 @@
   }
   .hide-scrollbar::-webkit-scrollbar { display: none; }
   .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  :global(.dark-theme) { background-color: #09090b !important; color: #fafafa !important; }
+  :global(.dark-theme .bg-white), :global(.dark-theme .bg-white\/90), :global(.dark-theme .bg-white\/80) { background-color: #18181b !important; border-color: #27272a !important; color: #fff; }
+  :global(.dark-theme .text-zinc-950), :global(.dark-theme .text-zinc-900) { color: #f4f4f5 !important; }
+  :global(.dark-theme .text-zinc-700), :global(.dark-theme .text-zinc-600), :global(.dark-theme .text-zinc-500) { color: #a1a1aa !important; }
+  :global(.dark-theme .bg-zinc-50), :global(.dark-theme .bg-zinc-100) { background-color: #27272a !important; border-color: #3f3f46 !important; }
+  :global(.dark-theme header) { background-color: rgba(9,9,11,0.8) !important; border-color: rgba(255,255,255,0.1) !important; }
+  :global(.dark-theme .menu-card), :global(.dark-theme .featured-card) { background-color: #18181b !important; border-color: rgba(255,255,255,0.1) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important; }
+  :global(.dark-theme .featured-card .w-full.bg-zinc-100) { background-color: #000 !important; }
 </style>
 
+<div class={isDarkMode ? "dark-theme min-h-screen transition-colors duration-1000" : "min-h-screen transition-colors duration-1000"}>
 <!-- Sticky Header Navigation -->
 <header class="fixed top-0 left-0 right-0 z-40 bg-white/60 backdrop-blur-2xl border-b border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-all">
   <div class="px-4 py-3 flex items-center justify-between relative">
@@ -305,28 +377,23 @@
     </div>
   </div>
   
-  <!-- Category Filter Bar -->
-  <div class="flex overflow-x-auto hide-scrollbar px-4 py-2 gap-2 border-t border-zinc-200/30" style="-webkit-overflow-scrolling: touch;">
-    <button 
-      class="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 {activeCategory === 'all' ? 'bg-[var(--brand-primary)] text-white shadow-md' : 'bg-white/80 text-zinc-600 border border-zinc-200/50 hover:bg-white hover:shadow-sm'}"
-      onclick={() => scrollToCategory('all')}
-    >
-      🍽️ All
-    </button>
-    {#each categories as category}
-      <button 
-        class="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 {activeCategory === category.id ? 'bg-[var(--brand-primary)] text-white shadow-md' : 'bg-white/80 text-zinc-600 border border-zinc-200/50 hover:bg-white hover:shadow-sm'}"
-        onclick={() => scrollToCategory(category.id)}
-      >
-        {category.icon_emoji} {category.name}
-      </button>
-    {/each}
-  </div>
-</header>
+  </header>
 
 <!-- Parallax Hero -->
 <!-- Spacer for sticky header -->
 <div class="h-24 w-full"></div>
+
+
+<!-- Dynamic 3D Category Indicator -->
+<div class="sticky top-20 left-0 right-0 z-30 flex justify-center pointer-events-none px-4">
+  <div class="bg-black/80 backdrop-blur-xl text-white px-6 py-2.5 rounded-full shadow-2xl border border-white/10 flex items-center justify-center overflow-hidden h-12 min-w-[140px] pointer-events-auto">
+    {#key activeCategory}
+      <span class="font-black tracking-widest uppercase text-sm" in:fly={{ y: 20, duration: 400, ease: 'back.out(1.5)' }} out:fly={{ y: -20, duration: 400, opacity: 0 }} style="position: absolute;">
+        {activeCategory === 'all' ? '✨ Featured' : categories.find(c => c.id === activeCategory)?.name || ''}
+      </span>
+    {/key}
+  </div>
+</div>
 
 <main class="pt-6 pb-32 px-4 space-y-8 max-w-2xl mx-auto relative z-10">
   
@@ -334,49 +401,31 @@
   {#if featuredItems.length > 0 && activeCategory === 'all'}
     <section class="space-y-4" style="perspective: 1000px;">
       <h2 class="text-base font-semibold text-zinc-950 flex items-center gap-2">✨ Featured</h2>
-      <!-- CSS Grid Bento Box -->
-      <div class="grid grid-cols-2 gap-4 pb-2 pt-2 px-1">
+      <!-- Editorial Magazine Layout -->
+      <div class="space-y-6 pb-2 pt-2">
         {#each featuredItems.slice(0, 5) as item, i}
-          <div class="featured-card {i === 0 ? 'col-span-2' : 'col-span-1'} rounded-3xl bg-white/90 backdrop-blur-sm overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.08)] group hover:shadow-[0_30px_60px_rgba(0,0,0,0.12)] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 border border-white/50 flex flex-col">
-            <div class="w-full {i === 0 ? 'h-48' : 'h-32'} bg-zinc-100 overflow-hidden relative">
-              <!-- Suggestion #4 and #9: Skeleton and Fallbacks -->
-              {#if item.image_url}
-                <div class="absolute inset-0 bg-gradient-to-r from-zinc-200 via-zinc-100 to-zinc-200 animate-pulse -z-10"></div>
-                <img src={item.image_url} alt={item.name} class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 z-0" loading="lazy" />
-              {:else}
-                <div class="w-full h-full bg-[var(--brand-primary)] text-white flex items-center justify-center font-serif text-5xl opacity-90 relative overflow-hidden">
-                  <span class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')]"></span>
-                  {item.name.substring(0, 1)}
-                </div>
-              {/if}
-              <!-- Suggestion #10: Snap scroll pills -->
-              <div class="absolute top-3 left-3 flex gap-1.5 overflow-x-auto snap-x hide-scrollbar max-w-[calc(100%-24px)]">
-                {#each item.dietary_tags as tag}<div class="snap-start shrink-0"><DietaryBadge {tag} /></div>{/each}
-              </div>
+          <div class="featured-card rounded-3xl overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.2)] relative h-[50vh] min-h-[400px] w-full flex flex-col justify-end group">
+            {#if item.image_url}
+              <img src={item.image_url} alt={item.name} class="absolute inset-0 w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105" loading="lazy" />
+            {:else}
+              <div class="absolute inset-0 bg-[var(--brand-primary)] flex items-center justify-center font-serif text-8xl text-white opacity-80">{item.name.substring(0, 1)}</div>
+            {/if}
+            
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+            
+            <div class="absolute top-4 left-4 flex gap-1.5 overflow-x-auto snap-x hide-scrollbar max-w-[calc(100%-32px)]">
+              {#each item.dietary_tags as tag}<div class="snap-start shrink-0"><DietaryBadge {tag} /></div>{/each}
             </div>
-            <div class="p-4 flex-1 flex flex-col">
-              <h3 class="font-bold text-[15px] text-zinc-950 leading-tight mb-1" class="flex items-center">{item.name} {@render dietaryIcon(item.dietary_tags)}</h3>
-              <p class="text-[11px] text-zinc-500 line-clamp-2 mb-3 flex-1">{item.description}</p>
-              <div class="flex items-center justify-between mt-auto">
-                <span class="font-bold text-[16px] text-zinc-900">{formatCurrency(item.price)}</span>
-                {#if getTotalQuantity(item.id) > 0}
-                  <!-- Suggestion #5: Blue accent -->
-                  <div class="flex items-center gap-1.5 bg-zinc-100 rounded-full p-0.5 border border-zinc-200/50 shadow-inner">
-                    {#if allVariations.filter(v => v.menu_item_id === item.id).length === 0 && allAddons.filter(a => a.menu_item_id === item.id).length === 0}
-                      <!-- Suggestion #3: Spring physics -->
-                      <button class="w-8 h-8 rounded-full bg-white border border-zinc-200/50 shadow-sm flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:bg-zinc-50" onclick={() => cart.setQuantity(cart.generateCartKey(item.id), getTotalQuantity(item.id) - 1)}><Minus size={14} /></button>
-                      <span class="w-4 text-center font-semibold text-xs">{getTotalQuantity(item.id)}</span>
-                      <button class="w-8 h-8 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:bg-blue-700" onclick={() => handleMenuAdd(item)}><Plus size={14} /></button>
-                    {:else}
-                      <span class="w-4 text-center font-semibold text-xs pl-1">{getTotalQuantity(item.id)}</span>
-                      <button class="w-8 h-8 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:bg-blue-700" onclick={() => handleMenuAdd(item)}><Plus size={14} /></button>
-                    {/if}
-                  </div>
-                {:else}
-                  <button class="w-9 h-9 rounded-full bg-[var(--brand-primary)] text-white shadow-md flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:bg-blue-600 hover:shadow-lg hover:-translate-y-0.5" onclick={() => handleMenuAdd(item)}>
-                    <Plus size={18} />
-                  </button>
-                {/if}
+
+            <div class="relative z-10 p-6 flex flex-col gap-2">
+              <h3 class="font-black text-3xl text-white leading-tight flex items-center shadow-black drop-shadow-md">{item.name} {@render dietaryIcon(item.dietary_tags)}</h3>
+              <p class="text-sm text-zinc-200 line-clamp-2 drop-shadow-md">{item.description}</p>
+              
+              <div class="flex items-center justify-between mt-4">
+                <span class="font-bold text-2xl text-white drop-shadow-md">{formatCurrency(item.price)}</span>
+                <button class="w-12 h-12 rounded-full bg-[var(--brand-primary)] text-white shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-90" onclick={() => handleMenuAdd(item)}>
+                  <Plus size={24} />
+                </button>
               </div>
             </div>
           </div>
@@ -410,7 +459,8 @@
         {:else}
           <div class="space-y-4">
             {#each items as item}
-              <div class="menu-card rounded-3xl bg-white/90 backdrop-blur-sm p-4 flex gap-4 relative overflow-hidden shadow-[0_12px_24px_rgba(0,0,0,0.04)] border border-white/60 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 {item.is_available ? '' : 'opacity-60'}">
+              <div class="absolute inset-0 bg-emerald-500 rounded-3xl flex items-center px-6 text-white font-bold tracking-widest"><ShoppingCart class="mr-2"/> Add to Cart</div>
+                <div use:swipeOrder={{item}} class="menu-card relative z-10 rounded-3xl bg-white/90 backdrop-blur-sm p-4 flex gap-4 relative overflow-hidden shadow-[0_12px_24px_rgba(0,0,0,0.04)] border border-white/60 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 {item.is_available ? '' : 'opacity-60'}">
                 {#if !item.is_available}
                   <div class="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-[2px]">
                     <span class="bg-[var(--brand-primary)] text-white px-3 py-1.5 rounded-lg text-xs font-semibold tracking-widest shadow-md">OUT OF STOCK</span>
@@ -431,7 +481,7 @@
                   <div class="flex gap-1.5 mb-2 overflow-x-auto snap-x hide-scrollbar max-w-full">
                     {#each item.dietary_tags as tag}<div class="snap-start shrink-0"><DietaryBadge {tag} /></div>{/each}
                   </div>
-                  <h3 class="font-bold text-[16px] text-zinc-950 leading-tight mb-1" class="flex items-center">{item.name} {@render dietaryIcon(item.dietary_tags)}</h3>
+                  <h3 class="font-bold text-[16px] text-zinc-950 leading-tight mb-1 flex items-center">{item.name} {@render dietaryIcon(item.dietary_tags)}</h3>
                   <p class="text-xs text-zinc-500 line-clamp-2 mb-auto leading-relaxed">{item.description}</p>
                   <div class="mt-3 flex items-center justify-between">
                     <div>
@@ -551,7 +601,7 @@
               {/if}
             </div>
             <div class="flex-1 min-w-0">
-              <h4 class="font-bold text-[15px] text-zinc-950 truncate" class="flex items-center">{item.menu_item.name} {@render dietaryIcon(item.menu_item.dietary_tags)}</h4>
+              <h4 class="font-bold text-[15px] text-zinc-950 truncate flex items-center">{item.menu_item.name} {@render dietaryIcon(item.menu_item.dietary_tags)}</h4>
               {#if item.variation}
                 <span class="text-[11px] text-zinc-500 block leading-tight">{item.variation.name} (+{formatCurrency(item.variation.extra_price)})</span>
               {/if}
@@ -608,46 +658,101 @@
   </div>
 {/if}
 
-<!-- Item Configuration Modal -->
+<!-- Item Configuration Modal (Visual Canvas) -->
 {#if activeItem}
   <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center px-4 pb-4 sm:p-0" transition:fade={{ duration: 200 }}>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick={() => activeItem = null}></div>
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-md" onclick={() => activeItem = null}></div>
     
-    <div class="bg-white w-full max-w-md rounded-2xl relative z-10 flex flex-col overflow-hidden border border-zinc-200 shadow-2xl max-h-[85vh]">
-      <div class="relative h-44 bg-zinc-100">
-        <img src={activeItem.image_url} alt={activeItem.name} class="w-full h-full object-cover" />
-        <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
-        <button class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 text-zinc-900 flex items-center justify-center hover:bg-white shadow" onclick={() => activeItem = null}>
-          <X size={16} />
+    <div class="bg-white w-full max-w-md rounded-[2rem] relative z-10 flex flex-col overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.4)] max-h-[90vh]">
+      <div class="relative h-64 bg-zinc-950 overflow-hidden">
+        <img src={activeItem.image_url} alt={activeItem.name} class="w-full h-full object-cover opacity-80" />
+        <div class="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent dark:from-zinc-900"></div>
+        
+        <!-- Floating Add-on Particles -->
+        {#each selectedAddons as a (a.id)}
+          <div 
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-1 bg-white/90 backdrop-blur text-xs font-bold rounded-full shadow-lg"
+            in:fly={{ y: 50, duration: 400, ease: 'back.out(1.5)' }}
+            out:fade={{ duration: 200 }}
+          >
+            + {a.name}
+          </div>
+        {/each}
+
+        <button class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-white/40 transition-colors" onclick={() => activeItem = null}>
+          <X size={20} />
         </button>
       </div>
       
-      <div class="p-5 overflow-y-auto flex-1 space-y-5">
+      <div class="p-6 overflow-y-auto flex-1 space-y-6 relative -mt-8 bg-white rounded-t-[2rem]">
         <div>
-          <h3 class="text-xl font-bold text-zinc-950 mb-1">{activeItem.name}</h3>
-          <p class="text-sm text-zinc-400">{activeItem.description}</p>
+          <h3 class="text-2xl font-black text-zinc-950 mb-1">{activeItem.name}</h3>
+          <p class="text-sm text-zinc-500 leading-relaxed">{activeItem.description}</p>
         </div>
 
         {#if allVariations.filter(v => activeItem && v.menu_item_id === activeItem.id).length > 0}
-          <div class="space-y-2">
-            <h4 class="font-semibold text-sm text-zinc-900">Options <span class="text-orange-600 text-xs font-normal ml-1 bg-orange-50 border border-orange-200 rounded-full px-2 py-0.5">Required</span></h4>
-            <div class="space-y-1.5">
+          <div class="space-y-3">
+            <h4 class="font-bold text-sm text-zinc-900 uppercase tracking-widest">Options <span class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full ml-2">Required</span></h4>
+            <div class="grid grid-cols-2 gap-2">
               {#each allVariations.filter(v => activeItem && v.menu_item_id === activeItem.id) as v}
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div 
-                  class="flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors {selectedVariation?.id === v.id ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white' : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'}"
+                  class="flex flex-col items-center justify-center p-3 rounded-2xl border-2 cursor-pointer transition-all active:scale-95 {selectedVariation?.id === v.id ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' : 'border-zinc-100 hover:border-zinc-200'}"
                   onclick={() => selectedVariation = v}
                 >
-                  <span class="font-medium text-sm">{v.name}</span>
-                  <span class="text-sm">{v.extra_price > 0 ? `+${formatCurrency(v.extra_price)}` : 'Free'}</span>
+                  <span class="font-bold text-sm text-zinc-900">{v.name}</span>
+                  <span class="text-xs text-zinc-500">{v.extra_price > 0 ? `+${formatCurrency(v.extra_price)}` : 'Free'}</span>
                 </div>
               {/each}
             </div>
           </div>
         {/if}
+
+        {#if allAddons.filter(a => activeItem && a.menu_item_id === activeItem.id).length > 0}
+          <div class="space-y-3">
+            <h4 class="font-bold text-sm text-zinc-900 uppercase tracking-widest">Add-ons</h4>
+            <div class="space-y-2">
+              {#each allAddons.filter(a => activeItem && a.menu_item_id === activeItem.id) as a}
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <div 
+                  class="flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all active:scale-95 {selectedAddons.find(sa => sa.id === a.id) ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' : 'border-zinc-100 hover:border-zinc-200'}"
+                  onclick={() => toggleAddon(a)}
+                >
+                  <span class="font-bold text-sm text-zinc-900">{a.name}</span>
+                  <span class="text-sm font-semibold text-[var(--brand-primary)]">+${formatCurrency(a.extra_price)}</span>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+        
+        <div class="flex items-center justify-between pt-4 border-t border-zinc-100">
+          <span class="font-bold text-sm text-zinc-900 uppercase tracking-widest">Quantity</span>
+          <div class="flex items-center gap-4 bg-zinc-100 rounded-full p-1 border border-zinc-200 shadow-inner">
+            <button class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center active:scale-95" onclick={() => itemModalQty = Math.max(1, itemModalQty - 1)}><Minus size={16} /></button>
+            <span class="w-6 text-center font-black text-lg">{itemModalQty}</span>
+            <button class="w-10 h-10 rounded-full bg-zinc-900 text-white shadow-md flex items-center justify-center active:scale-95" onclick={() => itemModalQty++}><Plus size={16} /></button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="p-6 bg-white border-t border-zinc-100">
+        <button 
+          class="flex w-full items-center justify-between rounded-2xl bg-[var(--brand-primary)] text-white shadow-xl hover:opacity-90 h-14 px-6 text-lg font-black transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+          onclick={confirmItemModal}
+          disabled={allVariations.filter(v => activeItem && v.menu_item_id === activeItem.id).length > 0 && !selectedVariation}
+        >
+          <span>Add to Cart</span>
+          <span>{formatCurrency((activeItem.price + (selectedVariation?.extra_price || 0) + selectedAddons.reduce((sum, a) => sum + a.extra_price, 0)) * itemModalQty)}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
 
         {#if allAddons.filter(a => activeItem && a.menu_item_id === activeItem.id).length > 0}
           <div class="space-y-2">
@@ -776,3 +881,5 @@
     </div>
   </div>
 {/if}
+
+</div>

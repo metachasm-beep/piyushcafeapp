@@ -249,7 +249,7 @@
               <img src={item.menu_item.image_url} alt={item.menu_item.name} class="w-full h-full object-cover" />
             </div>
             <div class="flex-1">
-              <h4 class="font-semibold text-zinc-900 text-sm" class="flex items-center">{item.menu_item.name} {@render dietaryIcon(item.menu_item.dietary_tags)}</h4>
+              <h4 class="font-semibold text-zinc-900 text-sm flex items-center">{item.menu_item.name} {@render dietaryIcon(item.menu_item.dietary_tags)}</h4>
               {#if item.variation_name}
                 <div class="text-[10px] font-medium text-zinc-500 mt-0.5">{item.variation_name}</div>
               {/if}

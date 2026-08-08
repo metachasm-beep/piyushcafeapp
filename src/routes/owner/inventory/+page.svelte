@@ -4,11 +4,13 @@
   import { toast } from 'svelte-sonner';
   import { RefreshCw, Search, Plus, X, Image as ImageIcon } from 'lucide-svelte';
 
-  import { deserialize } from '$app/forms';
+  import { deserialize, enhance } from '$app/forms';
+
+  let { data } = $props();
+  let restaurant = $derived(data.restaurant);
 
   let items = $state<MenuItem[]>([]);
   let categories = $state<MenuCategory[]>([]);
-  let ownerRestaurantId = $state<string | null>(null);
   let isLoading = $state(true);
   let searchQuery = $state('');
   let selectedCategory = $state<string | null>(null);
@@ -46,13 +48,13 @@
       return;
     }
 
-    const data = new FormData();
-    data.append('name', newCategoryName.trim());
-    data.append('sort_order', categories.length.toString());
+    const formData = new FormData();
+    formData.append('name', newCategoryName.trim());
+    formData.append('sort_order', categories.length.toString());
 
     const response = await fetch('?/addCategory', {
       method: 'POST',
-      body: data
+      body: formData
     });
     
     const result = deserialize(await response.text()) as any;
@@ -74,16 +76,10 @@
   async function loadInventory() {
     isLoading = true;
     try {
-      if (!supabase) throw new Error('Supabase not initialized');
+      if (!supabase || !restaurant?.id) return;
       
-      // Get the owner's restaurant ID
-      const { data: staffData } = await supabase.from('restaurant_staff').select('restaurant_id').limit(1).single();
-      if (staffData) {
-        ownerRestaurantId = staffData.restaurant_id;
-      }
-      
-      const { data: catData } = await supabase.from('menu_categories').select('*').order('sort_order');
-      const { data: itemData } = await supabase.from('menu_items').select('*').order('sort_order');
+      const { data: catData } = await supabase.from('menu_categories').select('*').eq('restaurant_id', restaurant.id).order('sort_order');
+      const { data: itemData } = await supabase.from('menu_items').select('*').eq('restaurant_id', restaurant.id).order('sort_order');
       
       if (catData) categories = catData;
       if (itemData) items = itemData;
@@ -100,23 +96,15 @@
 
   async function toggleAvailability(item: MenuItem) {
     const newValue = !item.is_available;
-    // Optimistic UI update
     const idx = items.findIndex(i => i.id === item.id);
-    if (idx !== -1) {
-      items[idx] = { ...item, is_available: newValue };
-    }
+    if (idx !== -1) items[idx] = { ...item, is_available: newValue };
+    
     if (!supabase) return;
-    const { error } = await supabase
-      .from('menu_items')
-      .update({ is_available: newValue })
-      .eq('id', item.id);
+    const { error } = await supabase.from('menu_items').update({ is_available: newValue }).eq('id', item.id);
       
     if (error) {
       toast.error(`Failed to update ${item.name}`);
-      // Revert
-      if (idx !== -1) {
-        items[idx] = { ...item, is_available: !newValue };
-      }
+      if (idx !== -1) items[idx] = { ...item, is_available: !newValue };
     } else {
       toast.success(`${item.name} marked as ${newValue ? 'In Stock' : 'Out of Stock'}`);
     }
@@ -135,96 +123,6 @@
       }
       imageFile = file;
       imagePreview = URL.createObjectURL(imageFile);
-    }
-  }
-
-  async function addItem(e: SubmitEvent) {
-    e.preventDefault();
-    if (!ownerRestaurantId || !supabase) {
-      toast.error("Could not authenticate restaurant");
-      return;
-    }
-    
-    isSaving = true;
-    const fd = new FormData(e.target as HTMLFormElement);
-    
-    try {
-      let imageUrl = null;
-      
-      // 1. Upload Image if provided
-      if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const filePath = `${ownerRestaurantId}/${fileName}`;
-        
-        const { error: uploadError, data } = await supabase.storage
-          .from('menu-images')
-          .upload(filePath, imageFile);
-          
-        if (uploadError) throw uploadError;
-        
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('menu-images')
-          .getPublicUrl(filePath);
-          
-        imageUrl = publicUrl;
-      }
-
-      // 2. Insert Menu Item
-      const newItem = {
-        id: crypto.randomUUID(),
-        restaurant_id: ownerRestaurantId,
-        category_id: fd.get('category_id') as string,
-        name: fd.get('name') as string,
-        description: fd.get('description') as string,
-        price: Number(fd.get('price')),
-        image_url: imageUrl,
-        is_available: true,
-        is_featured: fd.get('is_featured') === 'on',
-        dietary_tags: [] // Can be extended later
-      };
-      
-      const { data: itemResp, error: dbError } = await supabase.from('menu_items').insert(newItem).select().single();
-      if (dbError) throw dbError;
-      
-      // 3. Insert Variations & Addons
-      if (newVariations.length > 0) {
-        const validVars = newVariations.filter(v => v.name.trim() !== '').map((v, idx) => ({
-          menu_item_id: itemResp.id,
-          name: v.name.trim(),
-          extra_price: Number(v.extra_price),
-          sort_order: idx
-        }));
-        if (validVars.length > 0) await supabase.from('menu_item_variations').insert(validVars);
-      }
-      
-      if (newAddons.length > 0) {
-        const validAddons = newAddons.filter(a => a.name.trim() !== '').map((a, idx) => ({
-          menu_item_id: itemResp.id,
-          name: a.name.trim(),
-          extra_price: Number(a.extra_price),
-          sort_order: idx
-        }));
-        if (validAddons.length > 0) await supabase.from('menu_item_addons').insert(validAddons);
-      }
-
-      // Update UI
-      items = [...items, itemResp as unknown as MenuItem];
-      toast.success('Item added successfully!');
-      
-      // Reset Modal
-      showAddModal = false;
-      imageFile = null;
-      imagePreview = null;
-      newVariations = [];
-      newAddons = [];
-      
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || 'Failed to add item');
-    } finally {
-      isSaving = false;
     }
   }
 
@@ -335,7 +233,35 @@
         </button>
       </div>
       
-      <form onsubmit={addItem} class="p-6 space-y-5">
+      <form 
+        method="POST" 
+        action="?/addItem"
+        enctype="multipart/form-data"
+        use:enhance={({ formData }) => {
+          isSaving = true;
+          // Append variations and addons as JSON strings
+          if (newVariations.length > 0) formData.append('variations', JSON.stringify(newVariations));
+          if (newAddons.length > 0) formData.append('addons', JSON.stringify(newAddons));
+          
+          return async ({ result, update }) => {
+            isSaving = false;
+            if (result.type === 'success') {
+              toast.success('Item added successfully!');
+              if (result.data?.item) {
+                items = [...items, result.data.item as MenuItem];
+              }
+              showAddModal = false;
+              imageFile = null;
+              imagePreview = null;
+              newVariations = [];
+              newAddons = [];
+            } else if (result.type === 'failure') {
+              toast.error(result.data?.error || 'Failed to add item');
+            }
+          };
+        }}
+        class="flex flex-col gap-6 p-6"
+      >
         
         <!-- Image Upload -->
         <div>
@@ -347,7 +273,7 @@
               {:else}
                 <ImageIcon size={28} class="text-zinc-400" />
               {/if}
-              <input type="file" id="image" accept="image/*" onchange={handleImageSelect} class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+              <input type="file" id="image" name="image" accept="image/*" onchange={handleImageSelect} class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
             </div>
             <div class="flex-1">
               <p class="text-sm font-medium text-zinc-900">Upload a photo</p>

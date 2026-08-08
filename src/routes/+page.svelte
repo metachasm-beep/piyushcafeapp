@@ -49,7 +49,7 @@
       );
 
       const { error } = await supabase.auth.signInWithPassword({
-        email: 'paullovessoccer@gmail.com',
+        email: 'demo@goldenfork.com',
         password: 'password123'
       });
 

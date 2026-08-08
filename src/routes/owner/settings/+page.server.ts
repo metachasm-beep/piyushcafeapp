@@ -22,40 +22,53 @@ export const actions: Actions = {
 		}
 
 		const formData = await request.formData();
-		const imageFile = formData.get('logo') as File;
+		const imageFile = formData.get('logo') as File | null;
+		const primaryColor = formData.get('primary_color') as string | null;
 
-		if (!imageFile || imageFile.size === 0) {
-			return fail(400, { error: 'No image file provided' });
-		}
-
-		if (imageFile.size > 1 * 1024 * 1024) {
-			return fail(400, { error: 'Image exceeds 1MB limit. Please choose a smaller file.' });
+		const updatePayload: any = {};
+		if (primaryColor) {
+			updatePayload.primary_color = primaryColor;
 		}
 
 		const supabaseAdmin = getSupabaseAdmin();
-		const fileExt = imageFile.name.split('.').pop() || 'png';
-		const fileName = `${restaurantId}_logo_${Date.now()}.${fileExt}`;
-		const filePath = `${restaurantId}/${fileName}`;
+		let publicUrl = null;
 
-		// Upload to restaurant-logos bucket using Admin client (bypasses RLS)
-		const { error: uploadError } = await supabaseAdmin.storage
-			.from('restaurant-logos')
-			.upload(filePath, imageFile, { upsert: true });
+		if (imageFile && imageFile.size > 0) {
+			if (imageFile.size > 1 * 1024 * 1024) {
+				return fail(400, { error: 'Image exceeds 1MB limit. Please choose a smaller file.' });
+			}
 
-		if (uploadError) {
-			console.error('Upload error:', uploadError);
-			return fail(500, { error: 'Storage Error: ' + uploadError.message });
+			const fileExt = imageFile.name.split('.').pop() || 'png';
+			const fileName = `${restaurantId}_logo_${Date.now()}.${fileExt}`;
+			const filePath = `${restaurantId}/${fileName}`;
+
+			// Upload to restaurant-logos bucket using Admin client (bypasses RLS)
+			const { error: uploadError } = await supabaseAdmin.storage
+				.from('restaurant-logos')
+				.upload(filePath, imageFile, { upsert: true });
+
+			if (uploadError) {
+				console.error('Upload error:', uploadError);
+				return fail(500, { error: 'Storage Error: ' + uploadError.message });
+			}
+
+			// Get public URL
+			const { data: urlData } = supabaseAdmin.storage
+				.from('restaurant-logos')
+				.getPublicUrl(filePath);
+			
+			publicUrl = urlData.publicUrl;
+			updatePayload.logo_url = publicUrl;
 		}
 
-		// Get public URL
-		const { data: { publicUrl } } = supabaseAdmin.storage
-			.from('restaurant-logos')
-			.getPublicUrl(filePath);
+		if (Object.keys(updatePayload).length === 0) {
+			return fail(400, { error: 'No data provided to update' });
+		}
 
 		// Update restaurants table using Admin client
 		const { error: dbError } = await supabaseAdmin
 			.from('restaurants')
-			.update({ logo_url: publicUrl })
+			.update(updatePayload)
 			.eq('id', restaurantId);
 
 		if (dbError) {

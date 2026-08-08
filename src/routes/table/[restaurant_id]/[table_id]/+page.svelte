@@ -21,6 +21,18 @@
   let allVariations = $derived(data.variations);
   let allAddons = $derived(data.addons);
 
+  function hexToRgb(hex: string) {
+    if (!hex) return '9 9 11';
+    hex = hex.replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return `${r} ${g} ${b}`;
+  }
+  let primaryColor = $derived(restaurant?.primary_color || '#09090b');
+  let primaryRgb = $derived(hexToRgb(primaryColor));
+
   $effect(() => { session.init(restaurant, table); });
 
   onMount(async () => {
@@ -31,13 +43,6 @@
 
       const mm = gsap.matchMedia();
       mm.add('(prefers-reduced-motion: no-preference)', () => {
-        // Hero Parallax
-        gsap.to('.hero-parallax-img', {
-          yPercent: 30,
-          ease: 'none',
-          scrollTrigger: { trigger: '.hero-container', start: 'top top', end: 'bottom top', scrub: true }
-        });
-
         // Domino Entrances on load
         gsap.from('.featured-card', { y: 40, opacity: 0, duration: 0.6, stagger: 0.1, ease: 'power3.out', clearProps: 'all' });
         
@@ -221,7 +226,7 @@
   .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
 
-<!-- Sticky Header -->
+<!-- Sticky Header Navigation -->
 <header class="fixed top-0 left-0 right-0 z-40 bg-white/60 backdrop-blur-2xl border-b border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-all">
   <div class="px-4 py-3 flex items-center justify-between">
     <div class="flex items-center gap-3">
@@ -230,7 +235,7 @@
         <p class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Menu</p>
       </div>
     </div>
-    <span class="inline-flex items-center rounded-full border border-zinc-200/50 bg-zinc-900/90 backdrop-blur px-3 py-1 text-xs font-semibold text-zinc-50 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
+    <span class="inline-flex items-center rounded-full border border-zinc-200/50 bg-[var(--brand-primary)]/90 backdrop-blur px-3 py-1 text-xs font-semibold text-zinc-50 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
       {table.display_name ?? `Table ${table.table_number}`}
     </span>
   </div>
@@ -238,14 +243,14 @@
   <!-- Category Filter Bar -->
   <div class="flex overflow-x-auto hide-scrollbar px-4 py-2 gap-2 border-t border-zinc-200/30" style="-webkit-overflow-scrolling: touch;">
     <button 
-      class="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 {activeCategory === 'all' ? 'bg-zinc-900 text-white shadow-md' : 'bg-white/80 text-zinc-600 border border-zinc-200/50 hover:bg-white hover:shadow-sm'}"
+      class="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 {activeCategory === 'all' ? 'bg-[var(--brand-primary)] text-white shadow-md' : 'bg-white/80 text-zinc-600 border border-zinc-200/50 hover:bg-white hover:shadow-sm'}"
       onclick={() => scrollToCategory('all')}
     >
       🍽️ All
     </button>
     {#each categories as category}
       <button 
-        class="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 {activeCategory === category.id ? 'bg-zinc-900 text-white shadow-md' : 'bg-white/80 text-zinc-600 border border-zinc-200/50 hover:bg-white hover:shadow-sm'}"
+        class="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 {activeCategory === category.id ? 'bg-[var(--brand-primary)] text-white shadow-md' : 'bg-white/80 text-zinc-600 border border-zinc-200/50 hover:bg-white hover:shadow-sm'}"
         onclick={() => scrollToCategory(category.id)}
       >
         {category.icon_emoji} {category.name}
@@ -255,16 +260,8 @@
 </header>
 
 <!-- Parallax Hero -->
-<div class="hero-container relative w-full h-[35vh] overflow-hidden bg-zinc-900 -mt-20 z-0">
-  {#if restaurant.banner_url || restaurant.logo_url}
-    <img src={restaurant.banner_url || restaurant.logo_url} alt="Restaurant Banner" class="hero-parallax-img absolute inset-0 w-full h-[130%] object-cover opacity-60 origin-top" />
-  {/if}
-  <div class="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-900/40 to-[#f9fafb]"></div>
-  <div class="absolute bottom-10 left-4 right-4 z-10 flex flex-col items-center text-center">
-    <h2 class="text-3xl font-bold text-white drop-shadow-md">{restaurant.name}</h2>
-    <p class="text-sm text-zinc-200 mt-1 drop-shadow">Tap the items below to order</p>
-  </div>
-</div>
+<!-- Spacer for sticky header -->
+<div class="h-24 w-full"></div>
 
 <main class="pt-6 pb-32 px-4 space-y-8 max-w-2xl mx-auto relative z-10">
   
@@ -282,7 +279,7 @@
                 <div class="absolute inset-0 bg-gradient-to-r from-zinc-200 via-zinc-100 to-zinc-200 animate-pulse -z-10"></div>
                 <img src={item.image_url} alt={item.name} class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 z-0" loading="lazy" />
               {:else}
-                <div class="w-full h-full bg-zinc-900 text-white flex items-center justify-center font-serif text-5xl opacity-90 relative overflow-hidden">
+                <div class="w-full h-full bg-[var(--brand-primary)] text-white flex items-center justify-center font-serif text-5xl opacity-90 relative overflow-hidden">
                   <span class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')]"></span>
                   {item.name.substring(0, 1)}
                 </div>
@@ -311,7 +308,7 @@
                     {/if}
                   </div>
                 {:else}
-                  <button class="w-9 h-9 rounded-full bg-zinc-900 text-white shadow-md flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:bg-blue-600 hover:shadow-lg hover:-translate-y-0.5" onclick={() => handleMenuAdd(item)}>
+                  <button class="w-9 h-9 rounded-full bg-[var(--brand-primary)] text-white shadow-md flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:bg-blue-600 hover:shadow-lg hover:-translate-y-0.5" onclick={() => handleMenuAdd(item)}>
                     <Plus size={18} />
                   </button>
                 {/if}
@@ -351,7 +348,7 @@
               <div class="menu-card rounded-3xl bg-white/90 backdrop-blur-sm p-4 flex gap-4 relative overflow-hidden shadow-[0_12px_24px_rgba(0,0,0,0.04)] border border-white/60 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 {item.is_available ? '' : 'opacity-60'}">
                 {#if !item.is_available}
                   <div class="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-[2px]">
-                    <span class="bg-zinc-900 text-white px-3 py-1.5 rounded-lg text-xs font-semibold tracking-widest shadow-md">OUT OF STOCK</span>
+                    <span class="bg-[var(--brand-primary)] text-white px-3 py-1.5 rounded-lg text-xs font-semibold tracking-widest shadow-md">OUT OF STOCK</span>
                   </div>
                 {/if}
                 <div class="w-28 h-28 shrink-0 rounded-2xl bg-zinc-100 overflow-hidden shadow-inner relative">
@@ -359,7 +356,7 @@
                     <div class="absolute inset-0 bg-gradient-to-r from-zinc-200 via-zinc-100 to-zinc-200 animate-pulse -z-10"></div>
                     <img src={item.image_url} alt={item.name} class="w-full h-full object-cover transition-transform duration-700 hover:scale-110 z-0" loading="lazy" />
                   {:else}
-                    <div class="w-full h-full bg-zinc-900 text-white flex items-center justify-center font-serif text-3xl opacity-90 relative overflow-hidden">
+                    <div class="w-full h-full bg-[var(--brand-primary)] text-white flex items-center justify-center font-serif text-3xl opacity-90 relative overflow-hidden">
                       <span class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')]"></span>
                       {item.name.substring(0, 1)}
                     </div>
@@ -391,7 +388,7 @@
                           {/if}
                         </div>
                       {:else}
-                        <button class="w-9 h-9 rounded-full bg-zinc-900 text-white flex items-center justify-center shadow-md z-20 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:-translate-y-0.5 hover:shadow-lg hover:bg-blue-600" onclick={() => handleMenuAdd(item)}>
+                        <button class="w-9 h-9 rounded-full bg-[var(--brand-primary)] text-white flex items-center justify-center shadow-md z-20 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:-translate-y-0.5 hover:shadow-lg hover:bg-blue-600" onclick={() => handleMenuAdd(item)}>
                           <Plus size={18} />
                         </button>
                       {/if}
@@ -424,7 +421,7 @@
     <div transition:fly={{ y: 30, duration: 400, opacity: 0 }} style="animation: breathe 3s ease-in-out infinite alternate;">
       <button 
         use:magnetic
-        class="w-16 h-16 rounded-full bg-zinc-900/90 backdrop-blur-xl border border-zinc-700/50 shadow-[0_20px_40px_rgba(24,24,27,0.3)] flex items-center justify-center text-white transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-blue-600 hover:shadow-[0_25px_50px_rgba(37,99,235,0.4)]"
+        class="w-16 h-16 rounded-full bg-[var(--brand-primary)]/90 backdrop-blur-xl border border-zinc-700/50 shadow-[0_20px_40px_rgba(24,24,27,0.3)] flex items-center justify-center text-white transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-blue-600 hover:shadow-[0_25px_50px_rgba(37,99,235,0.4)]"
         onclick={() => isCartOpen = true}
       >
         <ShoppingCart size={24} />
@@ -447,7 +444,7 @@
   <div class="fixed inset-0 z-50 flex flex-col justify-end" transition:fade={{ duration: 300 }}>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="absolute inset-0 bg-zinc-950/60 backdrop-blur-sm" onclick={() => isCartOpen = false}></div>
+    <div class="absolute inset-0 bg-[var(--brand-primary)]/60 backdrop-blur-sm" onclick={() => isCartOpen = false}></div>
     
     <div 
       class="bg-white/95 backdrop-blur-2xl w-full max-h-[85vh] rounded-t-3xl shadow-[0_-20px_40px_rgba(0,0,0,0.15)] relative flex flex-col overflow-hidden border-t border-white/40"
@@ -466,7 +463,7 @@
       
       <div class="px-6 pb-4 flex items-center justify-between border-b border-zinc-200/50">
         <h2 class="text-xl font-bold text-zinc-950 flex items-center gap-2">
-          Your Order <span class="inline-flex items-center justify-center rounded-full bg-zinc-900 text-white text-xs font-bold w-6 h-6 shadow-sm">{$cartCount}</span>
+          Your Order <span class="inline-flex items-center justify-center rounded-full bg-[var(--brand-primary)] text-white text-xs font-bold w-6 h-6 shadow-sm">{$cartCount}</span>
         </h2>
         <button class="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-500 hover:text-zinc-900 transition-colors" onclick={() => isCartOpen = false}>
           <X size={16} />
@@ -482,7 +479,7 @@
                 <div class="absolute inset-0 bg-gradient-to-r from-zinc-200 via-zinc-100 to-zinc-200 animate-pulse -z-10"></div>
                 <img src={item.menu_item.image_url} alt={item.menu_item.name} class="w-full h-full object-cover z-0" />
               {:else}
-                <div class="w-full h-full bg-zinc-900 text-white flex items-center justify-center font-serif text-2xl opacity-90 relative overflow-hidden">
+                <div class="w-full h-full bg-[var(--brand-primary)] text-white flex items-center justify-center font-serif text-2xl opacity-90 relative overflow-hidden">
                   <span class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')]"></span>
                   {item.menu_item.name.substring(0, 1)}
                 </div>
@@ -503,7 +500,7 @@
             <div class="flex items-center gap-1.5 bg-zinc-100 rounded-full p-1 border border-zinc-200 shadow-inner shrink-0">
               <button class="w-7 h-7 rounded-full bg-white border border-zinc-200 flex items-center justify-center transition-transform ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-300 active:scale-75 shadow-sm" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity - 1)}><Minus size={13} /></button>
               <span class="w-4 text-center font-bold text-sm">{item.quantity}</span>
-              <button class="w-7 h-7 rounded-full bg-zinc-900 text-white flex items-center justify-center transition-transform ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-300 active:scale-75 shadow-md" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity + 1)}><Plus size={13} /></button>
+              <button class="w-7 h-7 rounded-full bg-[var(--brand-primary)] text-white flex items-center justify-center transition-transform ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-300 active:scale-75 shadow-md" onclick={() => cart.setQuantity(cart.generateCartKey(item.menu_item.id, item.variation, item.addons), item.quantity + 1)}><Plus size={13} /></button>
             </div>
           </div>
         {/each}
@@ -530,7 +527,7 @@
           <span>Total</span><span>{formatCurrency($cartTotal * 1.1)}</span>
         </div>
         <button 
-          class="inline-flex w-full items-center justify-center rounded-md bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-800 h-11 px-4 text-sm font-medium transition-colors mt-1"
+          class="inline-flex w-full items-center justify-center rounded-md bg-[var(--brand-primary)] text-zinc-50 shadow hover:bg-zinc-800 h-11 px-4 text-sm font-medium transition-colors mt-1"
           onclick={placeOrder}
         >
           Place Order
@@ -576,7 +573,7 @@
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div 
-                  class="flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors {selectedVariation?.id === v.id ? 'bg-zinc-900 border-zinc-900 text-white' : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'}"
+                  class="flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors {selectedVariation?.id === v.id ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white' : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'}"
                   onclick={() => selectedVariation = v}
                 >
                   <span class="font-medium text-sm">{v.name}</span>
@@ -595,7 +592,7 @@
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div 
-                  class="flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors {selectedAddons.find(sa => sa.id === a.id) ? 'bg-zinc-900 border-zinc-900 text-white' : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'}"
+                  class="flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors {selectedAddons.find(sa => sa.id === a.id) ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white' : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'}"
                   onclick={() => toggleAddon(a)}
                 >
                   <div class="flex items-center gap-3">
@@ -618,14 +615,14 @@
           <div class="flex items-center gap-2 bg-zinc-100 rounded-full p-0.5 border border-zinc-200">
             <button class="w-9 h-9 rounded-full bg-white border border-zinc-200 flex items-center justify-center active:scale-95" onclick={() => itemModalQty = Math.max(1, itemModalQty - 1)}><Minus size={14} /></button>
             <span class="w-5 text-center font-bold">{itemModalQty}</span>
-            <button class="w-9 h-9 rounded-full bg-zinc-900 text-white flex items-center justify-center active:scale-95" onclick={() => itemModalQty++}><Plus size={14} /></button>
+            <button class="w-9 h-9 rounded-full bg-[var(--brand-primary)] text-white flex items-center justify-center active:scale-95" onclick={() => itemModalQty++}><Plus size={14} /></button>
           </div>
         </div>
       </div>
       
       <div class="p-5 border-t border-zinc-100">
         <button 
-          class="inline-flex w-full items-center justify-between rounded-md bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-800 h-12 px-5 text-sm font-semibold transition-colors disabled:opacity-50"
+          class="inline-flex w-full items-center justify-between rounded-md bg-[var(--brand-primary)] text-zinc-50 shadow hover:bg-zinc-800 h-12 px-5 text-sm font-semibold transition-colors disabled:opacity-50"
           onclick={confirmItemModal}
           disabled={allVariations.filter(v => activeItem && v.menu_item_id === activeItem.id).length > 0 && !selectedVariation}
         >
@@ -660,7 +657,7 @@
       <div class="grid grid-cols-3 gap-2">
         {#each [{ id: 'upi', icon: Smartphone, label: 'UPI' }, { id: 'card', icon: CreditCard, label: 'Card' }, { id: 'cash', icon: Banknote, label: 'Cash' }] as method}
           <button 
-            class="flex flex-col items-center gap-2 p-3 rounded-xl border transition-colors {paymentMethod === method.id ? 'bg-zinc-900 border-zinc-900 text-white' : 'bg-white border-zinc-200 text-zinc-500 hover:bg-zinc-50'}"
+            class="flex flex-col items-center gap-2 p-3 rounded-xl border transition-colors {paymentMethod === method.id ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white' : 'bg-white border-zinc-200 text-zinc-500 hover:bg-zinc-50'}"
             onclick={() => paymentMethod = method.id as any}
           >
             <method.icon size={18} />
@@ -701,7 +698,7 @@
       </div>
 
       <button 
-        class="inline-flex w-full items-center justify-center rounded-md bg-zinc-900 text-zinc-50 shadow hover:bg-zinc-800 h-12 px-4 text-sm font-semibold transition-colors disabled:opacity-50"
+        class="inline-flex w-full items-center justify-center rounded-md bg-[var(--brand-primary)] text-zinc-50 shadow hover:bg-zinc-800 h-12 px-4 text-sm font-semibold transition-colors disabled:opacity-50"
         onclick={handlePayment}
         disabled={isProcessingPayment}
       >

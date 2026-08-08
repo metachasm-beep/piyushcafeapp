@@ -166,7 +166,7 @@
   );
 </script>
 
-{#snippet dietaryIcon(tags)}
+{#snippet dietaryIcon(tags: string[])}
   {#if tags?.includes('veg')}
     <span class="inline-flex items-center" title="Vegetarian">
       <svg class="w-[15px] h-[15px] ml-1.5 -mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">

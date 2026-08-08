@@ -217,13 +217,13 @@
   let isDarkMode = $state(false);
 
   // Swipe Action (Suggestion #2)
-  function swipeOrder(node, { item }) {
+  function swipeOrder(node: HTMLElement, { item }: { item: any }) {
     let startX = 0;
     let currentX = 0;
     let isSwiping = false;
 
-    function handleTouchStart(e) { startX = e.touches[0].clientX; isSwiping = true; }
-    function handleTouchMove(e) {
+    function handleTouchStart(e: TouchEvent) { startX = e.touches[0].clientX; isSwiping = true; }
+    function handleTouchMove(e: TouchEvent) {
       if (!isSwiping) return;
       currentX = e.touches[0].clientX - startX;
       if (currentX > 0) { node.style.transform = `translateX(${currentX}px)`; }
@@ -278,7 +278,7 @@
   }
 </script>
 
-{#snippet dietaryIcon(tags)}
+{#snippet dietaryIcon(tags: string[])}
   {#if tags?.includes('veg')}
     <span class="inline-flex items-center" title="Vegetarian">
       <svg class="w-[15px] h-[15px] ml-1.5 -mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -388,7 +388,7 @@
 <div class="sticky top-20 left-0 right-0 z-30 flex justify-center pointer-events-none px-4">
   <div class="bg-black/80 backdrop-blur-xl text-white px-6 py-2.5 rounded-full shadow-2xl border border-white/10 flex items-center justify-center overflow-hidden h-12 min-w-[140px] pointer-events-auto">
     {#key activeCategory}
-      <span class="font-black tracking-widest uppercase text-sm" in:fly={{ y: 20, duration: 400, ease: 'back.out(1.5)' }} out:fly={{ y: -20, duration: 400, opacity: 0 }} style="position: absolute;">
+      <span class="font-black tracking-widest uppercase text-sm" in:fly={{ y: 20, duration: 400, easing: (t) => { const s = 1.70158; return --t * t * ((s + 1) * t + s) + 1; } }} out:fly={{ y: -20, duration: 400, opacity: 0 }} style="position: absolute;">
         {activeCategory === 'all' ? '✨ Featured' : categories.find(c => c.id === activeCategory)?.name || ''}
       </span>
     {/key}
@@ -674,7 +674,7 @@
         {#each selectedAddons as a (a.id)}
           <div 
             class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-1 bg-white/90 backdrop-blur text-xs font-bold rounded-full shadow-lg"
-            in:fly={{ y: 50, duration: 400, ease: 'back.out(1.5)' }}
+            in:fly={{ y: 50, duration: 400, easing: (t) => { const s = 1.70158; return --t * t * ((s + 1) * t + s) + 1; } }}
             out:fade={{ duration: 200 }}
           >
             + {a.name}
@@ -754,55 +754,6 @@
   </div>
 {/if}
 
-        {#if allAddons.filter(a => activeItem && a.menu_item_id === activeItem.id).length > 0}
-          <div class="space-y-2">
-            <h4 class="font-semibold text-sm text-zinc-900">Add-ons <span class="text-zinc-400 text-xs font-normal ml-1 bg-zinc-50 border border-zinc-200 rounded-full px-2 py-0.5">Optional</span></h4>
-            <div class="space-y-1.5">
-              {#each allAddons.filter(a => activeItem && a.menu_item_id === activeItem.id) as a}
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div 
-                  class="flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors {selectedAddons.find(sa => sa.id === a.id) ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white' : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'}"
-                  onclick={() => toggleAddon(a)}
-                >
-                  <div class="flex items-center gap-3">
-                    <div class="w-4 h-4 rounded border {selectedAddons.find(sa => sa.id === a.id) ? 'border-white bg-white flex items-center justify-center' : 'border-zinc-300'}">
-                      {#if selectedAddons.find(sa => sa.id === a.id)}
-                        <svg viewBox="0 0 14 14" fill="none" class="w-3 h-3 text-zinc-900"><path d="M3 7.5L5.5 10L11 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                      {/if}
-                    </div>
-                    <span class="font-medium text-sm">{a.name}</span>
-                  </div>
-                  <span class="text-sm">+{formatCurrency(a.extra_price)}</span>
-                </div>
-              {/each}
-            </div>
-          </div>
-        {/if}
-        
-        <div class="flex items-center justify-between pt-2 border-t border-zinc-100">
-          <span class="font-semibold text-sm text-zinc-900">Quantity</span>
-          <div class="flex items-center gap-2 bg-zinc-100 rounded-full p-0.5 border border-zinc-200">
-            <button class="w-9 h-9 rounded-full bg-white border border-zinc-200 flex items-center justify-center active:scale-95" onclick={() => itemModalQty = Math.max(1, itemModalQty - 1)}><Minus size={14} /></button>
-            <span class="w-5 text-center font-bold">{itemModalQty}</span>
-            <button class="w-9 h-9 rounded-full bg-[var(--brand-primary)] text-white flex items-center justify-center active:scale-95" onclick={() => itemModalQty++}><Plus size={14} /></button>
-          </div>
-        </div>
-      </div>
-      
-      <div class="p-5 border-t border-zinc-100">
-        <button 
-          class="inline-flex w-full items-center justify-between rounded-md bg-[var(--brand-primary)] text-zinc-50 shadow hover:bg-zinc-800 h-12 px-5 text-sm font-semibold transition-colors disabled:opacity-50"
-          onclick={confirmItemModal}
-          disabled={allVariations.filter(v => activeItem && v.menu_item_id === activeItem.id).length > 0 && !selectedVariation}
-        >
-          <span>Add to Cart</span>
-          <span>{formatCurrency((activeItem.price + (selectedVariation?.extra_price || 0) + selectedAddons.reduce((sum, a) => sum + a.extra_price, 0)) * itemModalQty)}</span>
-        </button>
-      </div>
-    </div>
-  </div>
-{/if}
 
 <!-- Checkout Modal -->
 {#if showCheckoutModal}

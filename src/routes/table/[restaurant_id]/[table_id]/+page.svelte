@@ -6,12 +6,23 @@
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
   
+  import confetti from 'canvas-confetti';
+  
   import { session } from '$lib/stores/session';
   import { cart, cartCount, cartTotal } from '$lib/stores/cart';
   import { formatCurrency } from '$lib/utils';
   
   import DietaryBadge from '$lib/components/DietaryBadge.svelte';
   import type { PageData } from './$types';
+
+  function triggerHaptic(type: 'light' | 'medium' | 'heavy' | 'success') {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      if (type === 'light') navigator.vibrate(10);
+      if (type === 'medium') navigator.vibrate(30);
+      if (type === 'heavy') navigator.vibrate(50);
+      if (type === 'success') navigator.vibrate([30, 50, 30]);
+    }
+  }
 
   let { data }: { data: PageData } = $props();
   let restaurant = $derived(data.restaurant);
@@ -125,6 +136,7 @@
   function handleCallWaiter() {
     if (waiterCooldown) { toast('Waiter is already on the way!'); return; }
     toast.success('Waiter called! 🛎️ Someone will be with you shortly.');
+    triggerHaptic('medium');
     waiterCalled = true;
     waiterCooldown = true;
     setTimeout(() => { waiterCalled = false; }, 3000);
@@ -159,6 +171,8 @@
       showCheckoutModal = false;
       if (paymentMethod === 'cash') {
         toast.success('Order placed! 🎉 Waiter will collect cash.');
+        triggerHaptic('success');
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         goto(`/table/${restaurant.id}/${table.id}/order`);
       } else {
         toast.info('Initializing payment...');
@@ -188,6 +202,7 @@
   }
 
   function handleMenuAdd(item: typeof menuItems[0]) {
+    triggerHaptic('light');
     const itemVars = allVariations.filter(v => v.menu_item_id === item.id);
     activeItem = item;
     selectedVariation = itemVars.length > 0 ? itemVars[0] : null;
@@ -201,6 +216,13 @@
       cart.addItem(activeItem, itemModalQty, itemSpecialInstructions, selectedVariation, selectedAddons);
       activeItem = null;
       toast.success('Added to cart');
+      triggerHaptic('success');
+      confetti({
+        particleCount: 40,
+        spread: 50,
+        origin: { y: 0.8 },
+        colors: [primaryColor, '#ffffff', '#F59E0B']
+      });
     }
   }
   
@@ -342,13 +364,14 @@
   .hide-scrollbar::-webkit-scrollbar { display: none; }
   .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-  :global(.dark-theme) { background-color: #09090b !important; color: #fafafa !important; }
-  :global(.dark-theme .bg-white), :global(.dark-theme .bg-white\/90), :global(.dark-theme .bg-white\/80) { background-color: #18181b !important; border-color: #27272a !important; color: #fff; }
+  :global(.dark-theme) { background-color: #05050a !important; color: #fafafa !important; }
+  :global(.dark-theme .bg-white), :global(.dark-theme .bg-white\/90), :global(.dark-theme .bg-white\/80) { background-color: #0a0a14 !important; border-color: #1a1a2e !important; color: #fff; }
   :global(.dark-theme .text-zinc-950), :global(.dark-theme .text-zinc-900) { color: #f4f4f5 !important; }
   :global(.dark-theme .text-zinc-700), :global(.dark-theme .text-zinc-600), :global(.dark-theme .text-zinc-500) { color: #a1a1aa !important; }
-  :global(.dark-theme .bg-zinc-50), :global(.dark-theme .bg-zinc-100) { background-color: #27272a !important; border-color: #3f3f46 !important; }
-  :global(.dark-theme header) { background-color: rgba(9,9,11,0.8) !important; border-color: rgba(255,255,255,0.1) !important; }
-  :global(.dark-theme .menu-card), :global(.dark-theme .featured-card) { background-color: #18181b !important; border-color: rgba(255,255,255,0.1) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important; }
+  :global(.dark-theme .bg-zinc-50), :global(.dark-theme .bg-zinc-100) { background-color: #0f0f1a !important; border-color: #1f1f33 !important; }
+  :global(.dark-theme header) { background-color: rgba(5,5,10,0.8) !important; border-color: rgba(255,255,255,0.05) !important; }
+  :global(.dark-theme .menu-card), :global(.dark-theme .featured-card) { background-color: #0a0a14 !important; border-color: rgba(255,255,255,0.1) !important; box-shadow: 0 4px 30px rgba(0,0,0,0.8), 0 0 15px rgba(var(--brand-primary-rgb, 255,255,255), 0.15) !important; }
+  :global(.dark-theme .bg-zinc-900) { background-color: #080812 !important; box-shadow: 0 30px 60px rgba(0,0,0,0.9), 0 0 30px rgba(var(--brand-primary-rgb, 255,255,255), 0.1) !important; }
   :global(.dark-theme .featured-card .w-full.bg-zinc-100) { background-color: #000 !important; }
 </style>
 
@@ -369,7 +392,15 @@
       {/if}
     </div>
 
-    <div class="flex items-center justify-end flex-1 pl-2">
+    <div class="flex items-center justify-end flex-1 pl-2 gap-2">
+      {#if $session.activeOrderId}
+        <button 
+          class="inline-flex items-center gap-1.5 rounded-full border border-blue-400/50 bg-blue-500/10 backdrop-blur px-3 py-1 text-xs font-bold text-blue-600 dark:text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)] whitespace-nowrap animate-pulse"
+          onclick={() => goto(`/table/${restaurant.id}/${table.id}/order`)}
+        >
+          <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div> Live Order
+        </button>
+      {/if}
       <span class="inline-flex items-center rounded-full border border-zinc-200/50 bg-[var(--brand-primary)]/90 backdrop-blur px-3 py-1 text-xs font-semibold text-zinc-50 shadow-[0_4px_12px_rgba(0,0,0,0.1)] whitespace-nowrap">
         {table.display_name ?? `Table ${table.table_number}`}
       </span>

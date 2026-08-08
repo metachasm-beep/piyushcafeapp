@@ -4,6 +4,8 @@
   import { toast } from 'svelte-sonner';
   import { RefreshCw, Search, Plus, X, Image as ImageIcon } from 'lucide-svelte';
 
+  import { deserialize } from '$app/forms';
+
   let items = $state<MenuItem[]>([]);
   let categories = $state<MenuCategory[]>([]);
   let ownerRestaurantId = $state<string | null>(null);
@@ -38,27 +40,30 @@
   }
 
   async function handleAddCategory() {
-    if (!newCategoryName.trim() || !supabase || !ownerRestaurantId) {
+    if (!newCategoryName.trim()) {
       isAddingCategory = false;
       selectedModalCategoryId = '';
       return;
     }
 
-    const newCat = {
-      id: crypto.randomUUID(),
-      restaurant_id: ownerRestaurantId,
-      name: newCategoryName.trim(),
-      icon_emoji: '🍽️',
-      sort_order: categories.length
-    };
+    const data = new FormData();
+    data.append('name', newCategoryName.trim());
+    data.append('sort_order', categories.length.toString());
 
-    const { error } = await supabase.from('menu_categories').insert(newCat);
-    if (!error) {
-      categories = [...categories, newCat as MenuCategory];
+    const response = await fetch('?/addCategory', {
+      method: 'POST',
+      body: data
+    });
+    
+    const result = deserialize(await response.text()) as any;
+    
+    if (result.type === 'success' && result.data?.category) {
+      const newCat = result.data.category as MenuCategory;
+      categories = [...categories, newCat];
       selectedModalCategoryId = newCat.id;
       toast.success('Category added successfully!');
     } else {
-      toast.error('Failed to add category');
+      toast.error(result.data?.error || 'Failed to add category');
       selectedModalCategoryId = '';
     }
     

@@ -8,20 +8,33 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	// 0. Domain Enforcement removed to avoid redirect loops on vercel aliases
 
-	// 1. Initialize Supabase SSR
-	event.locals.supabase = createServerClient(env.PUBLIC_SUPABASE_URL || '', env.PUBLIC_SUPABASE_ANON_KEY || '', {
-		cookies: {
-			getAll: () => event.cookies.getAll(),
-			setAll: (cookiesToSet) => {
-				cookiesToSet.forEach(({ name, value, options }) => {
-					event.cookies.set(name, value, { ...options, path: '/' });
-				});
+	// 1. Initialize Supabase SSR (skip when env is missing so marketing pages still render)
+	const supabaseUrl = env.PUBLIC_SUPABASE_URL?.trim();
+	const supabaseAnonKey = env.PUBLIC_SUPABASE_ANON_KEY?.trim();
+	const supabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+
+	if (supabaseConfigured) {
+		event.locals.supabase = createServerClient(supabaseUrl!, supabaseAnonKey!, {
+			cookies: {
+				getAll: () => event.cookies.getAll(),
+				setAll: (cookiesToSet) => {
+					cookiesToSet.forEach(({ name, value, options }) => {
+						event.cookies.set(name, value, { ...options, path: '/' });
+					});
+				}
 			}
-		}
-	});
+		});
+	} else {
+		// Minimal stub — public marketing / contact routes do not need auth
+		event.locals.supabase = null as unknown as typeof event.locals.supabase;
+	}
 
 	// Safe session getter
 	event.locals.safeGetSession = async () => {
+		if (!supabaseConfigured || !event.locals.supabase) {
+			return { session: null, user: null };
+		}
+
 		const {
 			data: { session }
 		} = await event.locals.supabase.auth.getSession();
@@ -79,8 +92,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 					await event.locals.supabase.auth.signOut();
 					event.locals.session = null;
 					event.locals.user = null;
-					if (path !== '/' && !path.startsWith('/auth/')) {
-						throw redirect(303, '/?error=unauthorized');
+					if (path !== '/login' && !path.startsWith('/auth/') && path !== '/') {
+						throw redirect(303, '/login?error=unauthorized');
 					}
 				} else {
 					event.locals.userRole = 'owner';
@@ -92,18 +105,18 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// Superadmin Guards
 	if (routeId.startsWith('/superadmin')) {
 		if (!user) {
-			throw redirect(303, '/');
+			throw redirect(303, '/login');
 		}
-		
+
 		if (!user.email || user.email.toLowerCase() !== SUPERADMIN_EMAIL) {
-			throw redirect(303, '/?error=unauthorized');
+			throw redirect(303, '/login?error=unauthorized');
 		}
 	}
 
 	// Owner / Staff Guards
 	if (routeId.startsWith('/owner')) {
 		if (!event.locals.user) {
-			throw redirect(303, '/');
+			throw redirect(303, '/login');
 		}
 
 		const role = event.locals.userRole;
@@ -123,7 +136,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 			// No restrictions for owners
 		} else {
 			// Unrecognized role
-			throw redirect(303, '/?error=unauthorized');
+			throw redirect(303, '/login?error=unauthorized');
 		}
 	}
 

@@ -44,9 +44,21 @@ self.addEventListener('fetch', (event) => {
   // For navigation requests (HTML pages): network-first
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() =>
-        caches.match(event.request).then((r) => r ?? caches.match('/'))
-      ) as Promise<Response>
+      (async () => {
+        try {
+          return await fetch(event.request);
+        } catch {
+          const cached = await caches.match(event.request);
+          if (cached) return cached;
+          const home = await caches.match('/');
+          if (home) return home;
+          return new Response('Offline', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: { 'Content-Type': 'text/plain' }
+          });
+        }
+      })()
     );
     return;
   }
@@ -78,7 +90,19 @@ self.addEventListener('fetch', (event) => {
 
   // Default: network-first
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request)) as Promise<Response>
+    (async () => {
+      try {
+        return await fetch(event.request);
+      } catch {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+        return new Response('Offline', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'text/plain' }
+        });
+      }
+    })()
   );
 });
 

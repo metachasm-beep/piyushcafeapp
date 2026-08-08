@@ -11,7 +11,7 @@ export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
 			
 			if (!user || !user.email) {
 				await supabase.auth.signOut();
-				throw redirect(303, '/?error=unauthorized');
+				throw redirect(303, '/login?error=unauthorized');
 			}
 
 			// 1. Superadmin check
@@ -53,11 +53,11 @@ export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
 
 			// 4. If not found in any authorized table, deny access
 			await supabase.auth.signOut();
-			throw redirect(303, '/?error=unauthorized');
+			throw redirect(303, '/login?error=unauthorized');
 		}
 		console.error("Auth callback error:", error?.message);
 	}
 
 	// return the user to an error page with instructions
-	throw redirect(303, '/?error=auth_callback_failed');
+	throw redirect(303, '/login?error=auth_callback_failed');
 };

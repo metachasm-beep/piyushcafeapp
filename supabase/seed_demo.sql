@@ -51,7 +51,7 @@ INSERT INTO menu_items (category_id, restaurant_id, name, description, price, im
 
 -- Mains
 INSERT INTO menu_items (category_id, restaurant_id, name, description, price, image_url, dietary_tags) VALUES 
-('e4b3e8e1-d3c2-4eb2-a8c6-55a0f6229555', 'd793b827-0466-4cf8-8424-df38d21c0eb2', 'Truffle Mushroom Risotto', 'Creamy Arborio rice with wild mushrooms and truffle oil', 550.00, 'https://images.unsplash.com/photo-1633964913295-ceb43826e7cf?q=80&w=800&auto=format&fit=crop', '{"veg", "gluten_free"}'),
+('e4b3e8e1-d3c2-4eb2-a8c6-55a0f6229555', 'd793b827-0466-4cf8-8424-df38d21c0eb2', 'Truffle Mushroom Risotto', 'Creamy Arborio rice with wild mushrooms and truffle oil', 550.00, 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?q=80&w=800&auto=format&fit=crop', '{"veg", "gluten_free"}'),
 ('e4b3e8e1-d3c2-4eb2-a8c6-55a0f6229555', 'd793b827-0466-4cf8-8424-df38d21c0eb2', 'Grilled Salmon', 'Norwegian salmon with asparagus and lemon butter sauce', 850.00, 'https://images.unsplash.com/photo-1485921325833-c519f76c4927?q=80&w=800&auto=format&fit=crop', '{"gluten_free"}'),
 ('e4b3e8e1-d3c2-4eb2-a8c6-55a0f6229555', 'd793b827-0466-4cf8-8424-df38d21c0eb2', 'Classic Smash Burger', 'Double beef patty, cheddar, lettuce, tomato, house sauce', 450.00, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800&auto=format&fit=crop', '{}');
 

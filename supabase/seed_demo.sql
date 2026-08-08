@@ -46,7 +46,7 @@ ON CONFLICT (id) DO NOTHING;
 -- 6. Create Menu Items
 -- Starters
 INSERT INTO menu_items (category_id, restaurant_id, name, description, price, image_url, dietary_tags) VALUES 
-('f52e5d7a-1153-4889-b88a-e5e78ecae921', 'd793b827-0466-4cf8-8424-df38d21c0eb2', 'Crispy Calamari', 'Lightly breaded squid rings with garlic aioli', 350.00, 'https://images.unsplash.com/photo-1599487405270-8e12eb23b022?q=80&w=800&auto=format&fit=crop', '{"dairy_free"}'),
+('f52e5d7a-1153-4889-b88a-e5e78ecae921', 'd793b827-0466-4cf8-8424-df38d21c0eb2', 'Crispy Calamari', 'Lightly breaded squid rings with garlic aioli', 350.00, 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?q=80&w=800&auto=format&fit=crop', '{"dairy_free"}'),
 ('f52e5d7a-1153-4889-b88a-e5e78ecae921', 'd793b827-0466-4cf8-8424-df38d21c0eb2', 'Caprese Salad', 'Fresh mozzarella, tomatoes, and basil with balsamic glaze', 280.00, 'https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?q=80&w=800&auto=format&fit=crop', '{"veg", "gluten_free"}');
 
 -- Mains

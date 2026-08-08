@@ -1,7 +1,15 @@
 -- Run this script in the Supabase SQL Editor
 -- Make sure to clear the editor before pasting!
 
--- 1. Create the Restaurant
+-- 1. Create the Owner Profile
+INSERT INTO owner_profiles (id, email, is_approved)
+VALUES (
+    '57a00043-ea19-4059-9e35-5b0b2d1580e6',
+    'paullovessoccer@gmail.com',
+    true
+) ON CONFLICT (id) DO UPDATE SET is_approved = true;
+
+-- 2. Create the Restaurant
 INSERT INTO restaurants (id, name, slug, owner_id)
 VALUES (
     'd793b827-0466-4cf8-8424-df38d21c0eb2',
@@ -10,7 +18,7 @@ VALUES (
     '57a00043-ea19-4059-9e35-5b0b2d1580e6'
 ) ON CONFLICT (id) DO NOTHING;
 
--- 2. Assign Owner (Staff Table)
+-- 3. Assign Owner (Staff Table)
 INSERT INTO restaurant_staff (user_id, restaurant_id, role)
 VALUES (
     '57a00043-ea19-4059-9e35-5b0b2d1580e6',

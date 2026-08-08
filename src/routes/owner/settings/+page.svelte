@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { supabase } from '$lib/supabase';
   import { toast } from 'svelte-sonner';
   import { Store, Upload, Image as ImageIcon } from 'lucide-svelte';
+  import { enhance } from '$app/forms';
 
   // We inherit data.restaurant from the +layout.server.ts via $props()
   let { data } = $props();
@@ -26,51 +26,6 @@
       imagePreview = URL.createObjectURL(imageFile);
     }
   }
-
-  async function uploadLogo(e: SubmitEvent) {
-    e.preventDefault();
-    if (!restaurant) { toast.error('Error: Restaurant data not found'); return; }
-    if (!supabase) { toast.error('Error: Supabase client not initialized'); return; }
-    if (!imageFile) { toast.error('Error: No image file selected'); return; }
-
-    isUploading = true;
-    try {
-      const fileExt = imageFile.name.split('.').pop();
-      const fileName = `${restaurant.id}_logo_${Date.now()}.${fileExt}`;
-      const filePath = `${restaurant.id}/${fileName}`;
-      
-      // Upload to restaurant-logos bucket
-      const { error: uploadError } = await supabase.storage
-        .from('restaurant-logos')
-        .upload(filePath, imageFile, { upsert: true });
-        
-      if (uploadError) throw uploadError;
-      
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('restaurant-logos')
-        .getPublicUrl(filePath);
-        
-      // Update restaurants table
-      const { error: dbError } = await supabase
-        .from('restaurants')
-        .update({ logo_url: publicUrl })
-        .eq('id', restaurant.id);
-        
-      if (dbError) throw dbError;
-      
-      toast.success('Restaurant logo updated successfully!');
-      
-      // Reload page to reflect changes in layout
-      window.location.reload();
-      
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || 'Failed to upload logo');
-    } finally {
-      isUploading = false;
-    }
-  }
 </script>
 
 <svelte:head>
@@ -92,7 +47,24 @@
       Upload a high-quality logo. This will be displayed on your Staff Portal and the Customer Table App.
     </p>
 
-    <form onsubmit={uploadLogo} class="flex flex-col md:flex-row gap-8 items-start">
+    <form 
+      method="POST" 
+      action="?/uploadLogo" 
+      enctype="multipart/form-data" 
+      use:enhance={() => {
+        isUploading = true;
+        return async ({ result, update }) => {
+          isUploading = false;
+          if (result.type === 'success') {
+            toast.success('Restaurant logo updated successfully!');
+            window.location.reload();
+          } else if (result.type === 'failure') {
+            toast.error(result.data?.error || 'Failed to upload logo');
+          }
+        };
+      }}
+      class="flex flex-col md:flex-row gap-8 items-start"
+    >
       
       <!-- Current/Preview Logo -->
       <div class="flex-shrink-0 flex flex-col items-center gap-4">
@@ -106,6 +78,7 @@
           {/if}
           <input 
             type="file" 
+            name="logo"
             accept="image/*" 
             onchange={handleImageSelect} 
             class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
@@ -146,7 +119,7 @@
         </button>
       </div>
 
-      </form>
+    </form>
     {:else}
       <div class="flex flex-col items-center justify-center py-12 text-center">
         <Store class="w-12 h-12 text-zinc-300 mb-4" />

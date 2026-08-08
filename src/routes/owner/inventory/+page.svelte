@@ -242,8 +242,8 @@
 {#if showAddModal}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="fixed inset-0 bg-zinc-950/60 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto" transition:fade={{ duration: 200 }} onclick={(e) => { if (e.target === e.currentTarget) showAddModal = false; }}>
-    <div class="bg-white border border-zinc-200 w-full max-w-xl rounded-2xl relative shadow-2xl my-auto" transition:scale={{ duration: 400, easing: backOut, start: 0.95 }} onclick={(e) => e.stopPropagation()}>
+  <div class="fixed inset-0 bg-zinc-950/60 backdrop-blur-md z-50 overflow-y-auto p-4" transition:fade={{ duration: 200 }} onclick={(e) => { if (e.target === e.currentTarget) showAddModal = false; }}>
+    <div class="bg-white border border-zinc-200 w-full max-w-xl rounded-2xl relative shadow-2xl mx-auto my-4 sm:my-12" transition:scale={{ duration: 400, easing: backOut, start: 0.95 }} onclick={(e) => e.stopPropagation()}>
       <div class="p-6 border-b border-zinc-100 flex items-center justify-between bg-white rounded-t-2xl">
         <h2 class="text-xl font-bold tracking-tight text-zinc-950">Add Menu Item</h2>
         <button class="w-8 h-8 flex items-center justify-center bg-zinc-100 hover:bg-zinc-200 rounded-full text-zinc-600 transition-colors active:scale-90" onclick={() => showAddModal = false}>
@@ -277,7 +277,7 @@
             }
           };
         }}
-        class="flex flex-col p-6 max-h-[70vh] overflow-y-auto"
+        class="flex flex-col p-6"
       >
         
         <!-- Image Upload -->
@@ -383,7 +383,7 @@
           </div>
         </div>
 
-        <div class="pt-6 border-t border-zinc-100 flex gap-4 sticky bottom-0 bg-white shadow-[0_-20px_20px_rgba(255,255,255,1)]">
+        <div class="pt-6 border-t border-zinc-100 flex gap-4 mt-2">
           <button type="button" class="flex-1 py-3 px-4 rounded-xl font-bold uppercase tracking-widest text-xs text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-50 transition-colors active:scale-95" onclick={() => showAddModal = false}>
             Cancel
           </button>

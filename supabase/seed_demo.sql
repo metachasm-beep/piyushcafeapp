@@ -14,8 +14,8 @@ ON CONFLICT (id) DO UPDATE SET is_approved = true;
 WITH user_info AS (
     SELECT id FROM auth.users WHERE email = 'paullovessoccer@gmail.com' LIMIT 1
 )
-INSERT INTO restaurants (id, name, slug, owner_id)
-SELECT 'd793b827-0466-4cf8-8424-df38d21c0eb2', 'The Golden Fork Demo', 'golden-fork-demo', id
+INSERT INTO restaurants (id, name, slug, owner_id, logo_url)
+SELECT 'd793b827-0466-4cf8-8424-df38d21c0eb2', 'The Golden Fork Demo', 'golden-fork-demo', id, 'https://api.dicebear.com/7.x/shapes/svg?seed=GoldenFork&backgroundColor=F59E0B'
 FROM user_info
 ON CONFLICT (id) DO NOTHING;
 

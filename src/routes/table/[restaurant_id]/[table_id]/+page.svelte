@@ -81,6 +81,7 @@
   let selectedVariation = $state<typeof allVariations[0] | null>(null);
   let selectedAddons = $state<typeof allAddons[0][]>([]);
   let itemModalQty = $state(1);
+  let itemSpecialInstructions = $state('');
   
   let featuredItems = $derived(menuItems.filter(item => item.is_featured && item.is_available));
   
@@ -188,20 +189,16 @@
 
   function handleMenuAdd(item: typeof menuItems[0]) {
     const itemVars = allVariations.filter(v => v.menu_item_id === item.id);
-    const itemAddons = allAddons.filter(a => a.menu_item_id === item.id);
-    if (itemVars.length === 0 && itemAddons.length === 0) {
-      cart.addItem(item, 1);
-    } else {
-      activeItem = item;
-      selectedVariation = itemVars.length > 0 ? itemVars[0] : null;
-      selectedAddons = [];
-      itemModalQty = 1;
-    }
+    activeItem = item;
+    selectedVariation = itemVars.length > 0 ? itemVars[0] : null;
+    selectedAddons = [];
+    itemModalQty = 1;
+    itemSpecialInstructions = '';
   }
 
   function confirmItemModal() {
     if (activeItem) {
-      cart.addItem(activeItem, itemModalQty, '', selectedVariation, selectedAddons);
+      cart.addItem(activeItem, itemModalQty, itemSpecialInstructions, selectedVariation, selectedAddons);
       activeItem = null;
       toast.success('Added to cart');
     }
@@ -546,6 +543,9 @@
               {#if item.addons.length > 0}
                 <span class="text-[11px] text-zinc-500 block leading-tight">{item.addons.map(a => a.name).join(', ')}</span>
               {/if}
+              {#if item.special_instructions}
+                <span class="text-[11px] text-zinc-500 block leading-tight italic">Note: {item.special_instructions}</span>
+              {/if}
               <span class="block font-bold text-[15px] text-zinc-900 mt-1">
                 {formatCurrency(item.menu_item.price + (item.variation?.extra_price || 0) + item.addons.reduce((sum, a) => sum + a.extra_price, 0))}
               </span>
@@ -667,6 +667,15 @@
             </div>
           </div>
         {/if}
+
+        <div class="space-y-3">
+          <h4 class="font-bold text-sm text-zinc-900 uppercase tracking-widest">Special Instructions</h4>
+          <textarea 
+            bind:value={itemSpecialInstructions}
+            placeholder="e.g. No onions, extra spicy, etc."
+            class="flex w-full rounded-xl border-2 border-zinc-100 bg-white px-4 py-3 text-[15px] text-zinc-900 focus-visible:outline-none focus-visible:border-[var(--brand-primary)] focus-visible:bg-[var(--brand-primary)]/5 transition-all h-20 resize-none"
+          ></textarea>
+        </div>
         
         <div class="flex items-center justify-between pt-4 border-t border-zinc-100">
           <span class="font-bold text-sm text-zinc-900 uppercase tracking-widest">Quantity</span>

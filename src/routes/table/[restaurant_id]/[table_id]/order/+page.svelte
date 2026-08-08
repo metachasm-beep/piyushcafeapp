@@ -64,7 +64,7 @@
         }
         
         if (['served', 'paid', 'cancelled'].includes(data.status)) {
-          supabase.removeChannel(channel);
+          supabase?.removeChannel(channel);
         }
       } catch (err) {
         console.error('Failed to fetch order status', err);

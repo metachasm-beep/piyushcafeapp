@@ -33,26 +33,10 @@
   let primaryColor = $derived(restaurant?.primary_color || '#09090b');
   let primaryRgb = $derived(hexToRgb(primaryColor));
 
-  $effect(() => { session.init(restaurant, table); 
-    return () => { if(observer) observer.disconnect(); };
-  });
+  $effect(() => { session.init(restaurant, table); });
 
   
-  let observer: IntersectionObserver;
   onMount(async () => {
-    observer = new IntersectionObserver((entries) => {
-      let visibleCat = activeCategory;
-      entries.forEach(entry => {
-        if (entry.isIntersecting && entry.intersectionRatio > 0.1) {
-          visibleCat = entry.target.id.replace('category-', '');
-        }
-      });
-      activeCategory = visibleCat;
-    }, { rootMargin: '-20% 0px -60% 0px', threshold: [0.1, 0.5] });
-    
-    setTimeout(() => {
-      document.querySelectorAll('section[id^="category-"]').forEach(el => observer.observe(el));
-    }, 1000);
 
     if (browser) {
       const gsap = (await import('gsap')).default;
@@ -99,23 +83,41 @@
   let itemModalQty = $state(1);
   
   let featuredItems = $derived(menuItems.filter(item => item.is_featured && item.is_available));
-  let itemsByCategory = $derived(() => {
-    const grouped = new Map();
+  
+  let activeIndex = $state(0);
+  
+  let flatMenuItems = $derived.by(() => {
+    let flat: any[] = [];
     for (const cat of categories) {
-      grouped.set(cat.id, menuItems.filter(item => item.category_id === cat.id));
+      const items = menuItems.filter((i: any) => i.category_id === cat.id);
+      flat.push(...items);
     }
-    return grouped;
+    return flat;
   });
 
-  function scrollToCategory(catId: string) {
+  function trackActive(node: HTMLElement, { index, categoryId }: { index: number, categoryId: string }) {
+    if (typeof IntersectionObserver !== 'undefined') {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+            activeIndex = index;
+            activeCategory = categoryId;
+          }
+        });
+      }, { root: document.getElementById('carousel-container'), threshold: 0.6 });
+      observer.observe(node);
+      return { destroy() { observer.disconnect(); } };
+    }
+  }
+
+  function scrollToCarouselItem(catId: string) {
     activeCategory = catId;
-    if (catId === 'all') { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
-    const el = document.getElementById(`category-${catId}`);
-    if (el) {
-      const headerOffset = 120;
-      const elementPosition = el.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+    const firstItemIndex = flatMenuItems.findIndex((item: any) => item.category_id === catId);
+    if (firstItemIndex >= 0) {
+      const el = document.getElementById(`carousel-item-${firstItemIndex}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+      }
     }
   }
 
@@ -379,145 +381,81 @@
   
   </header>
 
-<!-- Parallax Hero -->
-<!-- Spacer for sticky header -->
-<div class="h-24 w-full"></div>
+<!-- Full-Screen 3D Carousel -->
+<main class="fixed inset-0 pt-[80px] pb-[80px] w-full h-[100dvh] bg-zinc-950 overflow-hidden flex flex-col z-10 transition-colors duration-1000 {isDarkMode ? 'dark-theme' : ''}">
+  <div id="carousel-container" class="w-full flex-1 flex items-center overflow-x-auto overflow-y-hidden snap-x snap-mandatory hide-scrollbar relative">
+    <!-- Spacer at start to center first item -->
+    <div class="w-[10vw] md:w-[30vw] shrink-0 snap-start"></div>
+    
+    {#if flatMenuItems.length === 0}
+       <div class="w-full flex justify-center text-white/50 py-20 text-xl font-bold">No items found</div>
+    {/if}
 
+    {#each flatMenuItems as item, i}
+      <div 
+        id="carousel-item-{i}"
+        class="w-[80vw] md:w-[40vw] shrink-0 h-[65vh] snap-center px-3 md:px-6 transition-all duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] {activeIndex === i ? 'scale-100 opacity-100 z-20' : 'scale-90 opacity-40 z-10'}"
+        style="perspective: 1000px;"
+        use:trackActive={{index: i, categoryId: item.category_id}}
+      >
+        <div class="w-full h-full rounded-[2rem] md:rounded-[3rem] relative overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.4)] bg-zinc-900 group" style="transform: {activeIndex === i ? 'rotateY(0deg)' : (i > activeIndex ? 'rotateY(-15deg)' : 'rotateY(15deg)')}; transition: transform 0.7s cubic-bezier(0.2,0.8,0.2,1);">
+          {#if item.image_url}
+             <img src={item.image_url} alt={item.name} class="absolute inset-0 w-full h-full object-cover transition-transform duration-[2s] {activeIndex === i ? 'scale-105' : 'scale-100'}" />
+          {:else}
+             <div class="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-950 flex items-center justify-center font-serif text-[12rem] text-white/5 font-black tracking-tighter select-none">
+                {item.name.substring(0,1).toUpperCase()}
+             </div>
+          {/if}
 
-<!-- Dynamic 3D Category Indicator -->
-<div class="sticky top-20 left-0 right-0 z-30 flex justify-center pointer-events-none px-4">
-  <div class="bg-black/80 backdrop-blur-xl text-white px-6 py-2.5 rounded-full shadow-2xl border border-white/10 flex items-center justify-center overflow-hidden h-12 min-w-[140px] pointer-events-auto">
-    {#key activeCategory}
-      <span class="font-black tracking-widest uppercase text-sm" in:fly={{ y: 20, duration: 400, easing: (t) => { const s = 1.70158; return --t * t * ((s + 1) * t + s) + 1; } }} out:fly={{ y: -20, duration: 400, opacity: 0 }} style="position: absolute;">
-        {activeCategory === 'all' ? '✨ Featured' : categories.find(c => c.id === activeCategory)?.name || ''}
-      </span>
-    {/key}
+          <!-- Dark gradient overlay for text readability -->
+          <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+
+          <!-- Tags & Out of stock -->
+          <div class="absolute top-5 left-5 right-5 flex gap-2 overflow-x-auto hide-scrollbar">
+            {#each item.dietary_tags as tag}<div class="shrink-0"><DietaryBadge {tag} /></div>{/each}
+            {#if !item.is_available}
+               <span class="bg-red-500/90 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold tracking-widest shadow-md ml-auto">OUT OF STOCK</span>
+            {/if}
+          </div>
+
+          <!-- Card Content -->
+          <div class="absolute bottom-0 left-0 right-0 p-6 md:p-8 flex flex-col gap-3 transition-all duration-700 {activeIndex === i ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} pointer-events-none">
+             <div class="pointer-events-auto">
+               <h3 class="text-3xl md:text-4xl font-black text-white leading-tight drop-shadow-md mb-2">{item.name}</h3>
+               <p class="text-sm md:text-base text-zinc-300 line-clamp-3 drop-shadow mb-4 leading-relaxed">{item.description}</p>
+               <div class="flex items-center justify-between">
+                 <span class="text-3xl font-bold text-white drop-shadow-md">{formatCurrency(item.price)}</span>
+                 {#if item.is_available}
+                   <button class="w-14 h-14 md:w-16 md:h-16 rounded-full bg-[var(--brand-primary)] text-white shadow-[0_10px_20px_rgba(0,0,0,0.3)] flex items-center justify-center transition-transform duration-300 active:scale-90 hover:scale-110" onclick={() => handleMenuAdd(item)}>
+                      <Plus size={28} />
+                   </button>
+                 {/if}
+               </div>
+             </div>
+          </div>
+        </div>
+      </div>
+    {/each}
+
+    <!-- Spacer at end -->
+    <div class="w-[10vw] md:w-[30vw] shrink-0 snap-end"></div>
+  </div>
+</main>
+
+<!-- Category Jump Dock -->
+<div class="fixed bottom-0 left-0 right-0 h-[80px] bg-black/60 backdrop-blur-2xl border-t border-white/10 z-30 flex items-center px-4 overflow-x-auto hide-scrollbar snap-x snap-mandatory pb-[env(safe-area-inset-bottom,0px)]">
+  <div class="flex gap-3 min-w-max px-2 mx-auto">
+    {#each categories as category}
+      <button 
+        class="snap-center px-6 py-3 rounded-full text-[13px] uppercase tracking-widest font-black transition-all duration-500 {activeCategory === category.id ? 'bg-white text-black scale-105 shadow-[0_0_20px_rgba(255,255,255,0.4)]' : 'bg-white/10 text-white/60 hover:bg-white/20'}"
+        onclick={() => scrollToCarouselItem(category.id)}
+      >
+        {category.icon_emoji} {category.name}
+      </button>
+    {/each}
   </div>
 </div>
 
-<main class="pt-6 pb-32 px-4 space-y-8 max-w-2xl mx-auto relative z-10">
-  
-  <!-- Featured Section (Suggestion #1 Bento Grid) -->
-  {#if featuredItems.length > 0 && activeCategory === 'all'}
-    <section class="space-y-4" style="perspective: 1000px;">
-      <h2 class="text-base font-semibold text-zinc-950 flex items-center gap-2">✨ Featured</h2>
-      <!-- Editorial Magazine Layout -->
-      <div class="space-y-6 pb-2 pt-2">
-        {#each featuredItems.slice(0, 5) as item, i}
-          <div class="featured-card rounded-3xl overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.2)] relative h-[50vh] min-h-[400px] w-full flex flex-col justify-end group">
-            {#if item.image_url}
-              <img src={item.image_url} alt={item.name} class="absolute inset-0 w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105" loading="lazy" />
-            {:else}
-              <div class="absolute inset-0 bg-[var(--brand-primary)] flex items-center justify-center font-serif text-8xl text-white opacity-80">{item.name.substring(0, 1)}</div>
-            {/if}
-            
-            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-            
-            <div class="absolute top-4 left-4 flex gap-1.5 overflow-x-auto snap-x hide-scrollbar max-w-[calc(100%-32px)]">
-              {#each item.dietary_tags as tag}<div class="snap-start shrink-0"><DietaryBadge {tag} /></div>{/each}
-            </div>
-
-            <div class="relative z-10 p-6 flex flex-col gap-2">
-              <h3 class="font-black text-3xl text-white leading-tight flex items-center shadow-black drop-shadow-md">{item.name} {@render dietaryIcon(item.dietary_tags)}</h3>
-              <p class="text-sm text-zinc-200 line-clamp-2 drop-shadow-md">{item.description}</p>
-              
-              <div class="flex items-center justify-between mt-4">
-                <span class="font-bold text-2xl text-white drop-shadow-md">{formatCurrency(item.price)}</span>
-                <button class="w-12 h-12 rounded-full bg-[var(--brand-primary)] text-white shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-90" onclick={() => handleMenuAdd(item)}>
-                  <Plus size={24} />
-                </button>
-              </div>
-            </div>
-          </div>
-        {/each}
-      </div>
-    </section>
-  {/if}
-
-  <!-- Menu Grid Grouped by Category -->
-  {#each categories as category}
-    {@const items = itemsByCategory().get(category.id) || []}
-    {#if (activeCategory === 'all' || activeCategory === category.id)}
-      <section id="category-{category.id}" class="space-y-4 scroll-mt-32">
-        <h2 class="text-base font-semibold text-zinc-950 flex items-center gap-2 border-b border-zinc-100 pb-2">
-          {category.icon_emoji} {category.name}
-        </h2>
-        
-        {#if items.length === 0}
-          <!-- Suggestion #2: Kinetic Empty State -->
-          <div class="py-12 flex flex-col items-center justify-center text-center">
-            <div class="relative h-12 overflow-hidden mb-2">
-              <span class="block text-4xl font-black text-zinc-200 uppercase tracking-tighter" style="animation: scrollUp 4s cubic-bezier(0.83, 0, 0.17, 1) infinite;">EMPTY</span>
-              <span class="block text-4xl font-black text-zinc-200 uppercase tracking-tighter absolute top-full left-0 right-0" style="animation: scrollUp2 4s cubic-bezier(0.83, 0, 0.17, 1) infinite;">EMPTY</span>
-            </div>
-            <p class="text-sm text-zinc-400 font-medium">No items available here right now.</p>
-            <style>
-              @keyframes scrollUp { 0%, 40% { transform: translateY(0); } 50%, 90% { transform: translateY(-100%); } 100% { transform: translateY(-100%); } }
-              @keyframes scrollUp2 { 0%, 40% { transform: translateY(0); } 50%, 90% { transform: translateY(-100%); } 100% { transform: translateY(-100%); } }
-            </style>
-          </div>
-        {:else}
-          <div class="space-y-4">
-            {#each items as item}
-              <div class="absolute inset-0 bg-emerald-500 rounded-3xl flex items-center px-6 text-white font-bold tracking-widest"><ShoppingCart class="mr-2"/> Add to Cart</div>
-                <div use:swipeOrder={{item}} class="menu-card relative z-10 rounded-3xl bg-white/90 backdrop-blur-sm p-4 flex gap-4 relative overflow-hidden shadow-[0_12px_24px_rgba(0,0,0,0.04)] border border-white/60 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 {item.is_available ? '' : 'opacity-60'}">
-                {#if !item.is_available}
-                  <div class="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-[2px]">
-                    <span class="bg-[var(--brand-primary)] text-white px-3 py-1.5 rounded-lg text-xs font-semibold tracking-widest shadow-md">OUT OF STOCK</span>
-                  </div>
-                {/if}
-                <div class="w-28 h-28 shrink-0 rounded-2xl bg-zinc-100 overflow-hidden shadow-inner relative">
-                  {#if item.image_url}
-                    <div class="absolute inset-0 bg-gradient-to-r from-zinc-200 via-zinc-100 to-zinc-200 animate-pulse -z-10"></div>
-                    <img src={item.image_url} alt={item.name} class="w-full h-full object-cover transition-transform duration-700 hover:scale-110 z-0" loading="lazy" />
-                  {:else}
-                    <div class="w-full h-full bg-[var(--brand-primary)] text-white flex items-center justify-center font-serif text-3xl opacity-90 relative overflow-hidden">
-                      <span class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')]"></span>
-                      {item.name.substring(0, 1)}
-                    </div>
-                  {/if}
-                </div>
-                <div class="flex flex-col flex-1 min-w-0">
-                  <div class="flex gap-1.5 mb-2 overflow-x-auto snap-x hide-scrollbar max-w-full">
-                    {#each item.dietary_tags as tag}<div class="snap-start shrink-0"><DietaryBadge {tag} /></div>{/each}
-                  </div>
-                  <h3 class="font-bold text-[16px] text-zinc-950 leading-tight mb-1 flex items-center">{item.name} {@render dietaryIcon(item.dietary_tags)}</h3>
-                  <p class="text-xs text-zinc-500 line-clamp-2 mb-auto leading-relaxed">{item.description}</p>
-                  <div class="mt-3 flex items-center justify-between">
-                    <div>
-                      <span class="font-bold text-[16px] text-zinc-900">{formatCurrency(item.price)}</span>
-                      {#if item.preparation_time}
-                        <span class="text-[10px] text-zinc-400 ml-1.5 font-medium">⏱ {item.preparation_time}m</span>
-                      {/if}
-                    </div>
-                    {#if item.is_available}
-                      {#if getTotalQuantity(item.id) > 0}
-                        <div class="flex items-center gap-1.5 bg-zinc-100 rounded-full p-0.5 border border-zinc-200/50 shadow-inner z-20">
-                          {#if allVariations.filter(v => v.menu_item_id === item.id).length === 0 && allAddons.filter(a => a.menu_item_id === item.id).length === 0}
-                            <button class="w-8 h-8 rounded-full bg-white border border-zinc-200/50 shadow-sm flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:bg-zinc-50" onclick={() => cart.setQuantity(cart.generateCartKey(item.id), getTotalQuantity(item.id) - 1)}><Minus size={14} /></button>
-                            <span class="w-4 text-center font-semibold text-xs">{getTotalQuantity(item.id)}</span>
-                            <button class="w-8 h-8 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:bg-blue-700" onclick={() => handleMenuAdd(item)}><Plus size={14} /></button>
-                          {:else}
-                            <span class="w-4 text-center font-semibold text-xs pl-1">{getTotalQuantity(item.id)}</span>
-                            <button class="w-8 h-8 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:bg-blue-700" onclick={() => handleMenuAdd(item)}><Plus size={14} /></button>
-                          {/if}
-                        </div>
-                      {:else}
-                        <button class="w-9 h-9 rounded-full bg-[var(--brand-primary)] text-white flex items-center justify-center shadow-md z-20 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-75 hover:-translate-y-0.5 hover:shadow-lg hover:bg-blue-600" onclick={() => handleMenuAdd(item)}>
-                          <Plus size={18} />
-                        </button>
-                      {/if}
-                    {/if}
-                  </div>
-                </div>
-              </div>
-            {/each}
-          </div>
-        {/if}
-      </section>
-    {/if}
-  {/each}
-</main>
 
 <!-- Floating Buttons -->
 <div class="fixed right-4 flex flex-col gap-4 z-40" style="bottom: max(24px, env(safe-area-inset-bottom, 24px)); perspective: 800px;">

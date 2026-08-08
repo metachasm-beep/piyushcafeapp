@@ -231,13 +231,23 @@
       <img 
         src={restaurant.logo_url} 
         alt={restaurant.name} 
-        class="w-32 h-32 md:w-48 md:h-48 rounded-full shadow-2xl object-cover mb-6 border-4 border-white/20 animate-pulse" 
+        class="w-80 h-80 md:w-[36rem] md:h-[36rem] max-w-[90vw] max-h-[90vw] rounded-full shadow-2xl object-cover mb-8 border-4 border-white/20 animate-pulse" 
       />
     {/if}
-    <h1 class="text-3xl md:text-5xl font-bold text-white tracking-tight drop-shadow-md text-center px-4">
+    <h1 
+      class="text-[4rem] leading-none md:text-[8rem] font-bold text-white tracking-tight drop-shadow-lg text-center px-4"
+      in:fly={{ y: 40, duration: 800, delay: 100 }}
+      out:fly={{ y: -40, duration: 500 }}
+    >
       {restaurant.name}
     </h1>
-    <p class="text-white/70 mt-2 text-sm uppercase tracking-widest font-semibold">Welcome</p>
+    <p 
+      class="text-white/70 mt-4 text-xl md:text-3xl uppercase tracking-widest font-semibold"
+      in:fade={{ duration: 800, delay: 400 }}
+      out:fade={{ duration: 400 }}
+    >
+      Welcome
+    </p>
   </div>
 {/if}
 

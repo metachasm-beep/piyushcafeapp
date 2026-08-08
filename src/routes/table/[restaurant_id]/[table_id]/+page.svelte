@@ -55,8 +55,14 @@
         });
       });
     }
+
+    // Splash screen timer
+    setTimeout(() => {
+      showSplash = false;
+    }, 2000);
   });
 
+  let showSplash = $state(true);
   let activeCategory = $state('all');
   let isCartOpen = $state(false);
   let showCheckoutModal = $state(false);
@@ -214,6 +220,26 @@
   <title>{restaurant.name} - Menu</title>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </svelte:head>
+
+<!-- Splash Screen -->
+{#if showSplash}
+  <div 
+    class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[var(--brand-primary)]"
+    out:fade={{ duration: 600 }}
+  >
+    {#if restaurant.logo_url}
+      <img 
+        src={restaurant.logo_url} 
+        alt={restaurant.name} 
+        class="w-32 h-32 md:w-48 md:h-48 rounded-full shadow-2xl object-cover mb-6 border-4 border-white/20 animate-pulse" 
+      />
+    {/if}
+    <h1 class="text-3xl md:text-5xl font-bold text-white tracking-tight drop-shadow-md text-center px-4">
+      {restaurant.name}
+    </h1>
+    <p class="text-white/70 mt-2 text-sm uppercase tracking-widest font-semibold">Welcome</p>
+  </div>
+{/if}
 
 <style>
   :global(body) {

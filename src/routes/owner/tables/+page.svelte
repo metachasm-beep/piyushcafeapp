@@ -73,8 +73,17 @@
     isSaving = false;
     
     if (supabase) {
-      const { error } = await supabase.from('tables').insert(newTable);
+      const dbPayload = {
+        id: newTable.id,
+        restaurant_id: newTable.restaurant_id,
+        table_number: newTable.table_number?.toString(), // DB expects text
+        display_name: newTable.display_name,
+        is_active: newTable.is_active
+      };
+      
+      const { error } = await supabase.from('tables').insert(dbPayload);
       if (error) {
+        console.error('Supabase Error:', error);
         toast.error('Failed to save table');
         // Revert optimistic
         tables = tables.filter(t => t.id !== newTable.id);

@@ -470,21 +470,13 @@
 <div class={isDarkMode ? "dark-theme min-h-screen transition-colors duration-1000" : "min-h-screen transition-colors duration-1000"}>
 <!-- Sticky Header Navigation -->
 <header class="fixed top-0 left-0 right-0 z-40 bg-white/60 backdrop-blur-2xl border-b border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-all">
-  <div class="px-4 py-3 flex items-center justify-between relative">
-    <div class="flex items-center flex-1 min-w-0">
-      <div class="truncate">
-        <h1 class="font-bold text-lg tracking-tight text-zinc-950 leading-tight truncate">{restaurant.name}</h1>
-        <p class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Menu</p>
-      </div>
-    </div>
-    
-    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-10 pointer-events-none">
-      {#if restaurant.logo_url}
-        <img src={restaurant.logo_url} alt="Logo" class="h-10 w-10 object-contain rounded-full shadow-sm bg-white border border-zinc-100 p-0.5" />
-      {/if}
+  <div class="px-4 py-3 flex items-center justify-between">
+    <div class="flex flex-col flex-1 min-w-0 justify-center">
+      <h1 class="font-black text-[22px] tracking-tighter text-zinc-950 leading-none truncate">{restaurant.name}</h1>
+      <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em] mt-1">Digital Menu</p>
     </div>
 
-    <div class="flex items-center justify-end flex-1 pl-2 gap-2">
+    <div class="flex items-center justify-end pl-2 gap-2.5">
       {#if $session.activeOrderId}
         <button 
           class="inline-flex items-center gap-1.5 rounded-full border border-blue-400/50 bg-blue-500/10 backdrop-blur px-3 py-1 text-xs font-bold text-blue-600 dark:text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)] whitespace-nowrap animate-pulse"
@@ -493,7 +485,10 @@
           <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div> Live Order
         </button>
       {/if}
-      <span class="inline-flex items-center rounded-full border border-zinc-200/50 bg-[var(--brand-primary)]/90 backdrop-blur px-3 py-1 text-xs font-semibold text-zinc-50 shadow-[0_4px_12px_rgba(0,0,0,0.1)] whitespace-nowrap">
+      {#if restaurant.logo_url}
+        <img src={restaurant.logo_url} alt="Logo" class="h-8 w-8 object-contain rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.1)] bg-white border-2 border-white" />
+      {/if}
+      <span class="inline-flex items-center rounded-full border border-white/20 bg-[var(--brand-primary)] backdrop-blur px-3 py-1.5 text-xs font-black text-white drop-shadow-md shadow-[0_4px_12px_rgba(0,0,0,0.15)] whitespace-nowrap">
         {table.display_name ?? `Table ${table.table_number}`}
       </span>
     </div>
@@ -579,7 +574,7 @@
 
 
 <!-- Floating Buttons -->
-<div class="fixed right-4 flex flex-col gap-4 z-40 gooey-filter" style="bottom: max(24px, env(safe-area-inset-bottom, 24px)); perspective: 800px;">
+<div class="fixed right-4 flex flex-col gap-4 z-40" style="bottom: max(24px, env(safe-area-inset-bottom, 24px)); perspective: 800px;">
   <!-- Call Waiter (Suggestion #8 Magnetic) -->
   <button 
     use:magnetic
@@ -704,7 +699,7 @@
           <span>Total</span><span>{formatCurrency($cartTotal * 1.1)}</span>
         </div>
         <button 
-          class="inline-flex w-full items-center justify-center rounded-md bg-[var(--brand-primary)] text-zinc-50 shadow hover:bg-zinc-800 h-11 px-4 text-sm font-medium transition-colors mt-1"
+          class="inline-flex w-full items-center justify-center rounded-xl bg-[var(--brand-primary)] text-white drop-shadow-md shadow-lg hover:brightness-90 h-12 px-4 text-base font-black transition-all mt-1"
           onclick={placeOrder}
         >
           Place Order
@@ -890,7 +885,7 @@
       </div>
 
       <button 
-        class="inline-flex w-full items-center justify-center rounded-md bg-[var(--brand-primary)] text-zinc-50 shadow hover:bg-zinc-800 h-12 px-4 text-sm font-semibold transition-colors disabled:opacity-50"
+        class="inline-flex w-full items-center justify-center rounded-xl bg-[var(--brand-primary)] text-white drop-shadow-md shadow-lg hover:brightness-90 h-14 px-4 text-base font-black transition-all disabled:opacity-50"
         onclick={handlePayment}
         disabled={isProcessingPayment}
       >

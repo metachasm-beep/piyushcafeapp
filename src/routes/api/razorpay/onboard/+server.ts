@@ -6,7 +6,7 @@ import { env } from '$env/dynamic/private';
 export const POST: RequestHandler = async ({ request, locals: { supabase } }) => {
 	try {
 		const body = await request.json();
-		const { restaurant_id, email, phone, business_name, pan_number } = body;
+		const { restaurant_id, email, phone, business_name, pan_number, beneficiary_name, account_number, ifsc_code } = body;
 
 		if (!restaurant_id) {
 			return json({ error: 'Missing restaurant_id' }, { status: 400 });
@@ -36,6 +36,13 @@ export const POST: RequestHandler = async ({ request, locals: { supabase } }) =>
 			},
 			legal_info: {
 				pan: pan_number
+			},
+			// Bank details for settlements
+			// Note: The exact structure might vary based on Razorpay Route version, but typically it can be added here or via an update call
+			notes: {
+				beneficiary_name: beneficiary_name,
+				account_number: account_number,
+				ifsc_code: ifsc_code
 			}
 		});
 

@@ -10,8 +10,8 @@ export type Restaurant = {
   primary_color: string;
   secondary_color: string;
   upi_id: string | null;
-  razorpay_key_id: string | null;
-  stripe_account_id: string | null;
+  razorpay_account_id: string | null;
+  paypal_account_id: string | null;
   currency: string;
   address: string | null;
   phone: string | null;

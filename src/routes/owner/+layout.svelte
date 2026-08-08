@@ -30,7 +30,7 @@
   const managementLinks = [
     { href: '/owner/analytics', label: 'Analytics', icon: TrendingUp, exact: false },
     { href: '/owner/settings', label: 'Settings', icon: Settings, exact: false },
-    { href: '/owner/kyc', label: 'PayU KYC', icon: Banknote, exact: false },
+    { href: '/owner/payouts', label: 'Payouts', icon: Banknote, exact: false },
   ];
 
   function isActive(link: { href: string; exact: boolean }) {

@@ -135,7 +135,7 @@
 
       <!-- Actions -->
       <div class="flex-1 space-y-6 w-full">
-        <!-- Color Picker -->
+        <!-- [TEMPORARILY DISABLED] Requires 'primary_color' column in DB
         <div class="space-y-3">
           <label class="text-sm font-semibold text-zinc-900 block">Theme Color</label>
           <p class="text-xs text-zinc-500 mb-2">We automatically extract a brand color from your logo. You can manually tweak it here to perfect your UI.</p>
@@ -154,13 +154,13 @@
               <span class="text-xs text-zinc-500">Primary Color</span>
             </div>
             
-            <!-- Mini Theme Preview -->
             <div class="ml-auto flex items-center gap-2 p-2 bg-zinc-50 rounded-lg border border-zinc-200">
               <div class="px-3 py-1.5 rounded-md text-xs font-bold text-white shadow-sm" style="background-color: {primaryColor}">Button</div>
               <div class="w-6 h-6 rounded-full flex items-center justify-center bg-white border shadow-sm" style="color: {primaryColor}">★</div>
             </div>
           </div>
         </div>
+        -->
 
         <div class="p-4 bg-zinc-50 rounded-xl border border-zinc-200 space-y-2">
           <p class="text-sm font-semibold text-zinc-900">Logo Requirements:</p>

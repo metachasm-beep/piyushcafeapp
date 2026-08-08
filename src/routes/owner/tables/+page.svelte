@@ -6,6 +6,7 @@
   import { env } from '$env/dynamic/public';
   import { Plus, QrCode as QrIcon, Download, X, Users } from 'lucide-svelte';
   import type { Table } from '$lib/types';
+  import { enhance } from '$app/forms';
 
   let { data } = $props();
   let restaurant = $derived(data.restaurant);
@@ -46,49 +47,6 @@
     a.href = qrDataUrl;
     a.download = `qr-table-${selectedTable.table_number}.png`;
     a.click();
-  }
-
-  async function addTable(e: SubmitEvent) {
-    e.preventDefault();
-    if (!restaurant?.id && supabase) {
-      toast.error('Could not determine your restaurant ID');
-      return;
-    }
-
-    isSaving = true;
-    const fd = new FormData(e.target as HTMLFormElement);
-    const newTable: Partial<Table> = {
-      id: crypto.randomUUID(),
-      table_number: Number(fd.get('table_number')),
-      display_name: fd.get('display_name') as string,
-      capacity: Number(fd.get('capacity')),
-      restaurant_id: restaurant?.id,
-      is_active: true,
-    };
-    
-    // Optimistic update
-    tables = [...tables, newTable as Table];
-    toast.success('Table added!');
-    showAddModal = false;
-    isSaving = false;
-    
-    if (supabase) {
-      const dbPayload = {
-        id: newTable.id,
-        restaurant_id: newTable.restaurant_id,
-        table_number: newTable.table_number?.toString(), // DB expects text
-        display_name: newTable.display_name,
-        is_active: newTable.is_active
-      };
-      
-      const { error } = await supabase.from('tables').insert(dbPayload);
-      if (error) {
-        console.error('Supabase Error:', error);
-        toast.error('Failed to save table');
-        // Revert optimistic
-        tables = tables.filter(t => t.id !== newTable.id);
-      }
-    }
   }
 </script>
 
@@ -183,7 +141,26 @@
     <div class="bg-white border border-zinc-200 w-full max-w-md p-8 rounded-2xl relative shadow-xl" onclick={(e) => e.stopPropagation()}>
       <button class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-zinc-50 hover:bg-zinc-100 flex items-center justify-center text-zinc-500 transition-colors" onclick={() => showAddModal = false}><X size={16} /></button>
       <h2 class="text-xl font-bold text-zinc-950 tracking-tight mb-6">Add New Table</h2>
-      <form onsubmit={addTable} class="flex flex-col gap-4">
+      <form 
+        method="POST" 
+        action="?/addTable"
+        use:enhance={() => {
+          isSaving = true;
+          return async ({ result, update }) => {
+            isSaving = false;
+            if (result.type === 'success') {
+              toast.success('Table added successfully!');
+              if (result.data?.table) {
+                tables = [...tables, result.data.table as Table];
+              }
+              showAddModal = false;
+            } else if (result.type === 'failure') {
+              toast.error(result.data?.error || 'Failed to save table');
+            }
+          };
+        }}
+        class="flex flex-col gap-4"
+      >
         <div>
           <label class="block text-sm font-medium text-zinc-700 mb-1.5" for="table_number">Table Number</label>
           <input class="w-full px-3 py-2 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all" id="table_number" name="table_number" type="number" required min="1" placeholder="7" />

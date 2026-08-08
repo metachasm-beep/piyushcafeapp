@@ -190,6 +190,60 @@
   <title>Track Order - Restaurant PWA</title>
 </svelte:head>
 
+<style>
+  @keyframes ring {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-15deg); }
+    75% { transform: rotate(15deg); }
+  }
+  .icon-ring { animation: ring 1s ease-in-out infinite; }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  .icon-float { animation: float 2s ease-in-out infinite; }
+
+  /* Skeuomorphic Ticket */
+  .receipt-ticket {
+    background: #fff;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border-radius: 8px 8px 0 0;
+    padding-bottom: 2rem;
+  }
+  .receipt-ticket::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 100%;
+    height: 10px;
+    background: radial-gradient(circle at 10px 10px, transparent 10px, #fff 11px) repeat-x;
+    background-size: 20px 20px;
+    background-position: -10px -10px;
+  }
+  
+  /* Glassmorphic Loader */
+  .glass-skeleton {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+  }
+  .glass-skeleton::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    100% { left: 200%; }
+  }
+</style>
+
 {#if order}
   <header class="fixed top-0 inset-x-0 z-40 bg-white/80 backdrop-blur-xl border-b border-zinc-200 px-4 py-4 flex items-center gap-4">
     <button class="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-700 active:scale-95 transition-transform hover:bg-zinc-200" onclick={handleBack}>
@@ -224,7 +278,7 @@
             {@const isCompleted = i <= currentStageIndex}
             {@const isCurrent = i === currentStageIndex}
             <div class="flex flex-col items-center gap-2">
-              <div class="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 {isCompleted ? 'bg-[var(--brand-primary)] text-white shadow-md' : 'bg-white text-zinc-400 border border-zinc-200'} {isCurrent ? 'scale-110' : ''} relative">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 {isCompleted ? 'bg-[var(--brand-primary)] text-white shadow-md' : 'bg-white text-zinc-400 border border-zinc-200'} {isCurrent ? 'scale-110 icon-float' : ''} relative">
                 {#if isCurrent}
                   <span class="absolute inset-0 rounded-full border-2 border-zinc-900 animate-ping opacity-50"></span>
                 {/if}
@@ -240,9 +294,15 @@
     </section>
 
     <!-- Order Summary -->
+    
     <section class="space-y-4">
-      <h3 class="font-bold text-lg text-zinc-950">Order Summary</h3>
-      <div class="bg-white border border-zinc-200 rounded-2xl p-5 space-y-4 shadow-sm">
+      <h3 class="font-bold text-lg text-zinc-950">Order Receipt</h3>
+      <div class="receipt-ticket p-6 space-y-4 font-mono text-sm text-zinc-800">
+        <div class="text-center pb-4 border-b border-dashed border-zinc-300">
+          <p class="font-bold text-lg">ORDER #{order.id.slice(0, 8).toUpperCase()}</p>
+          <p class="text-xs text-zinc-500">{new Date(order.created_at).toLocaleString()}</p>
+        </div>
+
         {#each (order.order_items ?? []) as item}
           <div class="flex gap-4 items-center">
             <div class="w-14 h-14 rounded-lg bg-zinc-100 border border-zinc-200 overflow-hidden flex-shrink-0">
@@ -291,7 +351,7 @@
         class="w-14 rounded-xl bg-white border border-zinc-200 flex items-center justify-center text-zinc-700 active:scale-95 transition-transform hover:bg-zinc-50 shadow-sm"
         onclick={handleCallWaiter}
       >
-        <Bell size={20} class={waiterCalled ? 'text-[var(--brand-primary)] animate-pulse' : ''} />
+        <Bell size={20} class={waiterCalled ? 'text-[var(--brand-primary)] icon-ring' : ''} />
       </button>
       <button class="flex-1 bg-zinc-100 text-zinc-500 font-semibold rounded-xl border border-zinc-200 py-4 opacity-70 cursor-not-allowed flex justify-center items-center gap-2">
         <CheckCircle size={20} /> Order Confirmed
@@ -301,9 +361,11 @@
 
 
 {:else}
-  <div class="h-screen flex items-center justify-center flex-col gap-4">
-    <div class="w-8 h-8 border-4 border-zinc-900 border-t-transparent rounded-full animate-spin"></div>
-    <p class="text-sm font-medium text-zinc-500">Loading your order...</p>
+  
+  <div class="h-screen pt-24 px-4 max-w-lg mx-auto flex flex-col gap-6">
+    <div class="h-32 w-full rounded-3xl glass-skeleton shadow-sm"></div>
+    <div class="flex-1 w-full rounded-2xl glass-skeleton shadow-sm receipt-ticket"></div>
+    <p class="text-sm font-medium text-zinc-500 text-center animate-pulse">Syncing order with kitchen...</p>
   </div>
 {/if}
 

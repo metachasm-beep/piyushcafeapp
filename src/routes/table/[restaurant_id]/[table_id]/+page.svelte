@@ -122,6 +122,57 @@
     }
   }
 
+  
+  function parallaxCard(node: HTMLElement, { active }: { active: boolean }) {
+    let bounds = node.getBoundingClientRect();
+    const image = node.querySelector('.parallax-img') as HTMLElement;
+    
+    function updateTransform(x: number, y: number) {
+      if (!active) return;
+      const rotX = (y / bounds.height - 0.5) * -15; // Max 15deg tilt
+      const rotY = (x / bounds.width - 0.5) * 15;
+      node.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+      if (image) {
+        image.style.transform = `scale(1.1) translateX(${rotY * -1}px) translateY(${rotX * 1}px)`;
+      }
+    }
+
+    function onMouseMove(e: MouseEvent) { updateTransform(e.clientX - bounds.left, e.clientY - bounds.top); }
+    function onDeviceOrientation(e: DeviceOrientationEvent) {
+      if (!active || !e.beta || !e.gamma) return;
+      const rotX = Math.max(-15, Math.min(15, e.beta - 45)); // Assuming 45deg holding angle
+      const rotY = Math.max(-15, Math.min(15, e.gamma));
+      node.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+      if (image) image.style.transform = `scale(1.1) translateX(${rotY * -1}px) translateY(${rotX * 1}px)`;
+    }
+    
+    // Reset transforms when not active
+    function reset() {
+       if(!active) {
+         node.style.transform = '';
+         if(image) image.style.transform = 'scale(1)';
+       }
+    }
+
+    function onScroll() { bounds = node.getBoundingClientRect(); }
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('deviceorientation', onDeviceOrientation);
+    window.addEventListener('scroll', onScroll);
+    
+    return {
+      update(params: { active: boolean }) {
+        active = params.active;
+        reset();
+      },
+      destroy() {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('deviceorientation', onDeviceOrientation);
+        window.removeEventListener('scroll', onScroll);
+      }
+    };
+  }
+
   function scrollToCarouselItem(catId: string) {
     activeCategory = catId;
     const firstItemIndex = flatMenuItems.findIndex((item: any) => item.category_id === catId);
@@ -319,6 +370,16 @@
 {/snippet}
 
 
+
+<!-- SVG Filter for Liquid Buttons -->
+<svg style="position: absolute; width: 0; height: 0;" aria-hidden="true">
+  <filter id="goo">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+    <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo" />
+    <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+  </filter>
+</svg>
+
 <svelte:head>
   <title>{restaurant.name} - Menu</title>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -373,6 +434,37 @@
   :global(.dark-theme .menu-card), :global(.dark-theme .featured-card) { background-color: #0a0a14 !important; border-color: rgba(255,255,255,0.1) !important; box-shadow: 0 4px 30px rgba(0,0,0,0.8), 0 0 15px rgba(var(--brand-primary-rgb, 255,255,255), 0.15) !important; }
   :global(.dark-theme .bg-zinc-900) { background-color: #080812 !important; box-shadow: 0 30px 60px rgba(0,0,0,0.9), 0 0 30px rgba(var(--brand-primary-rgb, 255,255,255), 0.1) !important; }
   :global(.dark-theme .featured-card .w-full.bg-zinc-100) { background-color: #000 !important; }
+
+  @keyframes gradientBlob {
+    0% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(5vw, -5vh) scale(1.1); }
+    66% { transform: translate(-5vw, 5vh) scale(0.9); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+  .mesh-bg {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(circle at 20% 30%, rgba(var(--brand-primary-rgb, 59, 130, 246), 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(var(--brand-primary-rgb, 59, 130, 246), 0.1) 0%, transparent 50%);
+    animation: gradientBlob 20s ease-in-out infinite;
+  }
+  .dark-theme .mesh-bg {
+    background: radial-gradient(circle at 20% 30%, rgba(var(--brand-primary-rgb, 59, 130, 246), 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(var(--brand-primary-rgb, 59, 130, 246), 0.2) 0%, transparent 50%);
+  }
+  
+  .gooey-filter { filter: url('#goo'); }
+  
+  .price-text {
+    font-weight: 700;
+    transition: font-weight 0.3s ease;
+  }
+  .price-text:hover { font-weight: 900; }
+  
+  .modal-backdrop {
+    backdrop-filter: blur(0px);
+    transition: backdrop-filter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .modal-backdrop.active { backdrop-filter: blur(24px); }
 </style>
 
 <div class={isDarkMode ? "dark-theme min-h-screen transition-colors duration-1000" : "min-h-screen transition-colors duration-1000"}>
@@ -410,6 +502,7 @@
   </header>
 
 <!-- Full-Screen 3D Carousel -->
+<div class="mesh-bg"></div>
 <main class="fixed inset-0 pt-[80px] pb-[80px] w-full h-[100dvh] bg-zinc-950 overflow-hidden flex flex-col z-10 transition-colors duration-1000 {isDarkMode ? 'dark-theme' : ''}">
   <div id="carousel-container" class="w-full flex-1 flex items-center overflow-x-auto overflow-y-hidden snap-x snap-mandatory hide-scrollbar relative">
     <!-- Spacer at start to center first item -->
@@ -426,9 +519,9 @@
         style="perspective: 1000px;"
         use:trackActive={{index: i, categoryId: item.category_id}}
       >
-        <div class="w-full h-full rounded-[2rem] md:rounded-[3rem] relative overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.4)] bg-zinc-900 group" style="transform: {activeIndex === i ? 'rotateY(0deg)' : (i > activeIndex ? 'rotateY(-15deg)' : 'rotateY(15deg)')}; transition: transform 0.7s cubic-bezier(0.2,0.8,0.2,1);">
+        <div class="w-full h-full rounded-[2rem] md:rounded-[3rem] relative overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.4)] bg-zinc-900 group card-parallax" style="transform: {activeIndex === i ? 'rotateY(0deg)' : (i > activeIndex ? 'rotateY(-15deg)' : 'rotateY(15deg)')}; transition: transform 0.7s cubic-bezier(0.2,0.8,0.2,1);" use:parallaxCard={{active: activeIndex === i}}>
           {#if item.image_url}
-             <img src={item.image_url} alt={item.name} class="absolute inset-0 w-full h-full object-cover transition-transform duration-[2s] {activeIndex === i ? 'scale-105' : 'scale-100'}" />
+             <img src={item.image_url} alt={item.name} class="absolute inset-0 w-full h-full object-cover parallax-img transition-transform duration-500 ease-out {activeIndex === i ? 'scale-105' : 'scale-100'}" />
           {:else}
              <div class="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-950 flex items-center justify-center font-serif text-[12rem] text-white/5 font-black tracking-tighter select-none">
                 {item.name.substring(0,1).toUpperCase()}
@@ -452,7 +545,7 @@
                <h3 class="text-3xl md:text-4xl font-black text-white leading-tight drop-shadow-md mb-2">{item.name}</h3>
                <p class="text-sm md:text-base text-zinc-300 line-clamp-3 drop-shadow mb-4 leading-relaxed">{item.description}</p>
                <div class="flex items-center justify-between">
-                 <span class="text-3xl font-bold text-white drop-shadow-md">{formatCurrency(item.price)}</span>
+                 <span class="text-3xl price-text text-white drop-shadow-md">{formatCurrency(item.price)}</span>
                  {#if item.is_available}
                    <button class="w-14 h-14 md:w-16 md:h-16 rounded-full bg-[var(--brand-primary)] text-white shadow-[0_10px_20px_rgba(0,0,0,0.3)] flex items-center justify-center transition-transform duration-300 active:scale-90 hover:scale-110" onclick={() => handleMenuAdd(item)}>
                       <Plus size={28} />
@@ -486,7 +579,7 @@
 
 
 <!-- Floating Buttons -->
-<div class="fixed right-4 flex flex-col gap-4 z-40" style="bottom: max(24px, env(safe-area-inset-bottom, 24px)); perspective: 800px;">
+<div class="fixed right-4 flex flex-col gap-4 z-40 gooey-filter" style="bottom: max(24px, env(safe-area-inset-bottom, 24px)); perspective: 800px;">
   <!-- Call Waiter (Suggestion #8 Magnetic) -->
   <button 
     use:magnetic
@@ -632,7 +725,7 @@
   <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center px-4 pb-4 sm:p-0" transition:fade={{ duration: 200 }}>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="absolute inset-0 bg-black/70 backdrop-blur-md" onclick={() => activeItem = null}></div>
+    <div class="absolute inset-0 bg-black/40 modal-backdrop active" onclick={() => activeItem = null}></div>
     
     <div class="bg-white w-full max-w-md rounded-[2rem] relative z-10 flex flex-col overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.4)] max-h-[90vh]">
       <div class="relative h-64 bg-zinc-950 overflow-hidden">

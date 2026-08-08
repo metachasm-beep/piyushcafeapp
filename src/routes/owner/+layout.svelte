@@ -68,12 +68,18 @@
       
       <!-- Logo -->
       <div class="flex h-[60px] items-center border-b border-zinc-200 px-6 gap-3">
-        <div class="flex h-6 w-6 items-center justify-center rounded-md bg-zinc-950 text-zinc-50">
-          <Command size={14} />
-        </div>
-        <div class="flex flex-col leading-tight">
-          <span class="font-semibold tracking-tight text-zinc-950 text-sm">{restaurant?.name || 'Restaurant'}</span>
-          <span class="text-[10px] text-zinc-500 uppercase tracking-wider">Staff Portal</span>
+        {#if restaurant?.logo_url}
+          <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-md bg-white border border-zinc-200 shadow-sm flex-shrink-0">
+            <img src={restaurant.logo_url} alt={restaurant.name} class="h-full w-full object-cover" />
+          </div>
+        {:else}
+          <div class="flex h-7 w-7 items-center justify-center rounded-md bg-zinc-950 text-zinc-50 shadow-sm flex-shrink-0">
+            <Command size={14} />
+          </div>
+        {/if}
+        <div class="flex flex-col leading-tight overflow-hidden">
+          <span class="font-bold tracking-tight text-zinc-950 text-sm truncate">{restaurant?.name || 'Restaurant'}</span>
+          <span class="text-[10px] text-zinc-500 font-medium uppercase tracking-widest truncate">{userRole === 'owner' ? 'Owner Portal' : 'Staff Portal'}</span>
         </div>
         <button onclick={() => mobileMenuOpen = false} class="ml-auto lg:hidden text-zinc-500 hover:text-zinc-900">
           <X size={18} />
@@ -161,8 +167,11 @@
           <Menu size={20} />
         </button>
 
-        <div class="flex-1">
-          <span class="text-sm font-medium text-zinc-500">{restaurant?.name || 'Staff Portal'}</span>
+        <div class="flex-1 flex items-center gap-3">
+          {#if restaurant?.logo_url}
+            <img src={restaurant.logo_url} alt={restaurant.name} class="h-7 w-7 rounded border border-zinc-200 object-cover" />
+          {/if}
+          <span class="text-sm font-semibold text-zinc-900">{restaurant?.name || 'Staff Portal'}</span>
         </div>
 
         {#if $pendingWaiterCount > 0}

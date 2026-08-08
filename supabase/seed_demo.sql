@@ -1,39 +1,41 @@
 -- Run this script in the Supabase SQL Editor
 -- Make sure to clear the editor before pasting!
 
--- 1. Create the Owner Profile
+-- 1. Create the Owner Profile dynamically finding the user id
+WITH user_info AS (
+    SELECT id FROM auth.users WHERE email = 'paullovessoccer@gmail.com' LIMIT 1
+)
 INSERT INTO owner_profiles (id, email, is_approved)
-VALUES (
-    '57a00043-ea19-4059-9e35-5b0b2d1580e6',
-    'paullovessoccer@gmail.com',
-    true
-) ON CONFLICT (id) DO UPDATE SET is_approved = true;
+SELECT id, 'paullovessoccer@gmail.com', true
+FROM user_info
+ON CONFLICT (id) DO UPDATE SET is_approved = true;
 
 -- 2. Create the Restaurant
+WITH user_info AS (
+    SELECT id FROM auth.users WHERE email = 'paullovessoccer@gmail.com' LIMIT 1
+)
 INSERT INTO restaurants (id, name, slug, owner_id)
-VALUES (
-    'd793b827-0466-4cf8-8424-df38d21c0eb2',
-    'The Golden Fork Demo', 
-    'golden-fork-demo', 
-    '57a00043-ea19-4059-9e35-5b0b2d1580e6'
-) ON CONFLICT (id) DO NOTHING;
+SELECT 'd793b827-0466-4cf8-8424-df38d21c0eb2', 'The Golden Fork Demo', 'golden-fork-demo', id
+FROM user_info
+ON CONFLICT (id) DO NOTHING;
 
 -- 3. Assign Owner (Staff Table)
+WITH user_info AS (
+    SELECT id FROM auth.users WHERE email = 'paullovessoccer@gmail.com' LIMIT 1
+)
 INSERT INTO restaurant_staff (user_id, restaurant_id, role)
-VALUES (
-    '57a00043-ea19-4059-9e35-5b0b2d1580e6',
-    'd793b827-0466-4cf8-8424-df38d21c0eb2',
-    'owner'
-) ON CONFLICT DO NOTHING;
+SELECT id, 'd793b827-0466-4cf8-8424-df38d21c0eb2', 'owner'
+FROM user_info
+ON CONFLICT DO NOTHING;
 
--- 3. Create Tables
+-- 4. Create Tables
 INSERT INTO tables (restaurant_id, table_number, display_name) VALUES
 ('d793b827-0466-4cf8-8424-df38d21c0eb2', 1, 'Table 1'),
 ('d793b827-0466-4cf8-8424-df38d21c0eb2', 2, 'Table 2'),
 ('d793b827-0466-4cf8-8424-df38d21c0eb2', 3, 'Table 3'),
 ('d793b827-0466-4cf8-8424-df38d21c0eb2', 4, 'VIP Table');
 
--- 4. Create Categories
+-- 5. Create Categories
 INSERT INTO menu_categories (id, restaurant_id, name, icon_emoji, sort_order) VALUES
 ('f52e5d7a-1153-4889-b88a-e5e78ecae921', 'd793b827-0466-4cf8-8424-df38d21c0eb2', 'Starters', '🥗', 10),
 ('e4b3e8e1-d3c2-4eb2-a8c6-55a0f6229555', 'd793b827-0466-4cf8-8424-df38d21c0eb2', 'Mains', '🍝', 20),
@@ -41,7 +43,7 @@ INSERT INTO menu_categories (id, restaurant_id, name, icon_emoji, sort_order) VA
 ('c8d76d4a-a92c-4f81-bfd0-7a31b268f7aa', 'd793b827-0466-4cf8-8424-df38d21c0eb2', 'Drinks', '🍹', 40)
 ON CONFLICT (id) DO NOTHING;
 
--- 5. Create Menu Items
+-- 6. Create Menu Items
 -- Starters
 INSERT INTO menu_items (category_id, restaurant_id, name, description, price, image_url, dietary_tags) VALUES 
 ('f52e5d7a-1153-4889-b88a-e5e78ecae921', 'd793b827-0466-4cf8-8424-df38d21c0eb2', 'Crispy Calamari', 'Lightly breaded squid rings with garlic aioli', 350.00, 'https://images.unsplash.com/photo-1599487405270-8e12eb23b022?q=80&w=800&auto=format&fit=crop', '{"dairy_free"}'),

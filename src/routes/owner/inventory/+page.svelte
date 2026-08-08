@@ -19,11 +19,52 @@
   
   let newVariations = $state<{name: string, extra_price: number}[]>([]);
   let newAddons = $state<{name: string, extra_price: number}[]>([]);
+  
+  // Category inline creation state
+  let selectedModalCategoryId = $state<string>('');
+  let isAddingCategory = $state(false);
+  let newCategoryName = $state('');
 
   function addVariation() { newVariations.push({ name: '', extra_price: 0 }); }
   function removeVariation(i: number) { newVariations.splice(i, 1); }
   function addAddon() { newAddons.push({ name: '', extra_price: 0 }); }
   function removeAddon(i: number) { newAddons.splice(i, 1); }
+
+  function handleCategoryChange(e: Event) {
+    const select = e.target as HTMLSelectElement;
+    if (select.value === 'ADD_NEW') {
+      isAddingCategory = true;
+    }
+  }
+
+  async function handleAddCategory() {
+    if (!newCategoryName.trim() || !supabase || !ownerRestaurantId) {
+      isAddingCategory = false;
+      selectedModalCategoryId = '';
+      return;
+    }
+
+    const newCat = {
+      id: crypto.randomUUID(),
+      restaurant_id: ownerRestaurantId,
+      name: newCategoryName.trim(),
+      icon_emoji: '🍽️',
+      sort_order: categories.length
+    };
+
+    const { error } = await supabase.from('menu_categories').insert(newCat);
+    if (!error) {
+      categories = [...categories, newCat as MenuCategory];
+      selectedModalCategoryId = newCat.id;
+      toast.success('Category added successfully!');
+    } else {
+      toast.error('Failed to add category');
+      selectedModalCategoryId = '';
+    }
+    
+    isAddingCategory = false;
+    newCategoryName = '';
+  }
 
   async function loadInventory() {
     isLoading = true;
@@ -324,12 +365,21 @@
 
         <div class="space-y-1.5">
           <label class="block text-sm font-medium text-zinc-700" for="category_id">Category *</label>
-          <select id="category_id" name="category_id" required class="w-full px-3 py-2 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all appearance-none">
-            <option value="" disabled selected>Select a category...</option>
-            {#each categories as cat}
-              <option value={cat.id}>{cat.name}</option>
-            {/each}
-          </select>
+          {#if isAddingCategory}
+            <div class="flex gap-2">
+              <input type="text" bind:value={newCategoryName} onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCategory(); } }} placeholder="New Category (e.g. Desserts)" class="flex-1 px-3 py-2 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all" autofocus />
+              <button type="button" onclick={handleAddCategory} class="px-3 py-2 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors">Save</button>
+              <button type="button" onclick={() => { isAddingCategory = false; selectedModalCategoryId = ''; }} class="px-3 py-2 bg-zinc-100 text-zinc-600 rounded-lg text-sm font-medium hover:bg-zinc-200 transition-colors">Cancel</button>
+            </div>
+          {:else}
+            <select id="category_id" name="category_id" bind:value={selectedModalCategoryId} onchange={handleCategoryChange} required class="w-full px-3 py-2 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all appearance-none">
+              <option value="" disabled selected>Select a category...</option>
+              {#each categories as cat}
+                <option value={cat.id}>{cat.name}</option>
+              {/each}
+              <option value="ADD_NEW" class="font-semibold text-zinc-900">➕ Create New Category</option>
+            </select>
+          {/if}
         </div>
 
         <div class="space-y-1.5">

@@ -70,6 +70,42 @@ export const actions: Actions = {
 		return { success: true, category: newCat };
 	},
 
+	deleteCategory: async ({ request, locals }) => {
+		const { session, userRole, restaurantId } = locals;
+		
+		if (!session || userRole !== 'owner' || !restaurantId) {
+			return fail(401, { error: 'Unauthorized.' });
+		}
+
+		const formData = await request.formData();
+		const categoryId = formData.get('category_id')?.toString();
+
+		if (!categoryId) {
+			return fail(400, { error: 'Category ID is required' });
+		}
+
+		const supabaseAdmin = getSupabaseAdmin();
+		
+		// Unlink items from this category to prevent cascade deletion or constraint errors
+		await supabaseAdmin.from('menu_items')
+			.update({ category_id: null })
+			.eq('category_id', categoryId)
+			.eq('restaurant_id', restaurantId);
+
+		const { error: dbError } = await supabaseAdmin
+			.from('menu_categories')
+			.delete()
+			.eq('id', categoryId)
+			.eq('restaurant_id', restaurantId);
+
+		if (dbError) {
+			console.error('DB error deleting category:', dbError);
+			return fail(500, { error: 'Database Error: ' + dbError.message });
+		}
+
+		return { success: true };
+	},
+
 	addItem: async ({ request, locals }) => {
 		const { session, userRole, restaurantId } = locals;
 		

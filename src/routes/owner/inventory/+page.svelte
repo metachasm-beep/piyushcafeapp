@@ -146,7 +146,7 @@
   </div>
 
   <!-- Filters -->
-  <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" in:fly={{ y: 10, duration: 400, delay: 50 }}>
+  <div class="flex gap-2 overflow-x-auto pb-3 pt-1 px-1 -mx-1 scrollbar-hide" in:fly={{ y: 10, duration: 400, delay: 50 }}>
     <button 
       class="px-5 py-2 rounded-full whitespace-nowrap transition-all text-xs font-bold uppercase tracking-widest {selectedCategory === null ? 'bg-zinc-900 text-white shadow-md scale-100' : 'bg-white border border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 scale-95 hover:scale-100'}"
       onclick={() => selectedCategory = null}
@@ -154,12 +154,34 @@
       All Items
     </button>
     {#each categories as cat}
-      <button 
-        class="px-5 py-2 rounded-full whitespace-nowrap transition-all text-xs font-bold uppercase tracking-widest {selectedCategory === cat.id ? 'bg-zinc-900 text-white shadow-md scale-100' : 'bg-white border border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 scale-95 hover:scale-100'}"
-        onclick={() => selectedCategory = cat.id}
-      >
-        {cat.name}
-      </button>
+      <div class="relative group flex items-center shrink-0">
+        <button 
+          class="px-5 py-2 rounded-full whitespace-nowrap transition-all text-xs font-bold uppercase tracking-widest {selectedCategory === cat.id ? 'bg-zinc-900 text-white shadow-md scale-100' : 'bg-white border border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 scale-95 hover:scale-100'}"
+          onclick={() => selectedCategory = cat.id}
+        >
+          {cat.name}
+        </button>
+        {#if selectedCategory === cat.id}
+          <form method="POST" action="?/deleteCategory" use:enhance={() => {
+            if (!confirm('Are you sure you want to delete this category? Items inside will become uncategorized.')) return ({ update }) => update({ reset: false });
+            return async ({ result, update }) => {
+              if (result.type === 'success') {
+                toast.success('Category deleted');
+                categories = categories.filter(c => c.id !== cat.id);
+                items = items.map(i => i.category_id === cat.id ? { ...i, category_id: null } : i);
+                selectedCategory = null;
+              } else {
+                toast.error((result.data?.error as string) || 'Failed to delete category');
+              }
+            };
+          }}>
+            <input type="hidden" name="category_id" value={cat.id} />
+            <button type="submit" class="absolute -top-1 -right-1 w-5 h-5 bg-red-100 text-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-200 hover:text-red-700 transition-all shadow-sm z-10" title="Delete category">
+              <X size={12} strokeWidth={3} />
+            </button>
+          </form>
+        {/if}
+      </div>
     {/each}
   </div>
 

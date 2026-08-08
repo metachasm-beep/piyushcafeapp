@@ -114,7 +114,6 @@ export const actions: Actions = {
 			price: Number(formData.get('price')),
 			image_url: imageUrl,
 			is_available: true,
-			is_featured: formData.get('is_featured') === 'on',
 			dietary_tags: []
 		};
 		

@@ -338,13 +338,6 @@
           </div>
         </div>
 
-        <label class="flex items-center gap-3 p-4 border border-zinc-200 rounded-lg bg-zinc-50 cursor-pointer hover:bg-zinc-100 transition-colors mt-4">
-          <input type="checkbox" name="is_featured" class="w-4 h-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900" />
-          <div>
-            <div class="font-medium text-sm text-zinc-900">Feature this item</div>
-            <div class="text-xs text-zinc-500">Highlight it on the customer menu.</div>
-          </div>
-        </label>
 
         <div class="pt-4 border-t border-zinc-100 flex gap-3">
           <button type="button" class="flex-1 py-2.5 px-4 rounded-lg font-medium text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-50 transition-colors text-sm" onclick={() => showAddModal = false}>

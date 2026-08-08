@@ -908,77 +908,87 @@
 
 <!-- Checkout Modal -->
 {#if showCheckoutModal}
-  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-4 sm:p-0" transition:fade={{ duration: 200 }}>
+  <div class="fixed inset-0 z-50 flex items-end justify-center sm:p-4">
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick={() => !isProcessingPayment && (showCheckoutModal = false)}></div>
+    <div 
+      class="absolute inset-0 bg-zinc-950/40 backdrop-blur-md" 
+      transition:fade={{ duration: 300 }}
+      onclick={() => !isProcessingPayment && (showCheckoutModal = false)}>
+    </div>
     
-    <div class="bg-white w-full max-w-md rounded-2xl p-6 relative z-10 space-y-5 shadow-2xl border border-zinc-200">
-      <div class="flex justify-between items-center">
-        <h3 class="text-lg font-bold text-zinc-950">Payment</h3>
-        <button class="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-500 hover:text-zinc-900" onclick={() => showCheckoutModal = false} disabled={isProcessingPayment}>
-          <X size={16} />
+    <div 
+      class="bg-white/95 backdrop-blur-2xl w-full max-w-md rounded-t-[2rem] sm:rounded-2xl p-6 relative z-10 shadow-2xl border-t sm:border border-white/40 flex flex-col gap-6 max-h-[90vh] overflow-y-auto"
+      transition:fly={{ y: 400, duration: 400 }}
+    >
+      <!-- Drag handle for mobile -->
+      <div class="w-12 h-1.5 bg-zinc-200 rounded-full mx-auto sm:hidden -mt-2"></div>
+      
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold tracking-tight text-zinc-900">Checkout</h2>
+        <button class="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-100 text-zinc-500 hover:bg-zinc-200 transition-colors" onclick={() => showCheckoutModal = false}>
+          <X size={18} />
         </button>
       </div>
 
-      <div class="text-center py-4 border-y border-zinc-100">
-        <p class="text-sm text-zinc-400 mb-1">Amount to Pay</p>
-        <p class="text-3xl font-bold text-zinc-950">{formatCurrency($cartTotal * 1.1)}</p>
+      <div class="flex items-center justify-between pb-6 border-b border-zinc-100">
+        <span class="text-zinc-500 font-medium">Total to pay</span>
+        <span class="text-3xl font-bold tracking-tighter text-zinc-900">{formatCurrency($cartTotal * 1.1)}</span>
       </div>
 
-      <div class="grid grid-cols-3 gap-2">
+      <!-- Segmented Control for Payment Methods -->
+      <div class="flex p-1 bg-zinc-100 rounded-xl relative">
         {#each [{ id: 'upi', icon: Smartphone, label: 'UPI' }, { id: 'card', icon: CreditCard, label: 'Card' }, { id: 'cash', icon: Banknote, label: 'Cash' }] as method}
           <button 
-            class="flex flex-col items-center gap-2 p-3 rounded-xl border transition-colors {paymentMethod === method.id ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white' : 'bg-white border-zinc-200 text-zinc-500 hover:bg-zinc-50'}"
+            class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all z-10 {paymentMethod === method.id ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}"
             onclick={() => paymentMethod = method.id as any}
           >
-            <method.icon size={18} />
-            <span class="text-xs font-medium">{method.label}</span>
+            <method.icon size={16} />
+            {method.label}
           </button>
         {/each}
       </div>
 
-      <div class="min-h-[100px] flex flex-col justify-center">
-        <!-- Suggestion #7: Intelligent Form Styling -->
+      <div class="min-h-[140px] flex flex-col justify-center">
         {#if paymentMethod === 'upi'}
-          <div class="space-y-2">
-            <label class="text-xs font-bold text-zinc-700 uppercase tracking-widest" for="upi-input">UPI ID</label>
-            <input id="upi-input" type="text" class="flex h-12 w-full rounded-xl border-0 bg-zinc-50 px-4 text-[15px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:bg-white transition-all text-zinc-950" value="goldenfork@upi" />
+          <div class="relative">
+            <input id="upi-input" type="text" placeholder=" " class="peer flex h-14 w-full rounded-xl border border-zinc-200 bg-white px-4 pt-4 pb-2 text-[15px] shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 focus-visible:border-zinc-950 transition-all text-zinc-900" value="goldenfork@upi" />
+            <label class="absolute left-4 top-4 text-[15px] text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:text-[11px] peer-focus:text-zinc-900 peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:text-[11px] cursor-text" for="upi-input">UPI ID</label>
           </div>
         {:else if paymentMethod === 'card'}
-          <div class="space-y-3">
-            <div class="space-y-1.5">
-              <label class="text-xs font-bold text-zinc-700 uppercase tracking-widest" for="card-input">Card Number</label>
-              <input id="card-input" type="text" class="flex h-12 w-full rounded-xl border-0 bg-zinc-50 px-4 text-[15px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:bg-white transition-all text-zinc-950" value="**** **** **** 4242" />
+          <div class="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden divide-y divide-zinc-200">
+            <div class="relative">
+              <input id="card-input" type="text" placeholder=" " class="peer flex h-14 w-full border-0 bg-transparent px-4 pt-4 pb-2 text-[15px] focus-visible:outline-none focus-visible:ring-0 transition-all text-zinc-900" value="**** **** **** 4242" />
+              <label class="absolute left-4 top-4 text-[15px] text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:text-[11px] peer-focus:text-zinc-900 peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:text-[11px] cursor-text" for="card-input">Card Number</label>
             </div>
-            <div class="flex gap-3">
-              <div class="space-y-1.5 flex-1">
-                <label class="text-xs font-bold text-zinc-700 uppercase tracking-widest" for="expiry-input">Expiry</label>
-                <input id="expiry-input" type="text" class="flex h-12 w-full rounded-xl border-0 bg-zinc-50 px-4 text-[15px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:bg-white transition-all text-zinc-950" value="12/26" />
+            <div class="flex divide-x divide-zinc-200">
+              <div class="relative flex-1">
+                <input id="expiry-input" type="text" placeholder=" " class="peer flex h-14 w-full border-0 bg-transparent px-4 pt-4 pb-2 text-[15px] focus-visible:outline-none focus-visible:ring-0 transition-all text-zinc-900" value="12/26" />
+                <label class="absolute left-4 top-4 text-[15px] text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:text-[11px] peer-focus:text-zinc-900 peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:text-[11px] cursor-text" for="expiry-input">Expiry</label>
               </div>
-              <div class="space-y-1.5 flex-1">
-                <label class="text-xs font-bold text-zinc-700 uppercase tracking-widest" for="cvv-input">CVV</label>
-                <input id="cvv-input" type="text" class="flex h-12 w-full rounded-xl border-0 bg-zinc-50 px-4 text-[15px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:bg-white transition-all text-zinc-950" value="***" />
+              <div class="relative flex-1">
+                <input id="cvv-input" type="text" placeholder=" " class="peer flex h-14 w-full border-0 bg-transparent px-4 pt-4 pb-2 text-[15px] focus-visible:outline-none focus-visible:ring-0 transition-all text-zinc-900" value="***" />
+                <label class="absolute left-4 top-4 text-[15px] text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:text-[11px] peer-focus:text-zinc-900 peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:text-[11px] cursor-text" for="cvv-input">CVV</label>
               </div>
             </div>
           </div>
         {:else}
-          <div class="text-center text-sm font-medium text-zinc-500 py-4 bg-zinc-50 rounded-xl">
+          <div class="text-center text-[15px] text-zinc-500 py-8 bg-zinc-50/50 rounded-xl border border-zinc-100">
             Our waiter will come to your table to collect cash.
           </div>
         {/if}
       </div>
 
       <button 
-        class="btn-shine flex w-full items-center justify-center gap-3 rounded-[1rem] bg-[var(--brand-primary)] text-white drop-shadow-md shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:scale-[1.02] active:scale-95 h-14 px-6 text-lg font-black transition-all disabled:opacity-50 disabled:scale-100"
+        class="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 text-white shadow-[0_4px_14px_rgba(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] hover:-translate-y-0.5 active:translate-y-0 h-14 px-6 text-[15px] font-semibold transition-all disabled:opacity-50 disabled:hover:-translate-y-0 disabled:shadow-none"
         onclick={handlePayment}
         disabled={isProcessingPayment}
       >
         {#if isProcessingPayment}
-          <div class="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+          <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
           <span>Processing...</span>
         {:else}
-          <Check size={24} strokeWidth={3} />
+          <Check size={18} strokeWidth={2.5} />
           <span>{paymentMethod === 'cash' ? 'Place Order (Cash)' : 'Confirm Payment'}</span>
         {/if}
       </button>

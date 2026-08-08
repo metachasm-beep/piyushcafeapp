@@ -39,6 +39,9 @@
     isLoading = true;
     
     try {
+      // Ensure the test account has the password set to password123
+      await fetch('/api/demo-login', { method: 'POST' });
+
       const { createBrowserClient } = await import('@supabase/ssr');
       const supabase = createBrowserClient(
         env.PUBLIC_SUPABASE_URL || '',

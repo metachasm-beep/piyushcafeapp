@@ -1195,41 +1195,7 @@
             <label class="absolute left-5 top-4 text-[13px] font-bold uppercase tracking-wider text-zinc-500 transition-all peer-focus:-translate-y-2.5 peer-focus:scale-[0.8] peer-focus:text-[var(--brand-primary)] peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:scale-[0.8] origin-left pointer-events-none" for="upi-input">UPI ID</label>
           </div>
         {:else if paymentMethod === 'card'}
-          <!-- 3D Card Scene -->
-          <div class="relative w-full h-48 mb-6 perspective-[1000px]">
-            <div 
-              class="w-full h-full relative transition-transform duration-700 [transform-style:preserve-3d]"
-              style={cardFocus === 'back' ? 'transform: rotateY(180deg);' : ''}
-            >
-              <!-- Front of Card -->
-              <div class="absolute inset-0 bg-gradient-to-tr from-zinc-900 to-zinc-800 rounded-2xl p-6 flex flex-col justify-between text-white shadow-xl [backface-visibility:hidden] border border-white/10">
-                <div class="flex justify-between items-start">
-                  <div class="w-10 h-8 bg-zinc-300/20 rounded-md"></div>
-                  <div class="font-black italic text-lg tracking-tighter opacity-80">CARD</div>
-                </div>
-                <div>
-                  <div class="font-mono text-xl tracking-widest mb-2 opacity-90">
-                    {cardDetails.number || '**** **** **** ****'}
-                  </div>
-                  <div class="flex justify-between text-sm uppercase opacity-70 font-bold tracking-widest">
-                    <span>Cardholder</span>
-                    <span>{cardDetails.expiry || 'MM/YY'}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Back of Card -->
-              <div class="absolute inset-0 bg-gradient-to-bl from-zinc-800 to-zinc-900 rounded-2xl flex flex-col justify-center text-white shadow-xl [backface-visibility:hidden] [transform:rotateY(180deg)] border border-white/10">
-                <div class="w-full h-10 bg-black absolute top-6"></div>
-                <div class="px-6 mt-16 text-right">
-                  <div class="bg-white text-zinc-900 font-mono text-lg px-3 py-1 rounded inline-block h-8 min-w-[3rem] text-center shadow-inner">
-                    {cardDetails.cvv || '***'}
-                  </div>
-                  <div class="text-[10px] opacity-50 uppercase tracking-widest mt-1 font-bold">CVV</div>
-                </div>
-              </div>
-            </div>
-          </div>
+
           <div class="rounded-[1.25rem] border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] overflow-hidden divide-y divide-zinc-200 dark:divide-zinc-800">
             <div class="relative w-full">
               <input id="card-input" type="text" placeholder=" " bind:value={cardDetails.number} onfocus={() => cardFocus = 'front'} class="peer flex h-14 w-full border-0 bg-transparent px-5 pt-5 pb-1 text-[15px] font-bold focus-visible:outline-none focus-visible:ring-0 transition-all text-zinc-900 dark:text-white font-mono" />
